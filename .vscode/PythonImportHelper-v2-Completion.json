@@ -1,0 +1,544 @@
+[
+    {
+        "label": "cache",
+        "importPath": "functools",
+        "description": "functools",
+        "isExtraImport": true,
+        "detail": "functools",
+        "documentation": {}
+    },
+    {
+        "label": "torch",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "torch",
+        "description": "torch",
+        "detail": "torch",
+        "documentation": {}
+    },
+    {
+        "label": "os",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "os",
+        "description": "os",
+        "detail": "os",
+        "documentation": {}
+    },
+    {
+        "label": "logging",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "logging",
+        "description": "logging",
+        "detail": "logging",
+        "documentation": {}
+    },
+    {
+        "label": "datasets",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "datasets",
+        "description": "datasets",
+        "detail": "datasets",
+        "documentation": {}
+    },
+    {
+        "label": "pandas",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "pandas",
+        "description": "pandas",
+        "detail": "pandas",
+        "documentation": {}
+    },
+    {
+        "label": "selfies",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "selfies",
+        "description": "selfies",
+        "detail": "selfies",
+        "documentation": {}
+    },
+    {
+        "label": "sys",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "sys",
+        "description": "sys",
+        "detail": "sys",
+        "documentation": {}
+    },
+    {
+        "label": "traceback",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "traceback",
+        "description": "traceback",
+        "detail": "traceback",
+        "documentation": {}
+    },
+    {
+        "label": "Fore",
+        "importPath": "colorama",
+        "description": "colorama",
+        "isExtraImport": true,
+        "detail": "colorama",
+        "documentation": {}
+    },
+    {
+        "label": "Style",
+        "importPath": "colorama",
+        "description": "colorama",
+        "isExtraImport": true,
+        "detail": "colorama",
+        "documentation": {}
+    },
+    {
+        "label": "init",
+        "importPath": "colorama",
+        "description": "colorama",
+        "isExtraImport": true,
+        "detail": "colorama",
+        "documentation": {}
+    },
+    {
+        "label": "rank_zero_only",
+        "importPath": "lightning.pytorch.utilities",
+        "description": "lightning.pytorch.utilities",
+        "isExtraImport": true,
+        "detail": "lightning.pytorch.utilities",
+        "documentation": {}
+    },
+    {
+        "label": "hydra",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "hydra",
+        "description": "hydra",
+        "detail": "hydra",
+        "documentation": {}
+    },
+    {
+        "label": "OmegaConf",
+        "importPath": "omegaconf",
+        "description": "omegaconf",
+        "isExtraImport": true,
+        "detail": "omegaconf",
+        "documentation": {}
+    },
+    {
+        "label": "DictConfig",
+        "importPath": "omegaconf",
+        "description": "omegaconf",
+        "isExtraImport": true,
+        "detail": "omegaconf",
+        "documentation": {}
+    },
+    {
+        "label": "OmegaConf",
+        "importPath": "omegaconf",
+        "description": "omegaconf",
+        "isExtraImport": true,
+        "detail": "omegaconf",
+        "documentation": {}
+    },
+    {
+        "label": "DictConfig",
+        "importPath": "omegaconf",
+        "description": "omegaconf",
+        "isExtraImport": true,
+        "detail": "omegaconf",
+        "documentation": {}
+    },
+    {
+        "label": "DictConfig",
+        "importPath": "omegaconf",
+        "description": "omegaconf",
+        "isExtraImport": true,
+        "detail": "omegaconf",
+        "documentation": {}
+    },
+    {
+        "label": "OmegaConf",
+        "importPath": "omegaconf",
+        "description": "omegaconf",
+        "isExtraImport": true,
+        "detail": "omegaconf",
+        "documentation": {}
+    },
+    {
+        "label": "lightning",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "lightning",
+        "description": "lightning",
+        "detail": "lightning",
+        "documentation": {}
+    },
+    {
+        "label": "Path",
+        "importPath": "pathlib",
+        "description": "pathlib",
+        "isExtraImport": true,
+        "detail": "pathlib",
+        "documentation": {}
+    },
+    {
+        "label": "logger",
+        "importPath": "venv",
+        "description": "venv",
+        "isExtraImport": true,
+        "detail": "venv",
+        "documentation": {}
+    },
+    {
+        "label": "preprocess_selfies_data",
+        "importPath": "preprocess_data",
+        "description": "preprocess_data",
+        "isExtraImport": true,
+        "detail": "preprocess_data",
+        "documentation": {}
+    },
+    {
+        "label": "get_tokenizer",
+        "importPath": "tokenizer",
+        "description": "tokenizer",
+        "isExtraImport": true,
+        "detail": "tokenizer",
+        "documentation": {}
+    },
+    {
+        "label": "tokenize_selfies_vocab",
+        "importPath": "tokenizer",
+        "description": "tokenizer",
+        "isExtraImport": true,
+        "detail": "tokenizer",
+        "documentation": {}
+    },
+    {
+        "label": "setup_training_logging",
+        "importPath": "utils.setup",
+        "description": "utils.setup",
+        "isExtraImport": true,
+        "detail": "utils.setup",
+        "documentation": {}
+    },
+    {
+        "label": "resolve_paths",
+        "importPath": "utils.setup",
+        "description": "utils.setup",
+        "isExtraImport": true,
+        "detail": "utils.setup",
+        "documentation": {}
+    },
+    {
+        "label": "print_batch",
+        "importPath": "utils.setup",
+        "description": "utils.setup",
+        "isExtraImport": true,
+        "detail": "utils.setup",
+        "documentation": {}
+    },
+    {
+        "label": "get_dataloaders",
+        "importPath": "utils.create_datasets",
+        "description": "utils.create_datasets",
+        "isExtraImport": true,
+        "detail": "utils.create_datasets",
+        "documentation": {}
+    },
+    {
+        "label": "fast_csv_to_df_reader",
+        "importPath": "utils.csv_data_reader",
+        "description": "utils.csv_data_reader",
+        "isExtraImport": true,
+        "detail": "utils.csv_data_reader",
+        "documentation": {}
+    },
+    {
+        "label": "configure_logging",
+        "importPath": "utils.logging_config",
+        "description": "utils.logging_config",
+        "isExtraImport": true,
+        "detail": "utils.logging_config",
+        "documentation": {}
+    },
+    {
+        "label": "decode",
+        "importPath": "idna",
+        "description": "idna",
+        "isExtraImport": true,
+        "detail": "idna",
+        "documentation": {}
+    },
+    {
+        "label": "Tokenizer",
+        "importPath": "tokenizers",
+        "description": "tokenizers",
+        "isExtraImport": true,
+        "detail": "tokenizers",
+        "documentation": {}
+    },
+    {
+        "label": "models",
+        "importPath": "tokenizers",
+        "description": "tokenizers",
+        "isExtraImport": true,
+        "detail": "tokenizers",
+        "documentation": {}
+    },
+    {
+        "label": "normalizers",
+        "importPath": "tokenizers",
+        "description": "tokenizers",
+        "isExtraImport": true,
+        "detail": "tokenizers",
+        "documentation": {}
+    },
+    {
+        "label": "pre_tokenizers",
+        "importPath": "tokenizers",
+        "description": "tokenizers",
+        "isExtraImport": true,
+        "detail": "tokenizers",
+        "documentation": {}
+    },
+    {
+        "label": "Tokenizer",
+        "importPath": "tokenizers",
+        "description": "tokenizers",
+        "isExtraImport": true,
+        "detail": "tokenizers",
+        "documentation": {}
+    },
+    {
+        "label": "PreTrainedTokenizerFast",
+        "importPath": "transformers",
+        "description": "transformers",
+        "isExtraImport": true,
+        "detail": "transformers",
+        "documentation": {}
+    },
+    {
+        "label": "PreTrainedTokenizerFast",
+        "importPath": "transformers",
+        "description": "transformers",
+        "isExtraImport": true,
+        "detail": "transformers",
+        "documentation": {}
+    },
+    {
+        "label": "Iterable",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Set",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "List",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "WordLevel",
+        "importPath": "tokenizers.models",
+        "description": "tokenizers.models",
+        "isExtraImport": true,
+        "detail": "tokenizers.models",
+        "documentation": {}
+    },
+    {
+        "label": "check_gpu_compatibility",
+        "kind": 2,
+        "importPath": "utils.create_datasets",
+        "description": "utils.create_datasets",
+        "peekOfCode": "def check_gpu_compatibility(config):\n    num_gpus = torch.cuda.device_count()\n    assert (config.loader.global_batch_size == (config.loader.batch_size\n                                              * config.trainer.num_nodes\n                                              * num_gpus\n                                              * config.trainer.accumulate_grad_batches))\n    if config.loader.global_batch_size % (\n        num_gpus * config.trainer.accumulate_grad_batches) != 0:\n        raise ValueError(\n        f'Train Batch Size {config.loader.global_batch_size}'",
+        "detail": "utils.create_datasets",
+        "documentation": {}
+    },
+    {
+        "label": "create_train_val_dataloaders",
+        "kind": 2,
+        "importPath": "utils.create_datasets",
+        "description": "utils.create_datasets",
+        "peekOfCode": "def create_train_val_dataloaders(config, tokenized_selfies_data, pin_memory=True, valid_seed=None):\n    # Create a Hugging Face Dataset\n    dataset = datasets.Dataset.from_dict(tokenized_selfies_data)\n    # Potentially also include the column \"conditioning\". First requires adding that to the tokenized selfies data\n    dataset.set_format(type='torch', columns=['input_ids', 'token_type_ids', 'attention_mask'])\n    # Split the data\n    split_dataset = dataset.train_test_split(test_size=1 - config.train_test_split.train)\n    train_dataset = split_dataset['train']\n    val_dataset = split_dataset['test']\n    # Create PyTorch DataLoaders for training and validation.",
+        "detail": "utils.create_datasets",
+        "documentation": {}
+    },
+    {
+        "label": "get_dataloaders",
+        "kind": 2,
+        "importPath": "utils.create_datasets",
+        "description": "utils.create_datasets",
+        "peekOfCode": "def get_dataloaders(config,tokenized_selfies_data, tokenizer):\n    check_gpu_compatibility(config)\n    train_set, valid_set = create_train_val_dataloaders(config, tokenized_selfies_data)\n    return train_set, valid_set",
+        "detail": "utils.create_datasets",
+        "documentation": {}
+    },
+    {
+        "label": "logger",
+        "kind": 5,
+        "importPath": "utils.create_datasets",
+        "description": "utils.create_datasets",
+        "peekOfCode": "logger = logging.getLogger(__name__)\ndef check_gpu_compatibility(config):\n    num_gpus = torch.cuda.device_count()\n    assert (config.loader.global_batch_size == (config.loader.batch_size\n                                              * config.trainer.num_nodes\n                                              * num_gpus\n                                              * config.trainer.accumulate_grad_batches))\n    if config.loader.global_batch_size % (\n        num_gpus * config.trainer.accumulate_grad_batches) != 0:\n        raise ValueError(",
+        "detail": "utils.create_datasets",
+        "documentation": {}
+    },
+    {
+        "label": "fast_csv_to_df_reader",
+        "kind": 2,
+        "importPath": "utils.csv_data_reader",
+        "description": "utils.csv_data_reader",
+        "peekOfCode": "def fast_csv_to_df_reader(file_path: str, row_limit: int = 10) -> pd.Series:\n    \"\"\"\n    Gets the column names from a large CSV file and then loads the rest of the data.\n    Args:\n        file_path (str): Path to the CSV file.\n        row_limit (int): Maximum number of rows to read excluding column headers(default 10).\n    Returns:\n        pd.df: Dataframe with the column names and the first 10 rows of data. Exclude the column names from the data.\n    \"\"\"\n    # Read only the header to get column names",
+        "detail": "utils.csv_data_reader",
+        "documentation": {}
+    },
+    {
+        "label": "logger",
+        "kind": 5,
+        "importPath": "utils.csv_data_reader",
+        "description": "utils.csv_data_reader",
+        "peekOfCode": "logger = logging.getLogger(__name__)\nimport selfies as sf\ndef fast_csv_to_df_reader(file_path: str, row_limit: int = 10) -> pd.Series:\n    \"\"\"\n    Gets the column names from a large CSV file and then loads the rest of the data.\n    Args:\n        file_path (str): Path to the CSV file.\n        row_limit (int): Maximum number of rows to read excluding column headers(default 10).\n    Returns:\n        pd.df: Dataframe with the column names and the first 10 rows of data. Exclude the column names from the data.",
+        "detail": "utils.csv_data_reader",
+        "documentation": {}
+    },
+    {
+        "label": "ColoredFormatter",
+        "kind": 6,
+        "importPath": "utils.logging_config",
+        "description": "utils.logging_config",
+        "peekOfCode": "class ColoredFormatter(logging.Formatter):\n    COLORS = {\n        'DEBUG': Fore.CYAN,\n        'INFO': Fore.GREEN,\n        'WARNING': Fore.YELLOW,\n        'ERROR': Fore.RED,\n        'CRITICAL': Fore.MAGENTA + Style.BRIGHT\n    }\n    def format(self, record):\n        log_message = super().format(record)",
+        "detail": "utils.logging_config",
+        "documentation": {}
+    },
+    {
+        "label": "configure_logging",
+        "kind": 2,
+        "importPath": "utils.logging_config",
+        "description": "utils.logging_config",
+        "peekOfCode": "def configure_logging():\n    colored_formatter = ColoredFormatter(\n        fmt='%(asctime)s - %(name)s - %(levelname)s - %(message)s',\n        datefmt='%Y-%m-%d %H:%M:%S'\n    )\n    # Create a file handler (without colors)\n    file_handler = logging.FileHandler('app.log')\n    file_handler.setFormatter(logging.Formatter(\n        '%(asctime)s - %(name)s - %(levelname)s - %(message)s'\n    ))",
+        "detail": "utils.logging_config",
+        "documentation": {}
+    },
+    {
+        "label": "resolve_paths",
+        "kind": 2,
+        "importPath": "utils.setup",
+        "description": "utils.setup",
+        "peekOfCode": "def resolve_paths(config: DictConfig):\n    \"\"\"\n    Recursively resolves all paths in a Hydra configuration\n    while ignoring non-path fields like metric names.\n    \"\"\"\n    def _resolve(obj, key=None):\n        # Skip resolving 'monitor' or other non-path fields\n        if key in [\"monitor\", \"id\", \"tags\"]:\n            return obj  # Do not modify metric names\n        # If it's a string and looks like a path, resolve it",
+        "detail": "utils.setup",
+        "documentation": {}
+    },
+    {
+        "label": "setup_training_logging",
+        "kind": 2,
+        "importPath": "utils.setup",
+        "description": "utils.setup",
+        "peekOfCode": "def setup_training_logging(config):\n    \"\"\"Sets up wandb logging for training. Also checks for any checkpoints to resume from and implements callbacks\"\"\"\n    wandb_logger = None\n    if config.get('wandb', None) is not None:\n        wandb_logger = L.pytorch.loggers.WandbLogger(\n        config=OmegaConf.to_object(config),\n        ** config.wandb)\n    if (config.checkpointing.resume_from_ckpt\n        and config.checkpointing.resume_ckpt_path is not None\n        ):",
+        "detail": "utils.setup",
+        "documentation": {}
+    },
+    {
+        "label": "print_batch",
+        "kind": 2,
+        "importPath": "utils.setup",
+        "description": "utils.setup",
+        "peekOfCode": "def print_batch(train_ds, valid_ds, tokenizer, k=8):\n  for dl_type, dl in [\n    ('train', train_ds), ('valid', valid_ds)]:\n    print(f'Printing {dl_type} dataloader batch.')\n    batch = next(iter(dl))\n    print('Batch input_ids.shape', batch['input_ids'].shape)\n    first = batch['input_ids'][0, :k]\n    last = batch['input_ids'][0, -k:]\n    print(f'First {k} tokens:', tokenizer.decode(first, skip_special_tokens=True))\n    print('ids:', first)",
+        "detail": "utils.setup",
+        "documentation": {}
+    },
+    {
+        "label": "run",
+        "kind": 2,
+        "importPath": "main",
+        "description": "main",
+        "peekOfCode": "def run(config: DictConfig):\n    # log config settings\n    logger.info(OmegaConf.to_yaml(config))\n    L.seed_everything(config.seed, verbose=False)\n    config = resolve_paths(config)\n    raw_data = fast_csv_to_df_reader(config.directory_paths.raw_data, row_limit=10)\n    # Data  goes from \"[C][=C][C]\" to ['[C]', '[=C]', '[C]'] and obtain alphabet\n    selfies_vocab, data = preprocess_selfies_data(raw_data)\n    # Passes selfies_vocab in case the tokenizer needs to be trained.\n    tokenizer = get_tokenizer(config, selfies_vocab)",
+        "detail": "main",
+        "documentation": {}
+    },
+    {
+        "label": "logger",
+        "kind": 5,
+        "importPath": "main",
+        "description": "main",
+        "peekOfCode": "logger = logging.getLogger(__name__)\ndef _train(config, tokenizer, data):\n    logger.info('Starting Training.')\n    wandb_logger, ckpt_path, callbacks = setup_training_logging(config)\n    tokenized_data, vocab_size = tokenize_selfies_vocab(tokenizer, config, data)\n    train_dataloader, val_dataloader = get_dataloaders(config, tokenized_data, tokenizer)\n    print_batch(train_dataloader, val_dataloader, tokenizer)\n    # TO DO: What is the max length of the training data? Maybe set the batch size\n    #  to something in the neighborhood. Take a look at initial training of the diffusion model. tokenizer\n    # is all setup. Try to pass the normal tokenizer to the diffusion model. Why does the other code use valid_ds.tokenizer?",
+        "detail": "main",
+        "documentation": {}
+    },
+    {
+        "label": "preprocess_selfies_data",
+        "kind": 2,
+        "importPath": "preprocess_data",
+        "description": "preprocess_data",
+        "peekOfCode": "def preprocess_selfies_data(raw_data):\n    \"\"\" This function preprocesses raw data by \n    splitting the selfies data and returning the alphabet of the selfies data\"\"\"\n    if 'selfies' not in raw_data.columns:\n        logger.warning(\"'selfies' column not found in raw_data. Cannot create vocabulary.\")\n        exit()\n    else:\n        logger.info(\"'selfies' column found. Creating vocabulary from SELFIES data...\")\n        alphabet = selfies.get_alphabet_from_selfies(raw_data['selfies'])\n        tokenized_list_col = []",
+        "detail": "preprocess_data",
+        "documentation": {}
+    },
+    {
+        "label": "logger",
+        "kind": 5,
+        "importPath": "preprocess_data",
+        "description": "preprocess_data",
+        "peekOfCode": "logger = logging.getLogger(__name__)\ndef preprocess_selfies_data(raw_data):\n    \"\"\" This function preprocesses raw data by \n    splitting the selfies data and returning the alphabet of the selfies data\"\"\"\n    if 'selfies' not in raw_data.columns:\n        logger.warning(\"'selfies' column not found in raw_data. Cannot create vocabulary.\")\n        exit()\n    else:\n        logger.info(\"'selfies' column found. Creating vocabulary from SELFIES data...\")\n        alphabet = selfies.get_alphabet_from_selfies(raw_data['selfies'])",
+        "detail": "preprocess_data",
+        "documentation": {}
+    },
+    {
+        "label": "SelfiesTokenizer",
+        "kind": 6,
+        "importPath": "tokenizer",
+        "description": "tokenizer",
+        "peekOfCode": "class SelfiesTokenizer(PreTrainedTokenizerFast):\n    \"\"\"\n    A custom tokenizer that inherits from PreTrainedTokenizerFast and\n    builds a vocabulary from a SELFIES alphabet plus special tokens.\n    \"\"\"\n    def __init__(\n        self,\n        selfies_vocab: Set[str] = None,\n        bos_token=\"[BOS]\",\n        eos_token=\"[EOS]\",",
+        "detail": "tokenizer",
+        "documentation": {}
+    },
+    {
+        "label": "get_tokenizer",
+        "kind": 2,
+        "importPath": "tokenizer",
+        "description": "tokenizer",
+        "peekOfCode": "def get_tokenizer(config, selfies_vocab):\n    if os.path.exists(config.directory_paths.tokenizer):\n        logger.info(\"Tokenizer folder found. Loading...\")\n        try:\n            tokenizer = SelfiesTokenizer.from_pretrained(config.directory_paths.tokenizer)\n        except Exception as e:\n            logger.error(f\"Error loading tokenizer: {e}\")\n            exit()\n    else:\n        logger.info(f\"No tokenizer found at {config.directory_paths.tokenizer}. Creating...\")",
+        "detail": "tokenizer",
+        "documentation": {}
+    },
+    {
+        "label": "add_bos_and_eos_tokens",
+        "kind": 2,
+        "importPath": "tokenizer",
+        "description": "tokenizer",
+        "peekOfCode": "def add_bos_and_eos_tokens(tokenized_data, tokenizer):\n    \"\"\"\n    Adds BOS and EOS tokens to each sequence in the BatchEncoding.\n    Assumes tokenized_data['input_ids'] is a torch.Tensor of shape (batch_size, seq_length).\n    Returns a new BatchEncoding with updated 'input_ids'.\n    \"\"\"\n    bos_id = tokenizer.bos_token_id\n    eos_id = tokenizer.eos_token_id\n    # Convert each sequence to list, add special tokens, and collect\n    new_input_ids = []",
+        "detail": "tokenizer",
+        "documentation": {}
+    },
+    {
+        "label": "tokenize_selfies_vocab",
+        "kind": 2,
+        "importPath": "tokenizer",
+        "description": "tokenizer",
+        "peekOfCode": "def tokenize_selfies_vocab(tokenizer, config, raw_data):\n    # If encoded inputs are not found, tokenize the SELFIES data, else, load the tokenized data\n    if os.path.exists(config.directory_paths.train_data_encoding):\n        logger.info(f\"SELFIES training data encoding found, loading data from {config.directory_paths.train_data_encoding}\")\n        try :\n            tokenized_data = torch.load(config.directory_paths.train_data_encoding, weights_only=False)\n            logger.info(f\"SELFIES data loaded successfully. Vocabulary size is: {tokenizer.vocab_size}\")\n            return tokenized_data, tokenizer.vocab_size\n        except Exception as e:\n            logger.error(f\"Error loading SELFIES data: {e}\")",
+        "detail": "tokenizer",
+        "documentation": {}
+    },
+    {
+        "label": "logger",
+        "kind": 5,
+        "importPath": "tokenizer",
+        "description": "tokenizer",
+        "peekOfCode": "logger = logging.getLogger(__name__)\nclass SelfiesTokenizer(PreTrainedTokenizerFast):\n    \"\"\"\n    A custom tokenizer that inherits from PreTrainedTokenizerFast and\n    builds a vocabulary from a SELFIES alphabet plus special tokens.\n    \"\"\"\n    def __init__(\n        self,\n        selfies_vocab: Set[str] = None,\n        bos_token=\"[BOS]\",",
+        "detail": "tokenizer",
+        "documentation": {}
+    }
+]

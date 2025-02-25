@@ -1,0 +1,104 @@
+{
+  "version": "1.0",
+  "truncation": null,
+  "padding": null,
+  "added_tokens": [
+    {
+      "id": 0,
+      "content": "[BOS]",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    {
+      "id": 1,
+      "content": "[EOS]",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    {
+      "id": 2,
+      "content": "[SEP]",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    {
+      "id": 3,
+      "content": "[CLS]",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    {
+      "id": 4,
+      "content": "[PAD]",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    {
+      "id": 5,
+      "content": "[MASK]",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    {
+      "id": 6,
+      "content": "[UNK]",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    }
+  ],
+  "normalizer": null,
+  "pre_tokenizer": null,
+  "post_processor": null,
+  "decoder": null,
+  "model": {
+    "type": "WordLevel",
+    "vocab": {
+      "[BOS]": 0,
+      "[EOS]": 1,
+      "[SEP]": 2,
+      "[CLS]": 3,
+      "[PAD]": 4,
+      "[MASK]": 5,
+      "[UNK]": 6,
+      "[C]": 7,
+      "[=Branch2]": 8,
+      "[N]": 9,
+      "[Ring1]": 10,
+      "[F]": 11,
+      "[O]": 12,
+      "[=N]": 13,
+      "[#C]": 14,
+      "[=Branch1]": 15,
+      "[#Branch1]": 16,
+      "[P]": 17,
+      "[#Branch2]": 18,
+      "[=C]": 19,
+      "[Ring2]": 20,
+      "[Branch1]": 21,
+      "[/C]": 22,
+      "[Branch2]": 23
+    },
+    "unk_token": "[UNK]"
+  }
+}

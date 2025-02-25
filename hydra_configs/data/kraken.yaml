@@ -1,0 +1,6 @@
+train: kraken-train
+valid: kraken-valid
+tokenizer_name_or_path: selfies-wordlevel
+cache_dir: data//cache_dir/kraken/ # Unused for now
+wrap: True
+streaming: False
