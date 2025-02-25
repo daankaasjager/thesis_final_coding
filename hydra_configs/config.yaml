@@ -1,0 +1,86 @@
+defaults:
+  - _self_
+  - /callbacks: [checkpoint_every_n_steps, checkpoint_monitor, learning_rate_monitor]
+  - /data: kraken
+  - /noise: ar #Experiment with this
+  - /model: small
+
+train_test_split:
+  train: 0.8
+  valid: 0.2
+
+
+directory_paths:
+  tokenizer: data/vocab_list/tokenizer
+  train_data_encoding: data/vocab_list/train_data_encoding.pt
+  raw_data: data/kraken/descriptors_v3.csv
+  cache_dir: /kraken_cache/data
+
+seed: 1
+
+mode: train
+diffusion: absorbing_state
+backbone: dit
+
+wandb:
+  project: SELFIES-diffusion
+  notes: testing a selfies model
+  group: null # Groups related runs
+  job_type: null # Type of job (e.g., training, evaluation)
+  name: null # Name of the run
+  id: ${.name}_${seed} #Sets unique name and seed
+  tags:
+    - ${noise.type} # Sets metadata tags for filtering runs
+    - ${data.train}
+    - ${data.valid}
+
+checkpointing:
+  save_dir: checkpoints
+  resume_from_ckpt: false
+  resume_ckpt_path: checkpoints/last.ckpt
+
+# This is the config for training the Lightning trainer model
+trainer:
+  _target_: lightning.Trainer
+  accelerator: cuda
+  strategy: ddp # Distributed Data Parallel
+  num_nodes: 1 # Number of machines, which might have multiple GPUs
+  devices: ${device_count:}
+  accumulate_grad_batches: ${div_up:${loader.global_batch_size}, ${eval:${trainer.devices} * ${loader.batch_size} * ${trainer.num_nodes}}}
+  gradient_clip_val: 1.0 # Clip gradients to this value. Prevents exploding gradients
+  precision: 'bf16' # BF16 float precision.
+  num_sanity_val_steps: 2 # Runs 2 validation steps before training
+  max_steps: 1_000_000 # Maximum number of training steps
+  log_every_n_steps: 10 # log metrics every 10 steps
+  limit_train_batches: 1.0   # train on full dataset, can be used to toggle quick run
+  limit_val_batches: 1.0     # validate on full dataset, can be used to toggle quick run
+  val_check_interval: 10000 # Run validation every 10k steps
+
+training:
+  ema: 0.9999
+  antithetic_sampling: True
+  importance_sampling: False
+  sampling_eps: 1e-3
+  change_of_variables: False
+
+# This is important when working with multi-GPU training, to ensure that 
+# the batch size is divided evenly among all GPUs.
+loader:
+  global_batch_size: 128
+  eval_global_batch_size: ${.global_batch_size}
+  # Note: batch_size and eval_batch_size are **per machine**
+  batch_size: ${div_up:${.global_batch_size}, ${eval:${trainer.devices} * ${trainer.num_nodes}}}
+  eval_batch_size: ${div_up:${.eval_global_batch_size}, ${eval:${trainer.devices} * ${trainer.num_nodes}}}
+  num_workers: ${eval:"__import__('os').cpu_count()"}
+  pin_memory: True
+
+
+sampling:
+  predictor: ddpm_cache  # analytic, ddpm, ddpm_cache
+  steps: 128
+  noise_removal: True
+  num_sample_batches: 2  # Total samples: `num_gpus` * `loader.eval_batch_size` * num_sample_batches
+  num_sample_log: 2
+  semi_ar: False
+  stride_length: 1
+  num_strides: 1

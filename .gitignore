@@ -1,0 +1,11 @@
+.venv/
+
+outputs/
+
+data/kraken
+
+utils/__pycache__
+
+__pycache__
+
+app.log
