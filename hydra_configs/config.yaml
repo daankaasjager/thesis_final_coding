@@ -2,8 +2,9 @@ defaults:
   - _self_
   - /callbacks: [checkpoint_every_n_steps, checkpoint_monitor, learning_rate_monitor]
   - /data: kraken
-  - /noise: ar #Experiment with this
+  - /noise: loglinear # Model appeared invariant to noise schedule types in MDLM paper
   - /model: small
+  - /lr_scheduler: constant_warmup # cosine decay not implemented yet
 
 train_test_split:
   train: 0.8
@@ -18,9 +19,13 @@ directory_paths:
 
 seed: 1
 
-mode: train
+mode: train  # train / ppl_eval / sample_eval
 diffusion: absorbing_state
-backbone: dit
+backbone: dit  # dit / dimamba / ar
+parameterization: subs  # subs / d3pm / sedd
+time_conditioning: False
+T: 0  # 0 (continuous time) / 1000 
+subs_masking: False
 
 wandb:
   project: SELFIES-diffusion
@@ -42,13 +47,13 @@ checkpointing:
 # This is the config for training the Lightning trainer model
 trainer:
   _target_: lightning.Trainer
-  accelerator: cuda
-  strategy: ddp # Distributed Data Parallel
+  accelerator: auto
+  strategy: auto
   num_nodes: 1 # Number of machines, which might have multiple GPUs
   devices: ${device_count:}
   accumulate_grad_batches: ${div_up:${loader.global_batch_size}, ${eval:${trainer.devices} * ${loader.batch_size} * ${trainer.num_nodes}}}
   gradient_clip_val: 1.0 # Clip gradients to this value. Prevents exploding gradients
-  precision: 'bf16' # BF16 float precision.
+  precision: '16-mixed' # BF16 float precision is better. CHANGE FOR LINUX
   num_sanity_val_steps: 2 # Runs 2 validation steps before training
   max_steps: 1_000_000 # Maximum number of training steps
   log_every_n_steps: 10 # log metrics every 10 steps
@@ -84,3 +89,10 @@ sampling:
   semi_ar: False
   stride_length: 1
   num_strides: 1
+
+optim:
+  weight_decay: 0
+  lr: 3e-4
+  beta1: 0.9
+  beta2: 0.999
+  eps: 1e-8

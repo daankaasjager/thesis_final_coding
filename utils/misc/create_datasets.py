@@ -7,6 +7,7 @@ import datasets
 logger = logging.getLogger(__name__)
 
 def check_gpu_compatibility(config):
+    logger.info("Checking GPU compatibility")
     num_gpus = torch.cuda.device_count()
     assert (config.loader.global_batch_size == (config.loader.batch_size
                                               * config.trainer.num_nodes
@@ -60,10 +61,11 @@ def create_train_val_dataloaders(config, tokenized_selfies_data, pin_memory=True
       pin_memory=config.loader.pin_memory,
       shuffle=shuffle_valid,
       generator=generator)
-    
+    logger.info("Train and validation DataLoaders created succesfully.")
     return train_loader, val_loader
 
 def get_dataloaders(config,tokenized_selfies_data, tokenizer):
+    
     check_gpu_compatibility(config)
     train_set, valid_set = create_train_val_dataloaders(config, tokenized_selfies_data)
     return train_set, valid_set
