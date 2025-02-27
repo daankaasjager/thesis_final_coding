@@ -2,15 +2,15 @@ from venv import logger
 import hydra
 from omegaconf import OmegaConf, DictConfig
 import lightning as L
-from preprocess_data import preprocess_selfies_data
+from utils.misc.preprocess_data import preprocess_selfies_data
 import logging
 import torch
 import os
 from tokenizer import get_tokenizer, tokenize_selfies_vocab
-from utils.setup import setup_training_logging, resolve_paths, print_batch
-from utils.create_datasets import get_dataloaders
-from utils.csv_data_reader import fast_csv_to_df_reader
-from utils.logging_config import configure_logging
+from utils.misc.setup import setup_training_logging, resolve_paths, print_batch
+from utils.misc.create_datasets import get_dataloaders
+from utils.misc.csv_data_reader import fast_csv_to_df_reader
+from utils.misc.logging_config import configure_logging
 
 
 
@@ -33,11 +33,22 @@ configure_logging()
 logger = logging.getLogger(__name__)
 
 def _train(config, tokenizer, data):
+    import diffusion
     logger.info('Starting Training.')
     wandb_logger, ckpt_path, callbacks = setup_training_logging(config)
     tokenized_data, vocab_size = tokenize_selfies_vocab(tokenizer, config, data)
     train_dataloader, val_dataloader = get_dataloaders(config, tokenized_data, tokenizer)
-    print_batch(train_dataloader, val_dataloader, tokenizer)
+    model = diffusion.Diffusion(config, tokenizer=tokenizer)
+  # print_batch(train_dataloader, val_dataloader, tokenizer) # takes a a long time so only run if necessary.
+    trainer = hydra.utils.instantiate(
+      config.trainer,
+      default_root_dir=os.getcwd(),
+      callbacks=callbacks,
+      strategy=config.trainer.strategy,
+      logger=wandb_logger)
+    
+    trainer.fit(model, train_dataloader, val_dataloader, ckpt_path=ckpt_path)
+    
     # TO DO: What is the max length of the training data? Maybe set the batch size
     #  to something in the neighborhood. Take a look at initial training of the diffusion model. tokenizer
     # is all setup. Try to pass the normal tokenizer to the diffusion model. Why does the other code use valid_ds.tokenizer?
@@ -70,5 +81,4 @@ if __name__ == "__main__":
     print("PyTorch version:", torch.__version__)
     print("CUDA version (compiled):", torch.version.cuda)
     print("CUDA available:", torch.cuda.is_available())
-    
     run()

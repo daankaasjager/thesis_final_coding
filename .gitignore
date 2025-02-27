@@ -9,3 +9,5 @@ utils/__pycache__
 __pycache__
 
 app.log
+
+wandb/

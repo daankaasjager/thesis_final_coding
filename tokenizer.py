@@ -132,26 +132,57 @@ This is a separate function that tokenizes the SELFIES data. """
 def add_bos_and_eos_tokens(tokenized_data, tokenizer):
     """
     Adds BOS and EOS tokens to each sequence in the BatchEncoding.
-    Assumes tokenized_data['input_ids'] is a torch.Tensor of shape (batch_size, seq_length).
-    Returns a new BatchEncoding with updated 'input_ids'.
+    Updates both 'input_ids' AND 'attention_mask' to maintain alignment.
+    
+    Assumes:
+      - tokenized_data['input_ids'] is a torch.Tensor of shape (batch_size, seq_length).
+      - tokenized_data['attention_mask'] is a torch.Tensor of shape (batch_size, seq_length).
+      - The user wants to prepend BOS and append EOS tokens to input_ids, plus reflect that in attention_mask.
     """
     bos_id = tokenizer.bos_token_id
     eos_id = tokenizer.eos_token_id
-    # Convert each sequence to list, add special tokens, and collect
+    pad_id = tokenizer.pad_token_id
+    
+    input_ids_list = tokenized_data['input_ids'].tolist()         # shape: [batch_size, seq_len]
+    attention_mask_list = tokenized_data['attention_mask'].tolist()  # shape: [batch_size, seq_len]
+    
     new_input_ids = []
-    for seq in tokenized_data['input_ids']:
-        # Convert tensor to list of ints
-        seq_list = seq.tolist()
-        # Prepend BOS and append EOS
-        new_seq = [bos_id] + seq_list + [eos_id]
-        new_input_ids.append(new_seq)
-    # Optionally, you could pad these new sequences to a fixed length if needed.
-    # Here we simply convert them back to a tensor (this might result in a ragged tensor if lengths differ)
-    # For simplicity, we'll pad to the max length in the new batch.
+    new_attention_mask = []
+    
+    # For each sequence, add BOS/EOS to input_ids and set attn mask to 1 for them
+    for seq_ids, seq_mask in zip(input_ids_list, attention_mask_list):
+        # Prepend BOS, append EOS
+        updated_ids = [bos_id] + seq_ids + [eos_id]
+        
+        # For the attention mask, also add 1 for BOS/EOS
+        # (meaning we want to attend to these tokens)
+        updated_mask = [1] + seq_mask + [1]
+        
+        new_input_ids.append(updated_ids)
+        new_attention_mask.append(updated_mask)
+    
+    # Manually pad them to the max length in the new batch
     max_len = max(len(seq) for seq in new_input_ids)
-    padded_input_ids = [seq + [tokenizer.pad_token_id] * (max_len - len(seq)) for seq in new_input_ids]
+    
+    padded_input_ids = []
+    padded_attention_mask = []
+    
+    for ids, mask in zip(new_input_ids, new_attention_mask):
+        pad_length = max_len - len(ids)
+        
+        padded_ids = ids + [pad_id] * pad_length
+        # For the mask, pad with 0 at the end
+        padded_mask = mask + [0] * pad_length
+        
+        padded_input_ids.append(padded_ids)
+        padded_attention_mask.append(padded_mask)
+    
+    # Convert back to tensors
     tokenized_data['input_ids'] = torch.tensor(padded_input_ids, dtype=torch.long)
+    tokenized_data['attention_mask'] = torch.tensor(padded_attention_mask, dtype=torch.long)
+    
     return tokenized_data
+
 
 
 def tokenize_selfies_vocab(tokenizer, config, raw_data):
