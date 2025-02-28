@@ -1069,7 +1069,7 @@
         "kind": 6,
         "importPath": "utils.modeling.samplers",
         "description": "utils.modeling.samplers",
-        "peekOfCode": "class RandomFaultTolerantSampler(RandomSampler):\n    \"\"\"\n    A random sampler that ensures fault tolerance by keeping track of the sampling state.\n    If a training job is interrupted and restarted, it resumes sampling from where it left off.\n    \"\"\"\n    def __init__(self, *args, generator=None, **kwargs):\n        \"\"\"\n        Initializes the sampler with a random seed for reproducibility.\n        If a generator is not provided, a new random seed is generated.\n        \"\"\"",
+        "peekOfCode": "class RandomFaultTolerantSampler(RandomSampler):\n    def __init__(self, *args, generator=None, **kwargs):\n        if generator is None:\n            seed = int(torch.empty((), dtype=torch.int64).random_().item())\n            generator = torch.Generator().manual_seed(seed)\n        kwargs.pop('shuffle', None)\n        super().__init__(*args, generator=generator, **kwargs)\n        self.counter = 0\n        self.restarting = False\n        self.state = self.generator.get_state()  # <-- FIX: Initialize self.state",
         "detail": "utils.modeling.samplers",
         "documentation": {}
     },
@@ -1078,7 +1078,7 @@
         "kind": 6,
         "importPath": "utils.modeling.samplers",
         "description": "utils.modeling.samplers",
-        "peekOfCode": "class FaultTolerantDistributedSampler(DistributedSampler):\n    \"\"\"\n    A distributed sampler that supports fault tolerance by tracking sampling progress.\n    Ensures consistent sample distribution across multiple GPUs/nodes.\n    \"\"\"\n    def __init__(self, *args, **kwargs):\n        \"\"\"\n        Initializes the distributed sampler.\n        Keeps track of the sampling progress to allow resumption after interruptions.\n        \"\"\"",
+        "peekOfCode": "class FaultTolerantDistributedSampler(DistributedSampler):\n    \"\"\"\n    A distributed sampler that supports fault tolerance by tracking sampling progress.\n    Ensures consistent sample distribution across multiple GPUs/nodes.\n    \"\"\"\n    def __init__(self, *args, **kwargs):\n        super().__init__(*args, **kwargs)\n        self.counter = 0\n        self.restarting = False\n        self.state = None  # Add this if needed for consistency",
         "detail": "utils.modeling.samplers",
         "documentation": {}
     },

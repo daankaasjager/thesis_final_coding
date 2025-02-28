@@ -6,35 +6,26 @@ from torch.utils.data import RandomSampler, DistributedSampler
 # Adapted from https://github.com/Lightning-AI/lightning/blob/2845e7565dbe6b765ae32870e7d2bc456529c30a/tests/tests_pytorch/utilities/test_auto_restart.py#L1397
 
 class RandomFaultTolerantSampler(RandomSampler):
-    """
-    A random sampler that ensures fault tolerance by keeping track of the sampling state.
-    If a training job is interrupted and restarted, it resumes sampling from where it left off.
-    """
     def __init__(self, *args, generator=None, **kwargs):
-        """
-        Initializes the sampler with a random seed for reproducibility.
-        If a generator is not provided, a new random seed is generated.
-        """
         if generator is None:
             seed = int(torch.empty((), dtype=torch.int64).random_().item())
             generator = torch.Generator().manual_seed(seed)
+        kwargs.pop('shuffle', None)
         super().__init__(*args, generator=generator, **kwargs)
-        self.counter = 0  # Tracks the number of sampled elements
-        self.restarting = False  # Flag indicating if the sampler is resuming from a saved state
+        
+        self.counter = 0
+        self.restarting = False
+        self.state = self.generator.get_state()  # <-- FIX: Initialize self.state
 
     def state_dict(self):
-        """
-        Saves the current state of the sampler, including the random generator state and the sampling counter.
-        """
         return {"random_state": self.state, "counter": self.counter}
 
     def load_state_dict(self, state_dict):
-        """
-        Restores the sampler's state from a previously saved checkpoint.
-        """
-        self.generator.set_state(state_dict.get("random_state"))
+        self.state = state_dict.get("random_state")  # <-- FIX: Restore self.state properly
+        self.generator.set_state(self.state)  # <-- Use self.state to set generator
         self.counter = state_dict["counter"]
-        self.restarting = True  # Indicate that we are restarting and need to adjust the sample sequence
+        self.restarting = True  # Indicate that we are restarting
+
 
     def __iter__(self) -> Iterator[int]:
         """
@@ -64,13 +55,10 @@ class FaultTolerantDistributedSampler(DistributedSampler):
     Ensures consistent sample distribution across multiple GPUs/nodes.
     """
     def __init__(self, *args, **kwargs):
-        """
-        Initializes the distributed sampler.
-        Keeps track of the sampling progress to allow resumption after interruptions.
-        """
         super().__init__(*args, **kwargs)
-        self.counter = 0  # Tracks the number of sampled elements
-        self.restarting = False  # Flag indicating if the sampler is resuming from a saved state
+        self.counter = 0
+        self.restarting = False
+        self.state = None  # Add this if needed for consistency
 
     def state_dict(self):
         """
