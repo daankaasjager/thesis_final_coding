@@ -17,7 +17,7 @@ def preprocess_selfies_data(config, raw_data):
     if os.path.exists(preproc_path):
         logger.info(f"Pre-processed data found at {preproc_path}. Loading instead of processing anew.")
         try:
-            saved_data = torch.load(preproc_path)
+            saved_data = torch.load(preproc_path, weights_only=False)
             alphabet = saved_data["alphabet"]
             processed_data = saved_data["raw_data"]
             logger.info("Pre-processed data loaded successfully.")

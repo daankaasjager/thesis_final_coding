@@ -42,12 +42,13 @@ def _load_from_checkpoint(config, tokenizer):
         config=config,
         map_location="cpu",  # Load to CPU first
         strict=False
-    )
+    ).half()
     torch.cuda.empty_cache()
     logger.info("Model loaded to CPU. Now moving selective parts to GPU.")
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     # Move only encoder and backbone to GPU (if necessary)
-    try:
+    model.to(device)
+    """try:
         model.backbone.to(device, non_blocking=True)  
         logger.info("Moved backbone to GPU.")
     except RuntimeError as e:
@@ -56,7 +57,7 @@ def _load_from_checkpoint(config, tokenizer):
         model.noise.to(device, non_blocking=True)  
         logger.info("Moved noise module to GPU.")
     except RuntimeError as e:
-        logger.error(f"Noise OOM: {e}")
+        logger.error(f"Noise OOM: {e}")"""
     return model
 
 

@@ -14,3 +14,5 @@ wandb/
 data/vocab_list/train_data_encoding.pt
 data/vocab_list/train_data_encoding.pt
 data/vocab_list/tokenizer/tokenizer.json
+
+checkpoints/
