@@ -336,8 +336,6 @@ class DIT(nn.Module, huggingface_hub.PyTorchModelHubMixin):
         x = self.vocab_embed(indices)
         c = F.silu(self.sigma_map(sigma))
         rotary_cos_sin = self.rotary_emb(x)
-        print(f"device is {x.device}")
-        print(get_torch_dtype(self.config.trainer.precision))
         with torch.amp.autocast(device_type=x.device.type, dtype=get_torch_dtype(self.config.trainer.precision)):
             for i in range(len(self.blocks)):
                 x = self.blocks[i](x, rotary_cos_sin, c, seqlens=None)
