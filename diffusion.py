@@ -3,6 +3,7 @@ import math
 import os
 import typing
 from dataclasses import dataclass
+from tqdm import tqdm
 
 import hydra.utils
 import lightning as L
@@ -196,40 +197,49 @@ class Diffusion(L.LightningModule):
 
   def on_train_start(self):
     if self.ema:
-      self.ema.move_shadow_params_to_device(self.device)
-    # Adapted from:
-    # https://github.com/Dao-AILab/flash-attention/blob/main/training/src/datamodules/language_modeling_hf.py
+        self.ema.move_shadow_params_to_device(self.device)
+
+    # Adapted from FlashAttention's training setup
     distributed = (
-      self.trainer._accelerator_connector.use_distributed_sampler
-      and self.trainer._accelerator_connector.is_distributed)
-    if distributed:
-      sampler_cls = utils.modeling.samplers.FaultTolerantDistributedSampler
-    else:
-      sampler_cls = utils.modeling.samplers.RandomFaultTolerantSampler
+        self.trainer._accelerator_connector.use_distributed_sampler
+        and self.trainer._accelerator_connector.is_distributed
+    )
+
+    sampler_cls = (
+        utils.modeling.samplers.FaultTolerantDistributedSampler
+        if distributed
+        else utils.modeling.samplers.RandomFaultTolerantSampler
+    )
+
     updated_dls = []
     for dl in self.trainer.fit_loop._combined_loader.flattened:
-      if hasattr(dl.sampler, 'shuffle'):
-        dl_sampler = sampler_cls(
-          dl.dataset, shuffle=dl.sampler.shuffle)
-      else:
-        dl_sampler = sampler_cls(dl.dataset)
-      if (distributed
-          and self.fast_forward_epochs is not None
-          and self.fast_forward_batches is not None):
-        dl_sampler.load_state_dict({
-          'epoch': self.fast_forward_epochs,
-          'counter': (self.fast_forward_batches
-                      * self.config.loader.batch_size)})
-      updated_dls.append(
-        torch.utils.data.DataLoader(
-          dl.dataset,
-          batch_size=self.config.loader.batch_size,
-          num_workers=self.config.loader.num_workers,
-          pin_memory=self.config.loader.pin_memory,
-          sampler=dl_sampler,
-          shuffle=False,
-          persistent_workers=True))
+        if hasattr(dl.sampler, "shuffle"):
+            dl_sampler = sampler_cls(dl.dataset, shuffle=dl.sampler.shuffle)
+        else:
+            dl_sampler = sampler_cls(dl.dataset)
+
+        if distributed and self.fast_forward_epochs is not None and self.fast_forward_batches is not None:
+            dl_sampler.load_state_dict({
+                "epoch": self.fast_forward_epochs,
+                "counter": self.fast_forward_batches * self.config.loader.batch_size,
+            })
+
+        # FIX: Preserve the original collate_fn to avoid list conversion issue
+        updated_dls.append(
+            torch.utils.data.DataLoader(
+                dl.dataset,
+                batch_size=self.config.loader.batch_size,
+                num_workers=self.config.loader.num_workers,
+                pin_memory=self.config.loader.pin_memory,
+                sampler=dl_sampler,
+                shuffle=False,
+                persistent_workers=True,
+                collate_fn=dl.collate_fn,  # <-- Fix: Ensure collate_fn is retained
+            )
+        )
+
     self.trainer.fit_loop._combined_loader.flattened = updated_dls
+
 
   def optimizer_step(self, *args, **kwargs):
     super().optimizer_step(*args, **kwargs)
@@ -290,20 +300,23 @@ class Diffusion(L.LightningModule):
     return sigma
 
   def forward(self, x, sigma):
-    """Returns log score."""
-    sigma = self._process_sigma(sigma)
-    with torch.amp.autocast(device_type = x.device.type, dtype=torch.float32):
-      logits = self.backbone(x, sigma)
+    """Ensure all inputs are on the correct device before computation."""
+    
+    # Ensure device consistency
+    device = next(self.backbone.parameters()).device  # Get backbone device
+
+    x = x.to(device)  # Move input to same device as backbone
+    sigma = sigma.to(device)  # Move sigma to same device as backbone
+
+    logits = self.backbone(x, sigma)  # Now both inputs & backbone are on same device
     
     if self.parameterization == 'subs':
-      return self._subs_parameterization(logits=logits,
-                                         xt=x)
+        return self._subs_parameterization(logits=logits, xt=x)
     elif self.parameterization == 'sedd':
-      return self._sedd_parameterization(logits=logits,
-                                         xt=x,
-                                         sigma=sigma)
+        return self._sedd_parameterization(logits=logits, xt=x, sigma=sigma)
     elif self.parameterization == 'd3pm':
-      return self._d3pm_parameterization(logits=logits)
+        return self._d3pm_parameterization(logits=logits)
+
     return logits
 
   def _d3pm_loss(self, model_output, xt, x0, t):
@@ -368,6 +381,7 @@ class Diffusion(L.LightningModule):
     self.noise.train()
 
   def training_step(self, batch, batch_idx):
+    print("DEBUG type(batch['input_ids']) =", type(batch["input_ids"]))
     loss = self._compute_loss(batch, prefix='train')
     self.log(name='trainer/loss',
              value=loss.item(),
@@ -377,14 +391,31 @@ class Diffusion(L.LightningModule):
     return loss
 
   def on_validation_epoch_start(self):
-    """There is no validation because there is no GPT-2-like benchmark but then for selfies"""
-    pass
+      # If using EMA, swap weights so validation uses the EMA version
+      if self.ema:
+          self.ema.store(
+              itertools.chain(self.backbone.parameters(), self.noise.parameters())
+          )
+          self.ema.copy_to(
+              itertools.chain(self.backbone.parameters(), self.noise.parameters())
+          )
+      self.backbone.eval()
+      self.noise.eval()
 
   def validation_step(self, batch, batch_idx):
-    pass
+      # Compute the validation loss, update 'val/nll', 'val/ppl', etc. internally
+      loss = self._compute_loss(batch, prefix='val')
+      # We could log something specifically here, but in Lightning, returning
+      # a value is enough, as metrics are updated inside _compute_loss already.
+      return loss
 
   def on_validation_epoch_end(self):
-    pass
+      # If using EMA, restore the original (non-EMA) weights
+      if self.ema:
+          self.ema.restore(
+              itertools.chain(self.backbone.parameters(), self.noise.parameters())
+          )
+      # That’s it. The metrics are already updated and will be logged automatically.
 
   def configure_optimizers(self):
     # TODO(yair): Lightning currently giving this warning when using `fp16`:
@@ -410,107 +441,6 @@ class Diffusion(L.LightningModule):
     }
     return [optimizer], [scheduler_dict]
 
-  @torch.no_grad()
-  def eval_retokenize(self, text_samples, max_length):
-    """Retokenizes samples for the eval model.
-    
-    Args:
-        text_samples: List of sentences generated by the model.
-    Returns:
-        samples: Samples re-tokenized for the eval model
-        attn_mask: Attention mask for the eval model
-        eval_context_size: Size of the context for the eval model
-    """
-    if 'llama2' in self.gen_ppl_eval_model_name_or_path:
-      tokenizer_kwargs = {
-        'text_samples': text_samples,
-        'return_tensors': 'pt',
-        'return_token_type_ids': False,
-        'return_attention_mask': True,
-        'truncation': True,
-        'padding': True,
-        'max_length': max_length,
-      }
-      eval_context_size = 4096
-    else:
-      tokenizer_kwargs = {
-        'return_tensors': 'pt',
-        'return_token_type_ids': False,
-        'return_attention_mask': True,
-        'truncation': True,
-        'padding': True,
-        'max_length': max_length,
-      }
-      eval_context_size = 1024
-    samples = self.eval_model_tokenizer(
-      text_samples, ** tokenizer_kwargs)
-    attn_mask = samples['attention_mask']
-    samples = samples['input_ids']
-    if 'llama2' not in self.gen_ppl_eval_model_name_or_path:
-      attn_mask = attn_mask.to(self.device)
-      samples = samples.to(self.device)      
-    return samples, attn_mask, eval_context_size
-
-  @torch.no_grad()
-  def compute_generative_perplexity(
-    self,
-    text_samples: typing.List[str],
-    retokenize: bool = True,
-    max_length: typing.Optional[int] = None) -> None:
-    """Compute the generative perplexity of the model.
-
-    Args:
-        text_samples: List of sentences generated by the model.
-    
-    Returns:
-        Perplexity of the generated text under a different
-        pre-trained AR model (e.g., GPT2).
-    """
-    os.environ['TOKENIZERS_PARALLELISM'] = 'false'
-    eval_model = transformers.AutoModelForCausalLM.from_pretrained(
-      self.gen_ppl_eval_model_name_or_path).eval()
-    if max_length is None:
-      max_length = self.config.model.length
-    if 'llama2' not in self.gen_ppl_eval_model_name_or_path:
-      eval_model = eval_model.to(self.device)
-    # Re-tokenize using eval model's tokenizer
-    if retokenize:
-      (samples, attn_mask,
-       eval_context_size) = self.eval_retokenize(
-         text_samples, max_length=max_length)
-    else:
-      samples = text_samples
-      attn_mask = torch.ones(samples.shape).to(self.device)
-      eval_context_size = samples.shape[-1]
-    batch_size = min(
-      self.config.eval.perplexity_batch_size,
-      samples.shape[0])
-    num_batches = samples.shape[0] // batch_size
-    for i in range(num_batches):
-      _samples = torch.split(
-        samples[i * batch_size: (i + 1) * batch_size],
-        eval_context_size,
-        dim=-1)
-      _attn_mask = torch.split(
-        attn_mask[i * batch_size: (i + 1) * batch_size],
-        eval_context_size,
-        dim=-1)
-      for (sample_chunk, attn_mask_chunk) in zip(
-        _samples, _attn_mask):
-        logits = eval_model(
-          sample_chunk, attention_mask=attn_mask_chunk)[0]
-        logits = logits.transpose(-1, -2)
-        
-        nlls = F.cross_entropy(logits[..., :-1],
-                               sample_chunk[..., 1:],
-                               reduction='none')
-        first_eos = (sample_chunk == self.eval_model_tokenizer\
-                     .eos_token_id).cumsum(-1) == 1
-        token_mask = (
-          sample_chunk
-          != self.eval_model_tokenizer.eos_token_id)
-        self.gen_ppl_metric.update(
-          nlls, first_eos[..., 1:] + token_mask[..., 1:])
 
   def q_xt(self, x, move_chance):
     """Computes the noisy sample xt.
@@ -596,46 +526,41 @@ class Diffusion(L.LightningModule):
 
   @torch.no_grad()
   def _sample(self, num_steps=None, eps=1e-5):
-    """Generate samples from the model."""
-    batch_size_per_gpu = self.config.loader.eval_batch_size
-    if self.parameterization == 'ar':
-      return self._ar_sampler(batch_size_per_gpu)
-    # Lightning auto-casting is not working in this method for some reason
-    if num_steps is None:
-      num_steps = self.config.sampling.steps
-    x = self._sample_prior(
-      batch_size_per_gpu,
-      self.config.model.length).to(self.device)
-    timesteps = torch.linspace(
-      1, eps, num_steps + 1, device=self.device)
-    dt = (1 - eps) / num_steps
-    p_x0_cache = None
+      """Generate samples from the model with progress tracking."""
+      batch_size_per_gpu = self.config.loader.eval_batch_size
+      if self.parameterization == 'ar':
+          return self._ar_sampler(batch_size_per_gpu)
 
-    for i in range(num_steps):
-      t = timesteps[i] * torch.ones(
-        x.shape[0], 1, device=self.device)
-      if self.sampler == 'ddpm':
-        x = self._ddpm_update(x, t, dt)
-      elif self.sampler == 'ddpm_cache':
-        p_x0_cache, x_next = self._ddpm_caching_update(
-          x, t, dt, p_x0=p_x0_cache)
-        if (not torch.allclose(x_next, x)
-            or self.time_conditioning):
-          # Disable caching
-          p_x0_cache = None
-        x = x_next
-      else:
-        x = self._analytic_update(x, t, dt)
+      if num_steps is None:
+          num_steps = self.config.sampling.steps
 
-    if self.config.sampling.noise_removal:
-      t = timesteps[-1] * torch.ones(x.shape[0], 1,
-                                     device=self.device)
-      if self.sampler == 'analytic':
-        x = self._denoiser_update(x, t)
-      else:
-        unet_conditioning = self.noise(t)[0]
-        x = self.forward(x, unet_conditioning).argmax(dim=-1)
-    return x
+      x = self._sample_prior(batch_size_per_gpu, self.config.model.length).to(self.device)
+      timesteps = torch.linspace(1, eps, num_steps + 1, device=self.device)
+      dt = (1 - eps) / num_steps
+      p_x0_cache = None
+
+      # Add tqdm progress bar for diffusion steps
+      for i in tqdm(range(num_steps), desc="Diffusion steps", unit="step"):
+          t = timesteps[i] * torch.ones(x.shape[0], 1, device=self.device)
+          if self.sampler == 'ddpm':
+              x = self._ddpm_update(x, t, dt)
+          elif self.sampler == 'ddpm_cache':
+              p_x0_cache, x_next = self._ddpm_caching_update(x, t, dt, p_x0=p_x0_cache)
+              if (not torch.allclose(x_next, x) or self.time_conditioning):
+                  p_x0_cache = None
+              x = x_next
+          else:
+              x = self._analytic_update(x, t, dt)
+
+      if self.config.sampling.noise_removal:
+          t = timesteps[-1] * torch.ones(x.shape[0], 1, device=self.device)
+          if self.sampler == 'analytic':
+              x = self._denoiser_update(x, t)
+          else:
+              unet_conditioning = self.noise(t)[0]
+              x = self.forward(x, unet_conditioning).argmax(dim=-1)
+      return x
+
 
   def restore_model_and_sample(self, num_steps, eps=1e-5):
     """Generate samples from the model."""
@@ -937,29 +862,30 @@ class Diffusion(L.LightningModule):
     return (sampling_steps, intermediate_text_samples,
             sequence_lengths)
 
-  def restore_model_and_semi_ar_sample(
-      self, stride_length, num_strides, dt=0.001):
-    """Generate samples from the model."""
-    # Lightning auto-casting is not working in this method for some reason
-    if self.ema:
-      self.ema.store(itertools.chain(
-        self.backbone.parameters(),
-        self.noise.parameters()))
-      self.ema.copy_to(itertools.chain(
-        self.backbone.parameters(),
-        self.noise.parameters()))
-    self.backbone.eval()
-    self.noise.eval()
-    (sampling_steps, samples,
-     sequence_lengths) = self.sample_subs_guidance(
-      n_samples=self.config.loader.eval_batch_size,
-      stride_length=stride_length,
-      num_strides=num_strides, 
-      dt=dt)
-    if self.ema:
-      self.ema.restore(itertools.chain(
-        self.backbone.parameters(),
-        self.noise.parameters()))
-    self.backbone.train()
-    self.noise.train()
-    return sampling_steps, samples, sequence_lengths
+
+  def restore_model_and_semi_ar_sample(self, stride_length, num_strides, dt=0.001):
+      """Generate samples from the model with progress tracking."""
+      if self.ema:
+          self.ema.store(itertools.chain(self.backbone.parameters(), self.noise.parameters()))
+          self.ema.copy_to(itertools.chain(self.backbone.parameters(), self.noise.parameters()))
+
+      self.backbone.eval()
+      self.noise.eval()
+      
+      # Track progress of semi-autoregressive sampling
+      with tqdm(total=num_strides + 1, desc="Semi-AR Sampling Strides", unit="stride") as pbar:
+          sampling_steps, samples, sequence_lengths = self.sample_subs_guidance(
+              n_samples=self.config.loader.eval_batch_size,
+              stride_length=stride_length,
+              num_strides=num_strides, 
+              dt=dt
+          )
+          pbar.update(num_strides + 1)
+
+      if self.ema:
+          self.ema.restore(itertools.chain(self.backbone.parameters(), self.noise.parameters()))
+
+      self.backbone.train()
+      self.noise.train()
+      return sampling_steps, samples, sequence_lengths
+

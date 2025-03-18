@@ -15,6 +15,7 @@ directory_paths:
   tokenizer: data/vocab_list/tokenizer
   train_data_encoding: data/vocab_list/train_data_encoding.pt
   raw_data: data/kraken/descriptors_v3.csv
+  pre_processed_data: data/kraken/preprocessed_data.pt
   cache_dir: /kraken_cache/data
 
 seed: 1
@@ -31,8 +32,8 @@ wandb:
   project: SELFIES-diffusion
   notes: testing a selfies model
   group: null # Groups related runs
-  job_type: null # Type of job (e.g., training, evaluation)
-  name: null # Name of the run
+  job_type: training # Type of job (e.g., training, evaluation)
+  name: train # Name of the run
   id: ${.name}_${seed} #Sets unique name and seed
   tags:
     - ${noise.type} # Sets metadata tags for filtering runs
@@ -40,20 +41,20 @@ wandb:
     - ${data.valid}
 
 checkpointing:
-  save_dir: checkpoints
+  save_dir: ${cwd:}
   resume_from_ckpt: false
-  resume_ckpt_path: checkpoints/last.ckpt
+  resume_ckpt_path: ${.save_dir}/checkpoints/last.ckpt
 
 # This is the config for training the Lightning trainer model
 trainer:
   _target_: lightning.Trainer
   accelerator: auto
-  strategy: auto
+  strategy: auto # Let lightning choose wtvr
   num_nodes: 1 # Number of machines, which might have multiple GPUs
   devices: ${device_count:}
   accumulate_grad_batches: ${div_up:${loader.global_batch_size}, ${eval:${trainer.devices} * ${loader.batch_size} * ${trainer.num_nodes}}}
   gradient_clip_val: 1.0 # Clip gradients to this value. Prevents exploding gradients
-  precision: '16-mixed' # BF16 float precision is better. CHANGE FOR LINUX
+  precision: '32' # BF16 float precision is better. CHANGE FOR LINUX
   num_sanity_val_steps: 2 # Runs 2 validation steps before training
   max_steps: 1_000_000 # Maximum number of training steps
   log_every_n_steps: 10 # log metrics every 10 steps
@@ -68,10 +69,18 @@ training:
   sampling_eps: 1e-3
   change_of_variables: False
 
+eval:
+  checkpoint_path: ''  # Used to evaluate a checkpoint after training.
+  disable_ema: False
+  compute_generative_perplexity: False
+  perplexity_batch_size: 8
+  compute_perplexity_on_sanity: False
+  generate_samples: True
+
 # This is important when working with multi-GPU training, to ensure that 
 # the batch size is divided evenly among all GPUs.
 loader:
-  global_batch_size: 2
+  global_batch_size: 16
   eval_global_batch_size: ${.global_batch_size}
   # Note: batch_size and eval_batch_size are **per machine**
   batch_size: ${div_up:${.global_batch_size}, ${eval:${trainer.devices} * ${trainer.num_nodes}}}
@@ -82,13 +91,13 @@ loader:
 
 sampling:
   predictor: ddpm_cache  # analytic, ddpm, ddpm_cache
-  steps: 128
+  steps: 256
   noise_removal: True
   num_sample_batches: 2  # Total samples: `num_gpus` * `loader.eval_batch_size` * num_sample_batches
   num_sample_log: 2
-  semi_ar: False
-  stride_length: 1
-  num_strides: 1
+  semi_ar: True
+  stride_length: 16
+  num_strides: 4
 
 optim:
   weight_decay: 0
