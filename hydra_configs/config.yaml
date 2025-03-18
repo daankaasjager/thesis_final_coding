@@ -33,7 +33,7 @@ wandb:
   notes: testing a selfies model
   group: null # Groups related runs
   job_type: training # Type of job (e.g., training, evaluation)
-  name: train # Name of the run
+  name: train2 # Name of the run
   id: ${.name}_${seed} #Sets unique name and seed
   tags:
     - ${noise.type} # Sets metadata tags for filtering runs
@@ -43,7 +43,8 @@ wandb:
 checkpointing:
   save_dir: ${cwd:}
   resume_from_ckpt: false
-  resume_ckpt_path: ${.save_dir}/checkpoints/last.ckpt
+  resume_ckpt_path: ${checkpointing.save_dir}/checkpoints/best-v3.ckpt
+
 
 # This is the config for training the Lightning trainer model
 trainer:
@@ -71,7 +72,7 @@ training:
 
 eval:
   checkpoint_path: ''  # Used to evaluate a checkpoint after training.
-  disable_ema: False
+  disable_ema: True
   compute_generative_perplexity: False
   perplexity_batch_size: 8
   compute_perplexity_on_sanity: False
@@ -85,15 +86,15 @@ loader:
   # Note: batch_size and eval_batch_size are **per machine**
   batch_size: ${div_up:${.global_batch_size}, ${eval:${trainer.devices} * ${trainer.num_nodes}}}
   eval_batch_size: ${div_up:${.eval_global_batch_size}, ${eval:${trainer.devices} * ${trainer.num_nodes}}}
-  num_workers: ${eval:"__import__('os').cpu_count()"}
+  num_workers: 4
   pin_memory: True
 
 
 sampling:
   predictor: ddpm_cache  # analytic, ddpm, ddpm_cache
-  steps: 256
+  steps: 128
   noise_removal: True
-  num_sample_batches: 2  # Total samples: `num_gpus` * `loader.eval_batch_size` * num_sample_batches
+  num_sample_batches: 6  # Total samples: `num_gpus` * `loader.eval_batch_size` * num_sample_batches
   num_sample_log: 2
   semi_ar: True
   stride_length: 16
