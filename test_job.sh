@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --time=6:00:00
+#SBATCH --time=3:00:00
 #SBATCH --partition=gpu
 #SBATCH --nodes=1
 #SBATCH --gpus-per-node=a100:4
@@ -17,5 +17,5 @@ source $HOME/venvs/thesis/bin/activate
 # (B) Print out which python just to check
 echo "venv, python is: $(which python)"
 
-srun python main.py
+srun python main.py sampling.num_sample_batches=4800
 

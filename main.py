@@ -11,8 +11,12 @@ from utils.misc.setup import setup_training_logging, resolve_paths, print_batch
 from utils.misc.create_datasets import get_dataloaders
 from utils.misc.csv_data_reader import fast_csv_to_df_reader
 from utils.misc.logging_config import configure_logging
+from utils.misc.plot_dist import plot_selfies_length_distribution
 import diffusion
 from tqdm import tqdm
+from datetime import datetime
+import json
+from tempfile import NamedTemporaryFile
 
 
 """Most of the code of this project is based on the original implementation
@@ -65,7 +69,6 @@ def _generate_samples(config, logger, tokenizer):
     logger.info('Generating samples.')
     
     model = _load_from_checkpoint(config=config, tokenizer=tokenizer)
-
     model.gen_ppl_metric.reset()
 
     if config.eval.disable_ema:
@@ -74,27 +77,50 @@ def _generate_samples(config, logger, tokenizer):
 
     stride_length = config.sampling.stride_length
     num_strides = config.sampling.num_strides
-    text_samples = []
+    timestamp = datetime.utcnow().isoformat()
+    flat_config = OmegaConf.to_container(config, resolve=True)
 
-    # Add tqdm progress bar for sample batches
-    for _ in tqdm(range(config.sampling.num_sample_batches), desc="Sampling batches", unit="batch"):
-        with torch.autocast(device_type="cuda" if torch.cuda.is_available() else "cpu", dtype=torch.bfloat16):
-            if config.sampling.semi_ar:
-                _, intermediate_samples, _ = model.restore_model_and_semi_ar_sample(
-                    stride_length=stride_length,
-                    num_strides=num_strides,
-                    dt=1 / config.sampling.steps
-                )
-                text_samples = intermediate_samples[-1]
-            else:
-                samples = model.restore_model_and_sample(num_steps=config.sampling.steps)
-                text_samples = model.tokenizer.batch_decode(samples)
+    # Temp file to store intermediate samples in case of crash
+    temp_path = os.path.join(config.directory_paths.sampled_data, "generated_samples.tmp")
+    os.makedirs(config.directory_paths.sampled_data, exist_ok=True)
 
-    print("\nGenerated Text Samples:")
-    for i, sample in enumerate(text_samples):
-        print(f"Sample {i+1}: {sample.strip()}")
-    return text_samples
+    sample_count = 0
+    with open(temp_path, 'a', encoding='utf-8') as temp_file:
+        for _ in tqdm(range(config.sampling.num_sample_batches), desc=f"Sampling batches of size: {config.loader.eval_batch_size}", unit="batch"):
+            with torch.autocast(device_type="cuda" if torch.cuda.is_available() else "cpu", dtype=torch.bfloat16):
+                if config.sampling.semi_ar:
+                    _, intermediate_samples, _ = model.restore_model_and_semi_ar_sample(
+                        stride_length=stride_length,
+                        num_strides=num_strides,
+                        dt=1 / config.sampling.steps
+                    )
+                    batch_text_samples = intermediate_samples[-1]
+                else:
+                    samples = model.restore_model_and_sample(num_steps=config.sampling.steps)
+                    batch_text_samples = model.tokenizer.batch_decode(samples)
 
+            for sample in batch_text_samples:
+                sample = sample.strip()
+                print(f"Sample {sample_count + 1}: {sample}")
+                temp_file.write(json.dumps(sample) + '\n')
+                sample_count += 1
+
+    # Now flush everything into the final JSON
+    final_path = os.path.join(config.directory_paths.sampled_data, "generated_samples.json")
+    with open(temp_path, 'r', encoding='utf-8') as temp_file:
+        samples = [json.loads(line.strip()) for line in temp_file]
+
+    sample_record = {
+        "timestamp": timestamp,
+        "config": flat_config,
+        "samples": samples
+    }
+
+    with open(final_path, 'w', encoding='utf-8') as f:
+        json.dump(sample_record, f, indent=2)
+
+    os.remove(temp_path)
+    logger.info(f"Saved {sample_count} samples to {final_path} with metadata.")
 
 
 def _train(config, tokenizer, data):
@@ -118,7 +144,6 @@ def _train(config, tokenizer, data):
     #  to something in the neighborhood. Take a look at initial training of the diffusion model. tokenizer
     # is all setup. Try to pass the normal tokenizer to the diffusion model. Why does the other code use valid_ds.tokenizer?
 
-
 @hydra.main(version_base=None, config_path='hydra_configs',
             config_name='config')
 def run(config: DictConfig):
@@ -131,18 +156,25 @@ def run(config: DictConfig):
 
     config = resolve_paths(config)
 
-    raw_data = fast_csv_to_df_reader(config.directory_paths.raw_data, row_limit=1000)
+    raw_data = fast_csv_to_df_reader(config.directory_paths.raw_data, row_limit=config.row_limit)
 
     # Data  goes from "[C][=C][C]" to ['[C]', '[=C]', '[C]'] and obtain alphabet
     selfies_vocab, data = preprocess_selfies_data(config, raw_data)
 
+    if config.plot_dist:
+      plot_selfies_length_distribution(data)
+
     # Passes selfies_vocab in case the tokenizer needs to be trained.
     tokenizer = get_tokenizer(config, selfies_vocab)
+
+    
     
     if config.mode == 'train':
       _train(config, tokenizer, data)
     elif config.mode == "sample_eval":
       _generate_samples(config, logger, tokenizer)
+
+    
 
 
 if __name__ == "__main__":
