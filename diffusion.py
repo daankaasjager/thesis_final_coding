@@ -381,7 +381,6 @@ class Diffusion(L.LightningModule):
     self.noise.train()
 
   def training_step(self, batch, batch_idx):
-    print("DEBUG type(batch['input_ids']) =", type(batch["input_ids"]))
     loss = self._compute_loss(batch, prefix='train')
     self.log(name='trainer/loss',
              value=loss.item(),
@@ -872,16 +871,11 @@ class Diffusion(L.LightningModule):
       self.backbone.eval()
       self.noise.eval()
       
-      # Track progress of semi-autoregressive sampling
-      with tqdm(total=num_strides + 1, desc="Semi-AR Sampling Strides", unit="stride") as pbar:
-          sampling_steps, samples, sequence_lengths = self.sample_subs_guidance(
-              n_samples=self.config.loader.eval_batch_size,
-              stride_length=stride_length,
-              num_strides=num_strides, 
-              dt=dt
-          )
-          pbar.update(num_strides + 1)
-
+      (sampling_steps, samples, sequence_lengths) = self.sample_subs_guidance(
+        n_samples=self.config.loader.eval_batch_size,
+        stride_length=stride_length,
+        num_strides=num_strides, 
+        dt=dt)
       if self.ema:
           self.ema.restore(itertools.chain(self.backbone.parameters(), self.noise.parameters()))
 
