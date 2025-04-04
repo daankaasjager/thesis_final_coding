@@ -1,0 +1,42 @@
+slurmstepd: error: *** JOB 16129469 ON v100v2gpu18 CANCELLED AT 2025-04-02T12:03:30 DUE TO TIME LIMIT ***
+
+###############################################################################
+Hábrók Cluster
+Job 16129469 for user s3905845
+Finished at: Wed Apr  2 12:03:36 CEST 2025
+
+Job details:
+============
+
+Job ID                         : 16129469
+Name                           : sleeper.sh
+User                           : s3905845
+Partition                      : gpushort
+Nodes                          : v100v2gpu18
+Number of Nodes                : 1
+Cores                          : 1
+Number of Tasks                : 1
+State                          : TIMEOUT  
+Submit                         : 2025-04-02T08:33:21
+Start                          : 2025-04-02T08:33:22
+End                            : 2025-04-02T12:03:31
+Reserved walltime              : 03:30:00
+Used walltime                  : 03:30:09
+Used CPU time                  : -- (Efficiency:  0.00%)
+% User (Computation)           : 53.12%
+% System (I/O)                 : 46.88%
+Total memory reserved          : 10G
+Maximum memory used            : 452.00K
+Requested GPUs                 : 1
+Allocated GPUs                 : v100=1
+Max GPU utilization            : 0%
+Max GPU memory used            : 0.00 
+
+Acknowledgements:
+=================
+
+Please see this page for information about acknowledging Hábrók in your publications:
+
+https://wiki.hpc.rug.nl/habrok/introduction/scientific_output
+
+################################################################################

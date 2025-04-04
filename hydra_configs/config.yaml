@@ -17,12 +17,14 @@ directory_paths:
   raw_data: data/kraken/descriptors_v3.csv
   pre_processed_data: data/kraken/preprocessed_data.pt
   cache_dir: /kraken_cache/data
-  sampled_data: data/kraken/sampled_data.pt
+  sampled_data: data/kraken/sampled_data/generated_samples.json
+  images_dir: data/kraken/images
 
 seed: 1
 
-mode: sample_eval  # train / ppl_eval / sample_eval
-row_limit: null
+mode: train  # train / sample /evaluate_samples
+row_limit: 1000
+permitted_selfies_length: 175 # CHANGE THIS TO THE ACTUAL PERCENTILE LATER
 diffusion: absorbing_state
 backbone: dit  # dit / dimamba / ar
 parameterization: subs  # subs / d3pm / sedd
@@ -37,7 +39,7 @@ wandb:
   notes: testing a selfies model
   group: null # Groups related runs
   job_type: training # Type of job (e.g., training, evaluation)
-  name: train2 # Name of the run
+  name: testing_tokenizer # Name of the run
   id: ${.name}_${seed} #Sets unique name and seed
   tags:
     - ${noise.type} # Sets metadata tags for filtering runs
@@ -87,7 +89,7 @@ loader:
   # Note: batch_size and eval_batch_size are **per machine**
   batch_size: ${div_up:${.global_batch_size}, ${eval:${trainer.devices} * ${trainer.num_nodes}}}
   eval_batch_size: ${div_up:${.eval_global_batch_size}, ${eval:${trainer.devices} * ${trainer.num_nodes}}}
-  num_workers: 4
+  num_workers: ${eval:"__import__('os').cpu_count()"}
   pin_memory: True
 
 
@@ -98,8 +100,8 @@ sampling:
   num_sample_batches: 1200  # Total samples: `loader.eval_batch_size` * num_sample_batches
   num_sample_log: 2
   semi_ar: True
-  num_strides: 0
-  stride_length: 0
+  num_strides: 16
+  stride_length: 4
 
 optim:
   weight_decay: 0

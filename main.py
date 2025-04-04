@@ -2,24 +2,23 @@ from venv import logger
 import hydra
 from omegaconf import OmegaConf, DictConfig
 import lightning as L
-from utils.misc.preprocess_data import preprocess_selfies_data
+from src.utils.misc.preprocess_data import preprocess_selfies_data
 import logging
 import torch
 import os
-from tokenizer import tokenize_selfies_vocab, get_tokenizer
-from utils.misc.setup import setup_training_logging, resolve_paths, print_batch
-from utils.misc.create_datasets import get_dataloaders
-from utils.misc.csv_data_reader import fast_csv_to_df_reader
-from utils.misc.logging_config import configure_logging
-from utils.misc.plot_dist import plot_selfies_length_distribution
-import diffusion
+from src.tokenizer import tokenize_selfies_vocab, get_tokenizer
+from src.utils.misc.setup import setup_training_logging, resolve_paths, print_batch
+from src.utils.misc.create_datasets import get_dataloaders
+from src.utils.misc.csv_data_reader import fast_csv_to_df_reader
+from src.utils.misc.logging_config import configure_logging
+from src.utils.misc.plot_dist import plot_selfies_length_distribution
 from tqdm import tqdm
 from datetime import datetime
 import json
-from tempfile import NamedTemporaryFile
+from src.evaluate.plot import analyze_bos_eos_tokens, plot_token_frequency_histogram, plot_molecule_length_histogram
+from src.evaluate.metrics import calculate_and_plot_metrics
 
-
-"""Most of the code of this project is based on the original implementation
+"""The coding framework of this project is based on the original implementation
 of Masked Diffusion Language Models (MDLM). 
 doi: 10.48550/arXiv.2406.07524
 repository: https://github.com/kuleshov-group/mdlm/tree/bbc8fb61077a3ca38eab2423d0f81a5484754f51"""
@@ -37,7 +36,24 @@ OmegaConf.register_new_resolver(
 configure_logging()
 logger = logging.getLogger(__name__)
 
+def _evaluate_samples(config, original_selfies):
+    with open(config.directory_paths.sampled_data, 'r') as f:
+        data = json.load(f)
+        samples = data['samples']
+    # Example usage:
+    metrics_to_compute = ['sascore']
+    generated_results = calculate_and_plot_metrics(config, samples, metrics_to_compute, name="generated", use_moses=True)
+    #original_results = calculate_and_plot_metrics(config, original_selfies, metrics_to_compute, name="original")
+    
+    """plot_token_frequency_histogram(config, samples, "generated_samples")
+    plot_token_frequency_histogram(config, original_selfies, "original_selfies")
+    plot_molecule_length_histogram(config, samples, "generated_samples")
+    plot_molecule_length_histogram(config, original_selfies, "original_selfies")
+    analyze_bos_eos_tokens(config, samples, "generated_samples")"""
+
+
 def _load_from_checkpoint(config, tokenizer):
+    import src.diffusion as diffusion
     logger.info("Loading model from checkpoint to CPU.")
     
     model = diffusion.Diffusion.load_from_checkpoint(
@@ -124,6 +140,7 @@ def _generate_samples(config, logger, tokenizer):
 
 
 def _train(config, tokenizer, data):
+    import src.diffusion as diffusion
     os.environ['TOKENIZERS_PARALLELISM'] = 'false'
     logger.info('Starting Training.')
     wandb_logger, ckpt_path, callbacks = setup_training_logging(config)
@@ -171,8 +188,10 @@ def run(config: DictConfig):
     
     if config.mode == 'train':
       _train(config, tokenizer, data)
-    elif config.mode == "sample_eval":
+    elif config.mode == "sample":
       _generate_samples(config, logger, tokenizer)
+    elif config.mode == "evaluate_samples":
+        _evaluate_samples(config, raw_data['selfies'])
 
     
 
