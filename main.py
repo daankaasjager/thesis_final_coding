@@ -146,6 +146,9 @@ def _train(config, tokenizer, data):
     wandb_logger, ckpt_path, callbacks = setup_training_logging(config)
     tokenized_data, vocab_size = tokenize_selfies_vocab(tokenizer, config, data)
     train_dataloader, val_dataloader = get_dataloaders(config, tokenized_data, tokenizer)
+    batch = next(iter(train_dataloader))
+    print(batch['input_ids'].shape) # Should be (batch_size, seq_len)
+    print(batch['attention_mask'].shape) # Should be (batch_size, seq_len)
     model = diffusion.Diffusion(config, tokenizer=tokenizer)
     # print_batch(train_dataloader, val_dataloader, tokenizer) # takes a a long time so only run if necessary.
     trainer = hydra.utils.instantiate(
