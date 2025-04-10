@@ -113,7 +113,7 @@ def get_tokenizer(config, selfies_vocab):
         tokenizer.add_special_tokens({'pad_token': '[PAD]'})
     return tokenizer
 
-def tokenize_selfies_vocab(tokenizer, config, raw_data, chunk_size=50000, max_length=310):
+def tokenize_selfies_vocab(config, tokenizer, raw_data=None, chunk_size=50000, max_length=310):
     """
     Chunk-based tokenization for SELFIES data. Merges all sequences into a single dictionary 
     with 'input_ids', 'attention_mask', and 'token_type_ids' stored as lists of lists of ints.
@@ -123,14 +123,14 @@ def tokenize_selfies_vocab(tokenizer, config, raw_data, chunk_size=50000, max_le
         try:
             tokenized_data = torch.load(config.directory_paths.train_data_encoding, map_location="cpu", weights_only = False)
             logger.info(f"SELFIES data loaded successfully. Vocab size: {tokenizer.vocab_size}")
-            return tokenized_data, tokenizer.vocab_size
+            return tokenized_data
         except Exception as e:
             logger.error(f"Error loading SELFIES data: {e}")
-            return None, tokenizer.vocab_size
+            return None
     
     if 'selfies' not in raw_data.columns:
         logger.info("'selfies' column not found in raw_data.")
-        return None, tokenizer.vocab_size
+        return None
     
     input_selfies = raw_data['selfies'].tolist()
     total_samples = len(input_selfies)
@@ -186,4 +186,4 @@ def tokenize_selfies_vocab(tokenizer, config, raw_data, chunk_size=50000, max_le
     logger.info(f"Done tokenizing. Vocab size: {tokenizer.vocab_size}")
     logger.info(f"Max sequence length in the final tokenized data: {max_seq_len}")
     # REMOVE LATER
-    return tokenized_data, tokenizer.vocab_size
+    return tokenized_data
