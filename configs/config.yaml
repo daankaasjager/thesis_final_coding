@@ -5,7 +5,7 @@ defaults:
   - /noise: loglinear # Model appeared invariant to noise schedule types in MDLM paper
   - /model: small
   - /lr_scheduler: constant_warmup # cosine decay not implemented yet
-  - /mode: train  # train / sample /evaluate_samples
+  - /mode: sample  # train / sample /evaluate_samples
 
 train_test_split:
   train: 0.8
@@ -40,7 +40,7 @@ training:
   change_of_variables: False
 
 eval:
-  checkpoint_path: ${cwd:}/checkpoints/best-v1.ckpt # Used to evaluate a checkpoint after training.
+  checkpoint_path: ${cwd:}/checkpoints/best.ckpt # Used to evaluate a checkpoint after training.
   disable_ema: False
   generate_samples: True
 
@@ -61,3 +61,4 @@ optim:
   beta1: 0.9
   beta2: 0.999
   eps: 1e-8
+

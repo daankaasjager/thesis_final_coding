@@ -1,6 +1,6 @@
 name: train
 
-row_limit: 10
+row_limit: 1000
 permitted_selfies_length: 175 # CHANGE THIS TO THE ACTUAL PERCENTILE LATER
 
 
