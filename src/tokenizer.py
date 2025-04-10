@@ -85,18 +85,18 @@ def get_tokenizer(config, selfies_vocab):
     if it exists, otherwise builds a new one from selfies_vocab.
     Ensures BOS/EOS/PAD tokens exist.
     """
-    if os.path.exists(config.directory_paths.tokenizer) and config.mode.checkpointing.fresh_data == False:
+    if os.path.exists(config.directory_paths.tokenizer) and config.checkpointing.fresh_data == False:
         logger.info("Tokenizer folder found. Loading...")
         try:
             tokenizer = SelfiesTokenizer.from_pretrained(config.directory_paths.tokenizer)
         except Exception as e:
             logger.error(f"Error loading tokenizer: {e}")
             exit()
-    elif not os.path.exists(config.directory_paths.tokenizer) and config.mode.checkpointing.fresh_data == False:
-        logger.error(f"No tokenizer found at {config.directory_paths.tokenizer}. But config.mode.checkpointing.fresh_data is {config.mode.checkpointing.fresh_data}.")
+    elif not os.path.exists(config.directory_paths.tokenizer) and config.pointing.fresh_data == False:
+        logger.error(f"No tokenizer found at {config.directory_paths.tokenizer}. But config.resh_data is {config.nfig.resh_data}.")
         exit()
     else:
-        logger.info(f"config.mode.checkpointing.fresh_data is {config.mode.checkpointing.fresh_data}.  Creating new tokenizer...")
+        logger.info(f"config.pointing.fresh_data is {config.checkpointing.fresh_data}.  Creating new tokenizer...")
         tokenizer = SelfiesTokenizer(selfies_vocab=selfies_vocab)
         tokenizer.save_pretrained(config.directory_paths.tokenizer)
         logger.info(f"Tokenizer saved to {config.directory_paths.tokenizer}")
@@ -118,7 +118,7 @@ def tokenize_selfies_vocab(config, tokenizer, raw_data=None, chunk_size=50000, m
     Chunk-based tokenization for SELFIES data. Merges all sequences into a single dictionary 
     with 'input_ids', 'attention_mask', and 'token_type_ids' stored as lists of lists of ints.
     """
-    if os.path.exists(config.directory_paths.train_data_encoding) and config.mode.checkpointing.fresh_data == False:
+    if os.path.exists(config.directory_paths.train_data_encoding) and config.checkpointing.fresh_data == False:
         logger.info(f"SELFIES training data encoding found at {config.directory_paths.train_data_encoding}")
         try:
             tokenized_data = torch.load(config.directory_paths.train_data_encoding, map_location="cpu", weights_only = False)

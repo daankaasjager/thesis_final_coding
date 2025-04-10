@@ -46,7 +46,7 @@ def generate_samples(config):
 
     stride_length = config.sampling.stride_length
     num_strides = config.sampling.num_strides
-    timestamp = datetime.utcnow().isoformat()
+    timestamp = datetime.isoformat()
     flat_config = OmegaConf.to_container(config, resolve=True)
 
     # Temp file to store intermediate samples in case of crash
@@ -55,7 +55,7 @@ def generate_samples(config):
 
     sample_count = 0
     with open(temp_path, 'a', encoding='utf-8') as temp_file:
-        for _ in tqdm(range(config.sampling.num_sample_batches), desc=f"Sampling batches of size: {config.mode.loader.eval_batch_size}", unit="batch"):
+        for _ in tqdm(range(config.sampling.num_sample_batches), desc=f"Sampling batches of size: {config.loader.eval_batch_size}", unit="batch"):
             with torch.autocast(device_type="cuda" if torch.cuda.is_available() else "cpu", dtype=torch.bfloat16):
                 if config.sampling.semi_ar:
                     _, intermediate_samples, _ = model.restore_model_and_semi_ar_sample(

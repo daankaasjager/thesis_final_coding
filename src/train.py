@@ -19,30 +19,30 @@ def run_model(config, tokenizer, train_dataloader, val_dataloader, ckpt_path, ca
     model = diffusion.Diffusion(config, tokenizer=tokenizer)
     # print_batch(train_dataloader, val_dataloader, tokenizer) # takes a a long time so only run if necessary.
     trainer = hydra.utils.instantiate(
-      config.mode.trainer,
+      config.er,
       default_root_dir=os.getcwd(),
       callbacks=callbacks,
-      strategy=config.mode.trainer.strategy,
+      strategy=config.rategy,
       logger=wandb_logger
     )
     trainer.fit(model, train_dataloader, val_dataloader, ckpt_path=ckpt_path)
 
 
 def resume_training_from_ckpt(config, callbacks, wandb_logger):
-    logger.info(f"Resuming training from checkpoint: {config.mode.checkpointing.resume_ckpt_path}")
+    logger.info(f"Resuming training from checkpoint: {config.pointing.resume_ckpt_path}")
     # This just loads the preprocessed data if it can find the path
     selfies_vocab, data = preprocess_selfies_data(config)
     # save selfies vocab somewhere and load that
     tokenizer = get_tokenizer(config, selfies_vocab)
     tokenized_data = tokenize_selfies_vocab(config, tokenizer)
     train_dataloader, val_dataloader = get_dataloaders(config, tokenized_data, tokenizer)
-    run_model(config, tokenizer, train_dataloader, val_dataloader, config.mode.checkpointing.resume_ckpt_path, callbacks, wandb_logger)
+    run_model(config, tokenizer, train_dataloader, val_dataloader, config.pointing.resume_ckpt_path, callbacks, wandb_logger)
 
 def train_model_from_scratch(config, callbacks, wandb_logger):
-    if config.mode.checkpointing.fresh_data== True:
+    if config.checkpointing.fresh_data== True:
         logger.info("Training model from scratch. Data will be reprocessed.")
         # read in the raw data
-        raw_data = fast_csv_to_df_reader(config.directory_paths.raw_data, row_limit=config.mode.row_limit)
+        raw_data = fast_csv_to_df_reader(config.directory_paths.raw_data, row_limit=config.row_limit)
         selfies_vocab, data = preprocess_selfies_data(config, raw_data)
     else:
         logger.info("Training model from scratch. Tokenized data will be loaded.")
@@ -63,7 +63,7 @@ def train_model_from_scratch(config, callbacks, wandb_logger):
 def train(config):
     os.environ['TOKENIZERS_PARALLELISM'] = 'false'
     wandb_logger, callbacks = setup_training_logging(config)
-    if config.mode.checkpointing.resume_from_ckpt:
+    if config.checkpointing.resume_from_ckpt:
         resume_training_from_ckpt(config, callbacks, wandb_logger)
     else:
         train_model_from_scratch(config, callbacks, wandb_logger)
