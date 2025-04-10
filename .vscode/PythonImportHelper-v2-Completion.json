@@ -889,7 +889,7 @@
         "kind": 2,
         "importPath": "utils.misc.create_datasets",
         "description": "utils.misc.create_datasets",
-        "peekOfCode": "def check_gpu_compatibility(config):\n    logger.info(\"Checking GPU compatibility\")\n    num_gpus = torch.cuda.device_count()\n    assert (config.loader.global_batch_size == (config.loader.batch_size\n                                              * config.trainer.num_nodes\n                                              * num_gpus\n                                              * config.trainer.accumulate_grad_batches))\n    if config.loader.global_batch_size % (\n        num_gpus * config.trainer.accumulate_grad_batches) != 0:\n        raise ValueError(",
+        "peekOfCode": "def check_gpu_compatibility(config):\n    logger.info(\"Checking GPU compatibility\")\n    num_gpus = torch.cuda.device_count()\n    assert (config.mode.loader.global_batch_size == (config.mode.loader.batch_size\n                                              * config.mode.trainer.num_nodes\n                                              * num_gpus\n                                              * config.mode.trainer.accumulate_grad_batches))\n    if config.mode.loader.global_batch_size % (\n        num_gpus * config.mode.trainer.accumulate_grad_batches) != 0:\n        raise ValueError(",
         "detail": "utils.misc.create_datasets",
         "documentation": {}
     },
@@ -916,7 +916,7 @@
         "kind": 5,
         "importPath": "utils.misc.create_datasets",
         "description": "utils.misc.create_datasets",
-        "peekOfCode": "logger = logging.getLogger(__name__)\ndef check_gpu_compatibility(config):\n    logger.info(\"Checking GPU compatibility\")\n    num_gpus = torch.cuda.device_count()\n    assert (config.loader.global_batch_size == (config.loader.batch_size\n                                              * config.trainer.num_nodes\n                                              * num_gpus\n                                              * config.trainer.accumulate_grad_batches))\n    if config.loader.global_batch_size % (\n        num_gpus * config.trainer.accumulate_grad_batches) != 0:",
+        "peekOfCode": "logger = logging.getLogger(__name__)\ndef check_gpu_compatibility(config):\n    logger.info(\"Checking GPU compatibility\")\n    num_gpus = torch.cuda.device_count()\n    assert (config.mode.loader.global_batch_size == (config.mode.loader.batch_size\n                                              * config.mode.trainer.num_nodes\n                                              * num_gpus\n                                              * config.mode.trainer.accumulate_grad_batches))\n    if config.mode.loader.global_batch_size % (\n        num_gpus * config.mode.trainer.accumulate_grad_batches) != 0:",
         "detail": "utils.misc.create_datasets",
         "documentation": {}
     },

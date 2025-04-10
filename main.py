@@ -2,16 +2,16 @@ from venv import logger
 import hydra
 from omegaconf import OmegaConf, DictConfig
 import lightning as L
-from src.utils.misc.preprocess_data import preprocess_selfies_data
+from src.utils.preprocess_data import preprocess_selfies_data
 import logging
 import torch
 import os
 from src.tokenizer import tokenize_selfies_vocab, get_tokenizer
-from src.utils.misc.setup import setup_training_logging, resolve_paths, print_batch
-from src.utils.misc.create_datasets import get_dataloaders
-from src.utils.misc.csv_data_reader import fast_csv_to_df_reader
-from src.utils.misc.logging_config import configure_logging
-from src.utils.misc.plot_dist import plot_selfies_length_distribution
+from src.utils.setup import setup_training_logging, resolve_paths, print_batch
+from src.utils.create_datasets import get_dataloaders
+from src.utils.csv_data_reader import fast_csv_to_df_reader
+from src.utils.logging_config import configure_logging
+from src.utils.plot_dist import plot_selfies_length_distribution
 from tqdm import tqdm
 from datetime import datetime
 import json
@@ -68,20 +68,11 @@ def _load_from_checkpoint(config, tokenizer):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     # Move only encoder and backbone to GPU (if necessary)
     model.to(device)
-    """try:
-        model.backbone.to(device, non_blocking=True)  
-        logger.info("Moved backbone to GPU.")
-    except RuntimeError as e:
-        logger.error(f"Backbone OOM: {e}")
-    try:
-        model.noise.to(device, non_blocking=True)  
-        logger.info("Moved noise module to GPU.")
-    except RuntimeError as e:
-        logger.error(f"Noise OOM: {e}")"""
+
     return model
 
 
-def _generate_samples(config, logger, tokenizer):
+def _generate_samples(config):
     logger.info('Generating samples.')
     
     model = _load_from_checkpoint(config=config, tokenizer=tokenizer)
@@ -102,7 +93,7 @@ def _generate_samples(config, logger, tokenizer):
 
     sample_count = 0
     with open(temp_path, 'a', encoding='utf-8') as temp_file:
-        for _ in tqdm(range(config.sampling.num_sample_batches), desc=f"Sampling batches of size: {config.loader.eval_batch_size}", unit="batch"):
+        for _ in tqdm(range(config.sampling.num_sample_batches), desc=f"Sampling batches of size: {config.mode.loader.eval_batch_size}", unit="batch"):
             with torch.autocast(device_type="cuda" if torch.cuda.is_available() else "cpu", dtype=torch.bfloat16):
                 if config.sampling.semi_ar:
                     _, intermediate_samples, _ = model.restore_model_and_semi_ar_sample(
@@ -138,65 +129,76 @@ def _generate_samples(config, logger, tokenizer):
     os.remove(temp_path)
     logger.info(f"Saved {sample_count} samples to {final_path} with metadata.")
 
-
-def _train(config, tokenizer, data):
+def run_model(config, tokenizer, train_dataloader, val_dataloader, ckpt_path, callbacks, wandb_logger):
     import src.diffusion as diffusion
-    os.environ['TOKENIZERS_PARALLELISM'] = 'false'
-    logger.info('Starting Training.')
-    wandb_logger, ckpt_path, callbacks = setup_training_logging(config)
-    tokenized_data, vocab_size = tokenize_selfies_vocab(tokenizer, config, data)
-    train_dataloader, val_dataloader = get_dataloaders(config, tokenized_data, tokenizer)
-    batch = next(iter(train_dataloader))
-    print(batch['input_ids'].shape) # Should be (batch_size, seq_len)
-    print(batch['attention_mask'].shape) # Should be (batch_size, seq_len)
     model = diffusion.Diffusion(config, tokenizer=tokenizer)
     # print_batch(train_dataloader, val_dataloader, tokenizer) # takes a a long time so only run if necessary.
     trainer = hydra.utils.instantiate(
-      config.trainer,
+      config.mode.trainer,
       default_root_dir=os.getcwd(),
       callbacks=callbacks,
-      strategy=config.trainer.strategy,
+      strategy=config.mode.trainer.strategy,
       logger=wandb_logger
     )
     trainer.fit(model, train_dataloader, val_dataloader, ckpt_path=ckpt_path)
+
+def resume_training_from_ckpt(config):
+    logger.info(f"Resuming training from checkpoint: {config.mode.checkpointing.resume_ckpt_path}")
+    # This just loads the preprocessed data if it can find the path
+    selfies_vocab, data = preprocess_selfies_data(config)
+    # save selfies vocab somewhere and load that
+    tokenizer = get_tokenizer(config, selfies_vocab)
+
+def train_model_from_scratch(config, callbacks, wandb_logger):
+    if config.mode.checkpointing.fresh_data== True:
+        logger.info("Training model from scratch. Data will be reprocessed.")
+        # read in the raw data
+        raw_data = fast_csv_to_df_reader(config.directory_paths.raw_data, row_limit=config.mode.row_limit)
+        selfies_vocab, data = preprocess_selfies_data(config, raw_data)
+    else:
+        logger.info("Training model from scratch. Tokenized data will be loaded.")
+        # This just loads the preprocessed data if it can find the path
+        selfies_vocab, data = preprocess_selfies_data(config)
+
+    ckpt_path = None
+
+    if config.plot_dist:
+      plot_selfies_length_distribution(data)
     
+    # Passes selfies_vocab in case the tokenizer needs to be trained.
+    tokenizer = get_tokenizer(config, selfies_vocab)
+    tokenized_data, vocab_size = tokenize_selfies_vocab(tokenizer, config, data)
+    train_dataloader, val_dataloader = get_dataloaders(config, tokenized_data, tokenizer)
+    run_model(config, tokenizer, train_dataloader, val_dataloader, ckpt_path, callbacks, wandb_logger)
     # TO DO: What is the max length of the training data? Maybe set the batch size
     #  to something in the neighborhood. Take a look at initial training of the diffusion model. tokenizer
     # is all setup. Try to pass the normal tokenizer to the diffusion model. Why does the other code use valid_ds.tokenizer?
 
-@hydra.main(version_base=None, config_path='hydra_configs',
+@hydra.main(version_base=None, config_path='configs',
             config_name='config')
 def run(config: DictConfig):
-    #This only prints the config once to reduce clutter in the logs because it is distributed.
+    """Main function to run the script.
+    Args:
+        config (DictConfig): Configuration object.
+    """
+
+    """sets up seeding, logging, and the config file"""
     rank = int(os.environ.get("LOCAL_RANK", 0))
     if rank == 0:
       logger.info(OmegaConf.to_yaml(config))
-
     L.seed_everything(config.seed, verbose=False)
-
     config = resolve_paths(config)
-
-    raw_data = fast_csv_to_df_reader(config.directory_paths.raw_data, row_limit=config.row_limit)
-
-    # Data  goes from "[C][=C][C]" to ['[C]', '[=C]', '[C]'] and obtain alphabet
-    selfies_vocab, data = preprocess_selfies_data(config, raw_data)
-
-    if config.plot_dist:
-      plot_selfies_length_distribution(data)
-
-    # Passes selfies_vocab in case the tokenizer needs to be trained.
-    tokenizer = get_tokenizer(config, selfies_vocab)
-
-    
-    
-    if config.mode == 'train':
-      _train(config, tokenizer, data)
-    elif config.mode == "sample":
-      _generate_samples(config, logger, tokenizer)
-    elif config.mode == "evaluate_samples":
-        _evaluate_samples(config, raw_data['selfies'])
-
-    
+    if config.mode.name == 'train':
+        os.environ['TOKENIZERS_PARALLELISM'] = 'false'
+        wandb_logger, callbacks = setup_training_logging(config)
+        if config.mode.checkpointing.resume_from_ckpt:
+            resume_training_from_ckpt(config, callbacks, wandb_logger)
+        else:
+            train_model_from_scratch(config, callbacks, wandb_logger)
+    elif config.mode.name == "sample":
+        _generate_samples(config)
+    elif config.mode.name == "evaluate_samples":
+        _evaluate_samples(config)
 
 
 if __name__ == "__main__":

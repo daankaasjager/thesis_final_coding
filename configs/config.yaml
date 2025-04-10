@@ -1,0 +1,63 @@
+defaults:
+  - _self_
+  - /callbacks: [checkpoint_every_n_steps, checkpoint_monitor, learning_rate_monitor]
+  - /data: kraken
+  - /noise: loglinear # Model appeared invariant to noise schedule types in MDLM paper
+  - /model: small
+  - /lr_scheduler: constant_warmup # cosine decay not implemented yet
+  - /mode: train  # train / sample /evaluate_samples
+
+train_test_split:
+  train: 0.8
+  valid: 0.2
+
+directory_paths:
+  tokenizer: data/vocab_list/tokenizer
+  train_data_encoding: data/vocab_list/train_data_encoding.pt
+  raw_data: data/kraken/descriptors_v3.csv
+  pre_processed_data: data/kraken/preprocessed_data.pt
+  cache_dir: /kraken_cache/data
+  sampled_data: data/kraken/sampled_data/generated_samples.json
+  images_dir: data/kraken/images
+
+seed: 1
+
+permitted_selfies_length: 175 # CHANGE THIS TO THE ACTUAL PERCENTILE LATER
+diffusion: absorbing_state
+backbone: dit  # dit / dimamba / ar
+parameterization: subs  # subs / d3pm / sedd
+time_conditioning: False
+T: 0  # 0 (continuous time) / 1000 
+subs_masking: False #prevents unmasking during training SET TO TRUE LATER FOR TESTING
+plot_dist: False
+
+
+training:
+  ema: 0.9999
+  antithetic_sampling: True
+  importance_sampling: False
+  sampling_eps: 1e-3
+  change_of_variables: False
+
+eval:
+  checkpoint_path: ${cwd:}/checkpoints/best-v1.ckpt # Used to evaluate a checkpoint after training.
+  disable_ema: False
+  generate_samples: True
+
+
+sampling:
+  predictor: ddpm_cache  # analytic, ddpm, ddpm_cache
+  steps: 128
+  noise_removal: True
+  num_sample_batches: 12  # Total samples: `loader.eval_batch_size` * num_sample_batches
+  num_sample_log: 2
+  semi_ar: True
+  num_strides: 16
+  stride_length: 4
+
+optim:
+  weight_decay: 0
+  lr: 3e-4
+  beta1: 0.9
+  beta2: 0.999
+  eps: 1e-8

@@ -8,7 +8,7 @@ import torch.nn.functional as F
 from einops import rearrange
 import logging
 import sys
-from src.utils.misc.get_torch_dtype import get_torch_dtype
+from src.utils.get_torch_dtype import get_torch_dtype
 
 
 logger = logging.getLogger(__name__)
@@ -356,7 +356,7 @@ class DIT(nn.Module, huggingface_hub.PyTorchModelHubMixin):
         c = F.silu(self.sigma_map(sigma)) # sigma_map now receives (B,)
 
         rotary_cos_sin = self.rotary_emb(x)
-        with torch.amp.autocast(device_type=x.device.type, dtype=get_torch_dtype(self.config.trainer.precision)):
+        with torch.amp.autocast(device_type=x.device.type, dtype=get_torch_dtype(self.config.mode.trainer.precision)):
             for i in range(len(self.blocks)):
                 # c passed to blocks will now have the correct shape (B, cond_dim)
                 x = self.blocks[i](x, rotary_cos_sin, c, seqlens=None)
