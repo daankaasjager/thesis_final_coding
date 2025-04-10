@@ -142,12 +142,15 @@ def run_model(config, tokenizer, train_dataloader, val_dataloader, ckpt_path, ca
     )
     trainer.fit(model, train_dataloader, val_dataloader, ckpt_path=ckpt_path)
 
-def resume_training_from_ckpt(config):
+def resume_training_from_ckpt(config, callbacks, wandb_logger):
     logger.info(f"Resuming training from checkpoint: {config.mode.checkpointing.resume_ckpt_path}")
     # This just loads the preprocessed data if it can find the path
     selfies_vocab, data = preprocess_selfies_data(config)
     # save selfies vocab somewhere and load that
     tokenizer = get_tokenizer(config, selfies_vocab)
+    tokenized_data = tokenize_selfies_vocab(config, tokenizer)
+    train_dataloader, val_dataloader = get_dataloaders(config, tokenized_data, tokenizer)
+    run_model(config, tokenizer, train_dataloader, val_dataloader, config.mode.checkpointing.resume_ckpt_path, callbacks, wandb_logger)
 
 def train_model_from_scratch(config, callbacks, wandb_logger):
     if config.mode.checkpointing.fresh_data== True:
@@ -167,12 +170,9 @@ def train_model_from_scratch(config, callbacks, wandb_logger):
     
     # Passes selfies_vocab in case the tokenizer needs to be trained.
     tokenizer = get_tokenizer(config, selfies_vocab)
-    tokenized_data, vocab_size = tokenize_selfies_vocab(tokenizer, config, data)
+    tokenized_data = tokenize_selfies_vocab(config, tokenizer, data)
     train_dataloader, val_dataloader = get_dataloaders(config, tokenized_data, tokenizer)
     run_model(config, tokenizer, train_dataloader, val_dataloader, ckpt_path, callbacks, wandb_logger)
-    # TO DO: What is the max length of the training data? Maybe set the batch size
-    #  to something in the neighborhood. Take a look at initial training of the diffusion model. tokenizer
-    # is all setup. Try to pass the normal tokenizer to the diffusion model. Why does the other code use valid_ds.tokenizer?
 
 @hydra.main(version_base=None, config_path='configs',
             config_name='config')
