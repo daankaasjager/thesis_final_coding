@@ -27,7 +27,7 @@ def preprocess_selfies_data(config, raw_data=None):
     """
     preproc_path = config.directory_paths.pre_processed_data
 
-    if os.path.exists(preproc_path) and config.mode.checkpointing.fresh_data == False:
+    if os.path.exists(preproc_path) and config.checkpointing.fresh_data == False:
         return load_preprocessed_data(preproc_path)
     else: 
         logger.info(f"Starting fresh preprocessing at: {preproc_path}. Proceeding with processing.")
@@ -43,7 +43,7 @@ def preprocess_selfies_data(config, raw_data=None):
         # splits and checks the SELFIES length.
         def tokenize_if_valid(s):
             tokenized = list(selfies.split_selfies(s))
-            return tokenized if len(tokenized) <= config.mode.permitted_selfies_length else None
+            return tokenized if len(tokenized) <= config.permitted_selfies_length else None
 
         raw_data['tokenized_selfies'] = raw_data['selfies'].apply(tokenize_if_valid)
         filtered_data = raw_data[raw_data['tokenized_selfies'].notnull()].copy()

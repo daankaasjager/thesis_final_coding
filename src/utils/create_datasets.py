@@ -10,17 +10,17 @@ logger = logging.getLogger(__name__)
 def check_gpu_compatibility(config):
     logger.info("Checking GPU compatibility")
     num_gpus = torch.cuda.device_count()
-    assert (config.mode.loader.global_batch_size ==
-            config.mode.loader.batch_size * config.mode.trainer.num_nodes
-            * num_gpus * config.mode.trainer.accumulate_grad_batches)
-    if config.mode.loader.global_batch_size % (num_gpus * config.mode.trainer.accumulate_grad_batches) != 0:
+    assert (config.loader.global_batch_size ==
+            config.loader.batch_size * config.m_nodes
+            * num_gpus * config.atches)
+    if config.loader.global_batch_size % (num_gpus * config.s) != 0:
         raise ValueError(
-            f'Train Batch Size {config.mode.loader.global_batch_size}'
-            f' not divisible by {num_gpus * config.mode.trainer.accumulate_grad_batches} gpus with accumulation.'
+            f'Train Batch Size {config.loader.global_batch_size}'
+            f' not divisible by {num_gpus * config.s} gpus with accumulation.'
         )
-    if config.mode.loader.eval_global_batch_size % num_gpus != 0:
+    if config.loader.eval_global_batch_size % num_gpus != 0:
         raise ValueError(
-            f'Eval Batch Size for {config.mode.loader.eval_global_batch_size}'
+            f'Eval Batch Size for {config.loader.eval_global_batch_size}'
             f' not divisible by {num_gpus}.'
         )
 
@@ -49,9 +49,9 @@ def create_train_val_dataloaders(config, tokenized_selfies_data, tokenizer):
 
     train_loader = torch.utils.data.DataLoader(
         train_dataset,
-        batch_size=config.mode.loader.batch_size,
-        num_workers=config.mode.loader.num_workers,
-        pin_memory=config.mode.loader.pin_memory,
+        batch_size=config.loader.batch_size,
+        num_workers=config.loader.num_workers,
+        pin_memory=config.loader.pin_memory,
         shuffle=not config.data.streaming,
         collate_fn=data_collator,
         persistent_workers=True
@@ -60,9 +60,9 @@ def create_train_val_dataloaders(config, tokenized_selfies_data, tokenizer):
     if val_dataset is not None and len(val_dataset) > 0:
         val_loader = torch.utils.data.DataLoader(
             val_dataset,
-            batch_size=config.mode.loader.eval_batch_size,
-            num_workers=config.mode.loader.num_workers,
-            pin_memory=config.mode.loader.pin_memory,
+            batch_size=config.loader.eval_batch_size,
+            num_workers=config.loader.num_workers,
+            pin_memory=config.loader.pin_memory,
             shuffle=False,
             collate_fn=data_collator
         )

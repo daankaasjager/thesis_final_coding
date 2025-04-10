@@ -209,16 +209,16 @@ class Diffusion(L.LightningModule):
         if distributed and self.fast_forward_epochs is not None and self.fast_forward_batches is not None:
             dl_sampler.load_state_dict({
                 "epoch": self.fast_forward_epochs,
-                "counter": self.fast_forward_batches * self.config.mode.loader.batch_size,
+                "counter": self.fast_forward_batches * self.config.loader.batch_size,
             })
 
         # FIX: Preserve the original collate_fn to avoid list conversion issue
         updated_dls.append(
             torch.utils.data.DataLoader(
                 dl.dataset,
-                batch_size=self.config.mode.loader.batch_size,
-                num_workers=self.config.mode.loader.num_workers,
-                pin_memory=self.config.mode.loader.pin_memory,
+                batch_size=self.config.loader.batch_size,
+                num_workers=self.config.loader.num_workers,
+                pin_memory=self.config.loader.pin_memory,
                 sampler=dl_sampler,
                 shuffle=False,
                 persistent_workers=True,
@@ -514,7 +514,7 @@ class Diffusion(L.LightningModule):
   @torch.no_grad()
   def _sample(self, num_steps=None, eps=1e-5):
       """Generate samples from the model with progress tracking."""
-      batch_size_per_gpu = self.config.mode.loader.eval_batch_size
+      batch_size_per_gpu = self.config.loader.eval_batch_size
       if self.parameterization == 'ar':
           return self._ar_sampler(batch_size_per_gpu)
 
@@ -860,7 +860,7 @@ class Diffusion(L.LightningModule):
       self.noise.eval()
       
       (sampling_steps, samples, sequence_lengths) = self.sample_subs_guidance(
-        n_samples=self.config.mode.loader.eval_batch_size,
+        n_samples=self.config.loader.eval_batch_size,
         stride_length=stride_length,
         num_strides=num_strides, 
         dt=dt)
