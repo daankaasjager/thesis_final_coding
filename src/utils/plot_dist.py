@@ -27,6 +27,3 @@ def plot_selfies_length_distribution(processed_data, column='selfies', bins=50, 
     # Explicitly save figure
     plt.savefig(save_path, bbox_inches='tight')
     logger.info(f"Plot saved to {os.path.abspath(save_path)}")
-
-    # Optional: explicitly show figure if your environment allows it
-    plt.show()

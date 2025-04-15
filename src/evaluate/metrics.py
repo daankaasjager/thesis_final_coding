@@ -1,185 +1,220 @@
+import os
+import re
+from collections import Counter
+import logging
+
+logger = logging.getLogger(__name__)
+
+import matplotlib.pyplot as plt
+import selfies
+
 from rdkit import Chem
 from rdkit.Chem import RDConfig
 from rdkit.Chem import Crippen
-from rdkit.Chem import Descriptors
 from rdkit.Chem import rdMolDescriptors
 from rdkit.Chem import Draw
-import selfies
-import sys
-import os
-import re
-import matplotlib.pyplot as plt
 
+import sys
 sys.path.append(os.path.join(RDConfig.RDContribDir, 'SA_Score'))
 import sascorer
 
-# ------------------------------------------------------------------------------
-# Utility Function: Remove BOS/EOS tokens
-# ------------------------------------------------------------------------------
-def remove_bos_eos_tokens(sample: str) -> str:
-    """
-    Removes [BOS] and [EOS] tokens from a SELFIES string.
-    
-    Args:
-        sample (str): A SELFIES string possibly containing [BOS] or [EOS] tokens.
-        
-    Returns:
-        str: The cleaned SELFIES string with [BOS] and [EOS] removed.
-    """
-    tokens = re.findall(r'\[[^\]]*\]', sample)
-    cleaned_tokens = [tok for tok in tokens if tok not in ("[BOS]", "[EOS]")]
-    return ''.join(cleaned_tokens)
 
-# ------------------------------------------------------------------------------
-# Helper Function: Compute a chosen metric for an RDKit Mol
-# ------------------------------------------------------------------------------
-def compute_metric(mol, metric: str) -> float:
-    """
-    Given an RDKit Mol object and a specified metric, compute the metric value.
-    
-    Args:
-        mol (rdkit.Chem.Mol): A valid RDKit Mol object
-        metric (str): The metric to calculate ('sascore', 'molweight', 'logp')
-        
-    Returns:
-        float: The computed metric value.
-    """
+
+def remove_bos_eos_tokens(sample: str) -> str:
+    tokens = re.findall(r'\[[^\]]*\]', sample)
+    return "".join(tok for tok in tokens if tok not in ("[BOS]", "[EOS]"))
+
+
+def compute_standard_metric(mol, metric: str) -> float:
     if metric == 'sascore':
         return sascorer.calculateScore(mol)
     elif metric == 'molweight':
         return rdMolDescriptors.CalcExactMolWt(mol)
     elif metric == 'logp':
         return Crippen.MolLogP(mol)
+    elif metric == 'num_rings':
+        return rdMolDescriptors.CalcNumRings(mol)
     else:
         raise ValueError(f"Unsupported metric: {metric}")
 
-# ------------------------------------------------------------------------------
-# Single Plotting Function for Any Metric
-# ------------------------------------------------------------------------------
-def plot_distribution(config, data_values, metric_name: str, name: str = "default"):
+
+def compute_token_frequency(config, samples, name):
     """
-    Plot a histogram of the given data values and save it.
-    
-    Args:
-        config: A configuration object that holds directory path information.
-        data_values (list): List of numeric values to plot.
-        metric_name (str): The name of the metric (e.g., 'sascore', 'molweight', 'logp').
-        name (str): Identifier (e.g., 'original', 'generated') for labeling/saving the plot.
+    Creates a bar chart of token frequency for the given 'samples'.
+    Saves as 'token_frequency_histogram_{name}.png'.
+    Returns None (since there's no numeric "per-molecule" result).
     """
-    if not data_values:
-        print(f"No data to plot for metric '{metric_name}'.")
+    if not config.plot_dist:
         return
 
-    mean_value = sum(data_values) / len(data_values)
+    token_pattern = re.compile(r'\[[^\]]*\]')
+    token_counts = Counter()
     
-    plt.figure(figsize=(10, 5))
-    plt.hist(data_values, bins=50, edgecolor='black', alpha=0.75, density=True)
-    plt.axvline(mean_value, color='red', linestyle='dotted', linewidth=2,
-                label=f"Mean = {mean_value:.2f}")
-    plt.title(f"Distribution of {metric_name.title()} ({name})")
-    plt.xlabel(metric_name.title())
-    plt.ylabel("Frequency")
-    plt.legend()
+    for sample in samples:
+        tokens = token_pattern.findall(sample)
+        token_counts.update(tokens)
+
+    if not token_counts:
+        return
+
+    tokens, counts = zip(*token_counts.most_common())
+    total = sum(counts)
+    norm_counts = [count / total for count in counts]
+
+    plt.figure(figsize=(12, 6))
+    plt.bar(tokens, norm_counts)
+    plt.xticks(rotation=90)
+    plt.title(f"Normalized Token Frequency Distribution ({name})")
+    plt.ylabel("Normalized Frequency")
     plt.tight_layout()
-    
-    save_path = f"{config.directory_paths.images_dir}{metric_name}_distribution_{name}.png"
+
+    save_path = os.path.join(config.directory_paths.metrics_dir, f"token_frequency_histogram_{name}.png")
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
     plt.savefig(save_path)
-    plt.show()
     plt.close()
 
+
+def compute_length_distribution(config, samples, name):
+    """
+    Creates a histogram of the number of tokens for each molecule in 'samples'.
+    Saves as 'molecule_length_histogram_{name}.png'.
+    Returns None.
+    """
+    if not config.plot_dist:
+        return
+
+    token_pattern = re.compile(r'\[[^\]]*\]')
+    lengths = []
+    for sample in samples:
+        tokens = token_pattern.findall(sample)
+        lengths.append(len(tokens))
+
+    if not lengths:
+        return
+
+    plt.figure(figsize=(10, 5))
+    bins = range(min(lengths), max(lengths) + 2)
+    plt.hist(lengths, bins=bins, align='left', edgecolor='black')
+    plt.title(f"Histogram of Molecule Lengths ({name})")
+    plt.xlabel("Number of Tokens")
+    plt.ylabel("Frequency")
+    plt.tight_layout()
+
+    save_path = os.path.join(config.directory_paths.metrics_dir, f"molecule_length_histogram_{name}.png")
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
+    plt.savefig(save_path)
+    plt.close()
+
+
 def synthesize_molecule(mol, filename):
-    """
-    Converts an RDKit Mol object to an image and saves it.
-
-    Args:
-        mol (rdkit.Chem.rdchem.Mol): The molecule to be visualized.
-        filename (str): The base path where the image will be saved (without extension).
-    """
-    # Ensure the directory exists
     os.makedirs(os.path.dirname(filename), exist_ok=True)
-
-    # Generate an image of the molecule
     img = Draw.MolToImage(mol, size=(300, 300))
+    img.save(f"{filename}.png")
 
-    # Append '.png' extension
-    filename_with_extension = f"{filename}.png"
 
-    # Save the image
-    img.save(filename_with_extension)
-
-def calculate_and_plot_metrics(config, selfies_strings, metrics, name: str = "default", use_moses: bool = False):
+def calculate_and_plot_metrics(config,
+    samples,
+    metrics,
+    name: str = "default",
+    use_moses: bool = False
+):
     """
-    Given a list of SELFIES strings, compute each metric (SAscore, MolWeight, LogP, etc.)
-    for every valid molecule, then plot the distributions of all requested metrics.
-
-    Args:
-        config: A configuration object that holds directory path information.
-        selfies_strings (list): List of SELFIES strings.
-        metrics (list): A list of metrics to compute (e.g., ['sascore', 'molweight', 'logp']).
-        name (str): Identifier (e.g., 'original', 'generated') for labeling.
-        
-    Returns:
-        dict: A dictionary where each key is a metric and each value is a list of computed values.
-    """
-    # Prepare a dictionary to hold metric values: { 'sascore': [], 'molweight': [], 'logp': [] }
-    metric_values_dict = {m: [] for m in metrics}
+    For each item in `metrics`, we check:
+      - If it's 'token_frequency' or 'length_distribution', we plot the distribution & return None.
+      - Otherwise, we treat it as a standard RDKit metric ('sascore','num_rings', etc.).
     
-    failed_smiles_count = 0
-    valid_mol_count = 0
+    Returns a dict with numeric results for all standard metrics:
+      { 'sascore': [...], 'num_rings': [...], ... }
+    (Pseudo-metrics like 'token_frequency' do not appear here.)
+    """
 
-    # First pass: convert SELFIES -> SMILES -> RDKit Mol, count failures
-    valid_mols = []  # store RDKit Mol objects for further processing
-    for selfies_str in selfies_strings:
-        # 1) Clean out BOS/EOS tokens
-        cleaned_selfies = remove_bos_eos_tokens(selfies_str)
-        
-        # 2) Convert SELFIES to SMILES
-        smiles = selfies.decoder(cleaned_selfies)
-        mol = Chem.MolFromSmiles(smiles)
-        
-        # 3) If invalid, increment fail count
-        if mol is None:
-            failed_smiles_count += 1
-        else:
-            valid_mols.append(mol)
-    if use_moses:
-        import moses
-        metrics = moses.get_all_metrics(valid_mols)
-        with open(os.path.join(config.directory_paths.images_dir, "moses_metrics.txt"), "w") as f:
-            for metric in metrics:
-                f.write(f"{metric}\n")
+    # A dict to hold numeric metrics
+    numeric_results = {}
 
-    valid_mol_count = len(valid_mols)
+    # Precompute RDKit Mols only once if we have any "standard" metrics
+    standard_metrics = [m for m in metrics if m not in ('token_frequency', 'length_distribution')]
+    valid_mols = []
+    failed_smiles = 0
 
-    # For each valid Mol, compute each requested metric
-    counter= 0
-    for mol in valid_mols:
-        for metric in metrics:
-            value = compute_metric(mol, metric)
-            if (metric == 'sascore' and value <4):
-                synthesize_molecule(mol, os.path.join(config.directory_paths.images_dir, str(counter)))
-                counter +=1
-            if counter > 100:
-                return
-            metric_values_dict[metric].append(value)
+    # Only if we have standard metrics, convert samples -> Mols
+    if standard_metrics:
+        for selfies_str in samples:
+            cleaned = remove_bos_eos_tokens(selfies_str)
+            smiles = selfies.decoder(cleaned)
+            mol = Chem.MolFromSmiles(smiles)
+            if mol is None:
+                failed_smiles += 1
+            else:
+                valid_mols.append(mol)
 
-    # Print overarching success/failure
-    print(f"Number of failed SMILES: {failed_smiles_count}")
-    print(f"Number of valid SMILES: {valid_mol_count}\n")
+        if use_moses:
+            import moses
+            moses_metrics = moses.get_all_metrics(valid_mols)
+            # to do
 
-    # Plot distributions and print stats for each metric
+        print(f"[{name.upper()}] - Standard metric Mols: {len(valid_mols)} valid, {failed_smiles} failed.\n")
+
+    # Now iterate over requested metrics
     for metric in metrics:
-        values = metric_values_dict[metric]
-        if values:
-            avg_val = sum(values) / len(values)
-            print(f"Metric: {metric}")
-            print(f"  Average {metric}: {avg_val:.3f}")
-            print(f"  Values count: {len(values)}")
-        else:
-            print(f"Metric: {metric}")
-            print(f"  No valid values computed.")
+        if metric == 'token_frequency':
+            compute_token_frequency(config, samples, name)
+            continue
 
-        # Plot distribution for each metric
-        plot_distribution(config, values, metric, name)
-    
-    return metric_values_dict
+        if metric == 'length_distribution':
+            compute_length_distribution(config, samples, name)
+            continue
+
+        # Standard RDKit metrics
+        metric_values = []
+        synth_counter = 0
+        for mol in valid_mols:
+            value = compute_standard_metric(mol, metric)
+            if value is None:
+                # print the failed smiles molecule
+                logger.info(f"[{name.upper()}] Invalid {metric} value for molecule: {Chem.MolToSmiles(mol)}")
+            else:
+                metric_values.append(value)
+
+            # e.g. if metric is sascore < 4 => save image
+            if metric == 'sascore' and value != None and value < 4:
+                outpath = os.path.join(
+                    config.directory_paths.synthesize_dir,
+                    f"synthesized_{name}_{synth_counter}"
+                )
+                synthesize_molecule(mol, outpath)
+                synth_counter += 1
+                if synth_counter >= 100:
+                    break
+
+        # Store the results in the dictionary
+        numeric_results[metric] = metric_values
+        logger.info(f"[{name.upper()}] Metric: {metric} -> {len(metric_values)} values.")   
+        # Print stats & optional distribution
+        if len(metric_values) > 0:
+            avg_val = sum(metric_values) / len(metric_values)
+            print(f"[{name.upper()}] Metric: {metric}")
+            print(f"  Average {metric}: {avg_val:.3f}")
+            print(f"  Count: {len(metric_values)}")
+
+            if config.plot_dist:
+                plt.figure(figsize=(10, 5))
+                plt.hist(metric_values, bins=50, edgecolor='black', alpha=0.75, density=True)
+                plt.axvline(avg_val, color='red', linestyle='dotted', linewidth=2,
+                            label=f"Mean={avg_val:.2f}")
+                plt.title(f"Distribution of {metric.title()} ({name})")
+                plt.xlabel(metric.title())
+                plt.ylabel("Frequency")
+                plt.legend()
+                plt.tight_layout()
+
+                save_path = os.path.join(
+                    config.directory_paths.metrics_dir,
+                    f"{metric}_distribution_{name}.png"
+                )
+                os.makedirs(os.path.dirname(save_path), exist_ok=True)
+                plt.savefig(save_path)
+                plt.close()
+        else:
+            print(f"[{name.upper()}] Metric: {metric} -> No valid values.")
+
+    return numeric_results

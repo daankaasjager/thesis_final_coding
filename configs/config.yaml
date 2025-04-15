@@ -5,7 +5,7 @@ defaults:
   - /noise: loglinear # Model appeared invariant to noise schedule types in MDLM paper
   - /model: small
   - /lr_scheduler: constant_warmup # cosine decay not implemented yet
-  - /mode: sample  # train / sample /evaluate_samples
+  - /mode: evaluate_samples  # train / sample /evaluate_samples
 
 train_test_split:
   train: 0.8
@@ -18,7 +18,8 @@ directory_paths:
   pre_processed_data: data/kraken/preprocessed_data.pt
   cache_dir: /kraken_cache/data
   sampled_data: data/kraken/sampled_data
-  images_dir: data/kraken/images
+  metrics_dir: data/kraken/metrics
+  synthesize_dir: data/kraken/synthesize
 
 seed: 1
 
@@ -29,8 +30,9 @@ parameterization: subs  # subs / d3pm / sedd
 time_conditioning: False
 T: 0  # 0 (continuous time) / 1000 
 subs_masking: False #prevents unmasking during training SET TO TRUE LATER FOR TESTING
-plot_dist: False
+plot_dist: True
 row_limit: 1000
+overwrite_original: False
 
 
 checkpointing:
