@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --time=3:00:00
+#SBATCH --time=8:00:00
 #SBATCH --partition=gpu
 #SBATCH --nodes=1
 #SBATCH --gpus-per-node=a100:4
@@ -12,10 +12,10 @@ module load Python/3.11.5-GCCcore-13.2.0
 module load CUDA/12.1.1
 
 
-source $HOME/venvs/thesis/bin/activate
+source /scratch/s3905845/venvs/thesis/bin/activate
 
 # (B) Print out which python just to check
 echo "venv, python is: $(which python)"
 
-srun python main.py sampling.num_sample_batches=4800
+srun python main.py mode=train 
 

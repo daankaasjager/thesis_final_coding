@@ -1,0 +1,327 @@
+config:
+  T: 0
+  backbone: dit
+  callbacks:
+    checkpoint_every_n_steps:
+      _target_: lightning.pytorch.callbacks.ModelCheckpoint
+      auto_insert_metric_name: false
+      dirpath: /scratch/s3905845/thesis_final_coding/checkpoints
+      every_n_train_steps: 4000
+      save_last: true
+      save_top_k: -1
+      verbose: true
+    checkpoint_monitor:
+      _target_: lightning.pytorch.callbacks.ModelCheckpoint
+      auto_insert_metric_name: false
+      dirpath: /scratch/s3905845/thesis_final_coding/checkpoints
+      filename: best
+      mode: min
+      monitor: val/nll
+      save_last: false
+      save_top_k: 1
+      verbose: true
+    learning_rate_monitor:
+      _target_: lightning.pytorch.callbacks.LearningRateMonitor
+      logging_interval: step
+  data:
+    cache_dir: /scratch/s3905845/thesis_final_coding/data/cache_dir/kraken
+    streaming: false
+    tokenizer_name_or_path: selfies-wordlevel
+    train: kraken-train
+    valid: kraken-valid
+    wrap: true
+  diffusion: absorbing_state
+  directory_paths:
+    cache_dir: /kraken_cache/data
+    images_dir: /scratch/s3905845/thesis_final_coding/data/kraken/images
+    pre_processed_data: /scratch/s3905845/thesis_final_coding/data/kraken/preprocessed_data.pt
+    raw_data: /scratch/s3905845/thesis_final_coding/data/kraken/descriptors_v3.csv
+    sampled_data: /scratch/s3905845/thesis_final_coding/data/kraken/sampled_data/generated_samples.json
+    tokenizer: /scratch/s3905845/thesis_final_coding/data/vocab_list/tokenizer
+    train_data_encoding: /scratch/s3905845/thesis_final_coding/data/vocab_list/train_data_encoding.pt
+  eval:
+    checkpoint_path: /scratch/s3905845/thesis_final_coding/checkpoints/best-v1.ckpt
+    disable_ema: false
+    generate_samples: true
+  lr_scheduler:
+    _target_: transformers.get_constant_schedule_with_warmup
+    num_warmup_steps: 2500
+  mode:
+    checkpointing:
+      fresh_data: false
+      resume_ckpt_path: /scratch/s3905845/thesis_final_coding/checkpoints/best-v1.ckpt
+      resume_from_ckpt: false
+      save_dir: /scratch/s3905845/thesis_final_coding
+    loader:
+      batch_size: 8
+      eval_batch_size: 8
+      eval_global_batch_size: 16
+      global_batch_size: 16
+      num_workers: 4
+      pin_memory: true
+    name: train
+    permitted_selfies_length: 175
+    row_limit: 10
+    trainer:
+      _target_: lightning.Trainer
+      accelerator: auto
+      accumulate_grad_batches: 1
+      devices: 2
+      gradient_clip_val: 1.0
+      limit_train_batches: 1.0
+      limit_val_batches: 1.0
+      log_every_n_steps: 10
+      max_steps: 1000000
+      num_nodes: 1
+      num_sanity_val_steps: 1
+      precision: '32'
+      strategy: auto
+      val_check_interval: null
+    wandb:
+      group: null
+      id: reshape_1
+      job_type: training
+      name: reshape
+      notes: testing a selfies model
+      project: SELFIES-diffusion
+      tags:
+      - loglinear
+      - kraken-train
+      - kraken-valid
+  model:
+    cond_dim: 128
+    dropout: 0.1
+    hidden_size: 768
+    length: 256
+    n_blocks: 12
+    n_heads: 12
+    name: small
+    scale_by_sigma: true
+    tie_word_embeddings: false
+    type: ddit
+  noise:
+    sigma_max: 20
+    sigma_min: 0.0001
+    type: loglinear
+  optim:
+    beta1: 0.9
+    beta2: 0.999
+    eps: 1.0e-08
+    lr: 0.0003
+    weight_decay: 0
+  parameterization: subs
+  permitted_selfies_length: 175
+  plot_dist: false
+  sampling:
+    noise_removal: true
+    num_sample_batches: 12
+    num_sample_log: 2
+    num_strides: 16
+    predictor: ddpm_cache
+    semi_ar: true
+    steps: 128
+    stride_length: 4
+  seed: 1
+  subs_masking: false
+  time_conditioning: false
+  train_test_split:
+    train: 0.8
+    valid: 0.2
+  training:
+    antithetic_sampling: true
+    change_of_variables: false
+    ema: 0.9999
+    importance_sampling: false
+    sampling_eps: 0.001
+tokenizer: !!python/object:src.tokenizer.SelfiesTokenizer
+  SPECIAL_TOKENS_ATTRIBUTES:
+  - bos_token
+  - eos_token
+  - unk_token
+  - sep_token
+  - pad_token
+  - cls_token
+  - mask_token
+  - additional_special_tokens
+  _decode_use_source_tokenizer: false
+  _in_target_context_manager: false
+  _pad_token_type_id: 0
+  _processor_class: null
+  _special_tokens_map:
+    additional_special_tokens: []
+    bos_token: !!python/object:tokenizers.AddedToken
+      content: '[BOS]'
+      lstrip: false
+      normalized: false
+      rstrip: false
+      single_word: false
+      special: true
+    cls_token: !!python/object:tokenizers.AddedToken
+      content: '[CLS]'
+      lstrip: false
+      normalized: false
+      rstrip: false
+      single_word: false
+      special: true
+    eos_token: !!python/object:tokenizers.AddedToken
+      content: '[EOS]'
+      lstrip: false
+      normalized: false
+      rstrip: false
+      single_word: false
+      special: true
+    mask_token: !!python/object:tokenizers.AddedToken
+      content: '[MASK]'
+      lstrip: false
+      normalized: false
+      rstrip: false
+      single_word: false
+      special: true
+    pad_token: !!python/object:tokenizers.AddedToken
+      content: '[PAD]'
+      lstrip: false
+      normalized: false
+      rstrip: false
+      single_word: false
+      special: true
+    sep_token: !!python/object:tokenizers.AddedToken
+      content: '[SEP]'
+      lstrip: false
+      normalized: false
+      rstrip: false
+      single_word: false
+      special: true
+    unk_token: !!python/object:tokenizers.AddedToken
+      content: '[UNK]'
+      lstrip: false
+      normalized: false
+      rstrip: false
+      single_word: false
+      special: true
+  _tokenizer: !!python/object/new:tokenizers.Tokenizer
+    args:
+    - !!python/object/new:tokenizers.models.Model
+      state: !!binary |
+        eyJ0eXBlIjoiQlBFIiwiZHJvcG91dCI6bnVsbCwidW5rX3Rva2VuIjpudWxsLCJjb250aW51aW5n
+        X3N1YndvcmRfcHJlZml4IjpudWxsLCJlbmRfb2Zfd29yZF9zdWZmaXgiOm51bGwsImZ1c2VfdW5r
+        IjpmYWxzZSwiYnl0ZV9mYWxsYmFjayI6ZmFsc2UsImlnbm9yZV9tZXJnZXMiOmZhbHNlLCJ2b2Nh
+        YiI6e30sIm1lcmdlcyI6W119
+    state: !!binary |
+      eyJ2ZXJzaW9uIjoiMS4wIiwidHJ1bmNhdGlvbiI6bnVsbCwicGFkZGluZyI6bnVsbCwiYWRkZWRf
+      dG9rZW5zIjpbeyJpZCI6MCwiY29udGVudCI6IltCT1NdIiwic2luZ2xlX3dvcmQiOmZhbHNlLCJs
+      c3RyaXAiOmZhbHNlLCJyc3RyaXAiOmZhbHNlLCJub3JtYWxpemVkIjpmYWxzZSwic3BlY2lhbCI6
+      dHJ1ZX0seyJpZCI6MSwiY29udGVudCI6IltFT1NdIiwic2luZ2xlX3dvcmQiOmZhbHNlLCJsc3Ry
+      aXAiOmZhbHNlLCJyc3RyaXAiOmZhbHNlLCJub3JtYWxpemVkIjpmYWxzZSwic3BlY2lhbCI6dHJ1
+      ZX0seyJpZCI6MiwiY29udGVudCI6IltTRVBdIiwic2luZ2xlX3dvcmQiOmZhbHNlLCJsc3RyaXAi
+      OmZhbHNlLCJyc3RyaXAiOmZhbHNlLCJub3JtYWxpemVkIjpmYWxzZSwic3BlY2lhbCI6dHJ1ZX0s
+      eyJpZCI6MywiY29udGVudCI6IltDTFNdIiwic2luZ2xlX3dvcmQiOmZhbHNlLCJsc3RyaXAiOmZh
+      bHNlLCJyc3RyaXAiOmZhbHNlLCJub3JtYWxpemVkIjpmYWxzZSwic3BlY2lhbCI6dHJ1ZX0seyJp
+      ZCI6NCwiY29udGVudCI6IltQQURdIiwic2luZ2xlX3dvcmQiOmZhbHNlLCJsc3RyaXAiOmZhbHNl
+      LCJyc3RyaXAiOmZhbHNlLCJub3JtYWxpemVkIjpmYWxzZSwic3BlY2lhbCI6dHJ1ZX0seyJpZCI6
+      NSwiY29udGVudCI6IltNQVNLXSIsInNpbmdsZV93b3JkIjpmYWxzZSwibHN0cmlwIjpmYWxzZSwi
+      cnN0cmlwIjpmYWxzZSwibm9ybWFsaXplZCI6ZmFsc2UsInNwZWNpYWwiOnRydWV9LHsiaWQiOjYs
+      ImNvbnRlbnQiOiJbVU5LXSIsInNpbmdsZV93b3JkIjpmYWxzZSwibHN0cmlwIjpmYWxzZSwicnN0
+      cmlwIjpmYWxzZSwibm9ybWFsaXplZCI6ZmFsc2UsInNwZWNpYWwiOnRydWV9XSwibm9ybWFsaXpl
+      ciI6bnVsbCwicHJlX3Rva2VuaXplciI6bnVsbCwicG9zdF9wcm9jZXNzb3IiOm51bGwsImRlY29k
+      ZXIiOm51bGwsIm1vZGVsIjp7InR5cGUiOiJXb3JkTGV2ZWwiLCJ2b2NhYiI6eyJbQk9TXSI6MCwi
+      W0VPU10iOjEsIltTRVBdIjoyLCJbQ0xTXSI6MywiW1BBRF0iOjQsIltNQVNLXSI6NSwiW1VOS10i
+      OjYsIltDXSI6NywiWyNCcmFuY2gyXSI6OCwiWz1DXSI6OSwiW1BdIjoxMCwiWz1CcmFuY2gxXSI6
+      MTEsIltOXSI6MTIsIltSaW5nMV0iOjEzLCJbPUJyYW5jaDJdIjoxNCwiWz1OXSI6MTUsIlsjQ10i
+      OjE2LCJbRl0iOjE3LCJbQnJhbmNoMl0iOjE4LCJbT10iOjE5LCJbQnJhbmNoMV0iOjIwLCJbL0Nd
+      IjoyMSwiW1JpbmcyXSI6MjIsIlsjQnJhbmNoMV0iOjIzfSwidW5rX3Rva2VuIjoiW1VOS10ifX0=
+  add_prefix_space: false
+  chat_template: null
+  clean_up_tokenization_spaces: false
+  deprecation_warnings: {}
+  extra_special_tokens: {}
+  init_inputs: !!python/tuple []
+  init_kwargs:
+    bos_token: !!python/object:tokenizers.AddedToken
+      content: '[BOS]'
+      lstrip: false
+      normalized: false
+      rstrip: false
+      single_word: false
+      special: true
+    clean_up_tokenization_spaces: false
+    cls_token: !!python/object:tokenizers.AddedToken
+      content: '[CLS]'
+      lstrip: false
+      normalized: false
+      rstrip: false
+      single_word: false
+      special: true
+    eos_token: !!python/object:tokenizers.AddedToken
+      content: '[EOS]'
+      lstrip: false
+      normalized: false
+      rstrip: false
+      single_word: false
+      special: true
+    extra_special_tokens: {}
+    mask_token: !!python/object:tokenizers.AddedToken
+      content: '[MASK]'
+      lstrip: false
+      normalized: false
+      rstrip: false
+      single_word: false
+      special: true
+    model_max_length: 1000000000000000019884624838656
+    name_or_path: /scratch/s3905845/thesis_final_coding/data/vocab_list/tokenizer
+    pad_token: !!python/object:tokenizers.AddedToken
+      content: '[PAD]'
+      lstrip: false
+      normalized: false
+      rstrip: false
+      single_word: false
+      special: true
+    sep_token: !!python/object:tokenizers.AddedToken
+      content: '[SEP]'
+      lstrip: false
+      normalized: false
+      rstrip: false
+      single_word: false
+      special: true
+    unk_token: !!python/object:tokenizers.AddedToken
+      content: '[UNK]'
+      lstrip: false
+      normalized: false
+      rstrip: false
+      single_word: false
+      special: true
+    vocab_file: null
+  model_input_names:
+  - input_ids
+  - token_type_ids
+  - attention_mask
+  model_max_length: 1000000000000000019884624838656
+  name_or_path: /scratch/s3905845/thesis_final_coding/data/vocab_list/tokenizer
+  padding_side: right
+  split_special_tokens: false
+  truncation_side: right
+  verbose: false
+  vocab_dict:
+    '[#Branch1]': 23
+    '[#Branch2]': 8
+    '[#C]': 16
+    '[/C]': 21
+    '[=Branch1]': 11
+    '[=Branch2]': 14
+    '[=C]': 9
+    '[=N]': 15
+    '[BOS]': 0
+    '[Branch1]': 20
+    '[Branch2]': 18
+    '[CLS]': 3
+    '[C]': 7
+    '[EOS]': 1
+    '[F]': 17
+    '[MASK]': 5
+    '[N]': 12
+    '[O]': 19
+    '[PAD]': 4
+    '[P]': 10
+    '[Ring1]': 13
+    '[Ring2]': 22
+    '[SEP]': 2
+    '[UNK]': 6
