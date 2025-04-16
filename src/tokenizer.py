@@ -2,7 +2,6 @@ import os
 import math
 import torch
 import logging
-import pandas as pd
 from typing import Set
 from transformers import PreTrainedTokenizerFast
 from tokenizers import Tokenizer
@@ -59,6 +58,8 @@ class SelfiesTokenizer(PreTrainedTokenizerFast):
                     vocab_dict[symbol] = idx
                     idx += 1
             tokenizer_backend = Tokenizer(WordLevel(vocab=vocab_dict, unk_token=unk_token))
+            tokenizer_backend.add_special_tokens([bos_token, eos_token, sep_token, cls_token, pad_token, mask_token, unk_token])
+    
             super().__init__(
                 tokenizer_object=tokenizer_backend,
                 bos_token=bos_token,

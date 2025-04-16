@@ -5,7 +5,7 @@ defaults:
   - /noise: loglinear # Model appeared invariant to noise schedule types in MDLM paper
   - /model: small
   - /lr_scheduler: constant_warmup # cosine decay not implemented yet
-  - /mode: evaluate_samples  # train / sample /evaluate_samples
+  - /mode: train  # train / sample /evaluate_samples
 
 train_test_split:
   train: 0.8
@@ -30,9 +30,9 @@ parameterization: subs  # subs / d3pm / sedd
 time_conditioning: False
 T: 0  # 0 (continuous time) / 1000 
 subs_masking: False #prevents unmasking during training SET TO TRUE LATER FOR TESTING
-plot_dist: True
-row_limit: 1000
-overwrite_original: False
+plot_dist: True # this is for evaluating samples
+row_limit: Null
+overwrite_original: False # this is for evaluating samples
 
 
 checkpointing:
@@ -46,7 +46,7 @@ wandb:
   notes: testing a selfies model
   group: null # Groups related runs
   job_type: training # Type of job (e.g., training, evaluation)
-  name: reshape # Name of the run
+  name: tokenizer_update # Name of the run
   id: ${.name}_${seed} #Sets unique name and seed
   tags:
     - ${noise.type} # Sets metadata tags for filtering runs
@@ -72,7 +72,7 @@ sampling:
   noise_removal: True
   num_sample_batches: 12  # Total samples: `loader.eval_batch_size` * num_sample_batches
   num_sample_log: 2
-  semi_ar: True
+  semi_ar: False
   num_strides: 16
   stride_length: 4
 
@@ -107,7 +107,7 @@ trainer:
   precision: '32' # BF16 float precision is better. CHANGE FOR LINUX
   num_sanity_val_steps: 1 # Runs 1 validation steps before training
   max_steps: 1_000_000 # Maximum number of training steps
-  log_every_n_steps: 10 # log metrics every 10 steps
+  log_every_n_steps: 45 # log metrics every 10 steps
   limit_train_batches: 1.0   # train on full dataset, can be used to toggle quick run
   limit_val_batches: 0.1     # validate on full dataset, can be used to toggle quick run
-  val_check_interval: 1 # Run validation every epoch (too often right now)
+  val_check_interval: 0.9 # Run validation every epoch (too often right now)

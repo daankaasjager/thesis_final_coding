@@ -19,10 +19,10 @@ def run_model(config, tokenizer, train_dataloader, val_dataloader, ckpt_path, ca
     model = diffusion.Diffusion(config, tokenizer=tokenizer)
     # print_batch(train_dataloader, val_dataloader, tokenizer) # takes a a long time so only run if necessary.
     trainer = hydra.utils.instantiate(
-      config.er,
+      config.trainer,
       default_root_dir=os.getcwd(),
       callbacks=callbacks,
-      strategy=config.rategy,
+      strategy=config.trainer.strategy,
       logger=wandb_logger
     )
     trainer.fit(model, train_dataloader, val_dataloader, ckpt_path=ckpt_path)

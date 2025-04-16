@@ -11,12 +11,12 @@ def check_gpu_compatibility(config):
     logger.info("Checking GPU compatibility")
     num_gpus = torch.cuda.device_count()
     assert (config.loader.global_batch_size ==
-            config.loader.batch_size * config.m_nodes
-            * num_gpus * config.atches)
-    if config.loader.global_batch_size % (num_gpus * config.s) != 0:
+            config.loader.batch_size * config.trainer.num_nodes
+            * num_gpus * config.trainer.accumulate_grad_batches)
+    if config.loader.global_batch_size % (num_gpus * config.trainer.accumulate_grad_batches) != 0:
         raise ValueError(
             f'Train Batch Size {config.loader.global_batch_size}'
-            f' not divisible by {num_gpus * config.s} gpus with accumulation.'
+            f' not divisible by {num_gpus * config.trainer.accumulate_grad_batches} gpus with accumulation.'
         )
     if config.loader.eval_global_batch_size % num_gpus != 0:
         raise ValueError(
