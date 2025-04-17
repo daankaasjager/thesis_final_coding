@@ -44,7 +44,7 @@ checkpointing:
   save_dir: ${cwd:}
   resume_from_ckpt: false
   resume_ckpt_path: ${cwd:}/checkpoints/best-v1.ckpt
-  fresh_data: true
+  fresh_data: false
   retrain_tokenizer: True
 
 wandb:

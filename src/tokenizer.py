@@ -1,3 +1,4 @@
+from curses import raw
 import os
 import logging
 import re
@@ -6,8 +7,7 @@ import torch
 
 from transformers import PreTrainedTokenizerFast
 # Make sure necessary imports are present
-from tokenizers import Tokenizer, NormalizedString, PreTokenizedString, Regex
-from tokenizers.pre_tokenizers import PreTokenizer
+from tokenizers import Tokenizer, AddedToken
 from tokenizers.models import WordLevel, BPE # Import models if used below
 from tokenizers.trainers import WordLevelTrainer, BpeTrainer # Import trainers if used belo
 from transformers import PreTrainedTokenizerFast
@@ -56,15 +56,14 @@ def train_or_load_selfies_tokenizer(config):
             tokenizer.pre_tokenizer = pre_tokenizers.WhitespaceSplit()
         elif config.tokenizer_type == "bpe":
             tokenizer = Tokenizer(models.BPE(unk_token="[UNK]"))
+            tokenizer.pre_tokenizer = pre_tokenizers.ByteLevel(add_prefix_space=False)
             tokenizer.add_special_tokens(special_tokens)
-            tokenizer.add_tokens(raw_tokens) 
-            tokenizer.pre_tokenizer = pre_tokenizers.WhitespaceSplit()
-            corpus_txt = Path(config.directory_paths.selfies_txt)   # one molecule per line
+            tokenizer.add_tokens([AddedToken(t, normalized=False) for t in raw_tokens])
+            corpus_txt = Path(config.directory_paths.selfies_nospace_txt)   # one molecule per line
             merges_to_learn = 50             # change in config later
             trainer = BpeTrainer(
                 vocab_size=len(raw_tokens) + merges_to_learn,
-                special_tokens=special_tokens,
-                initial_alphabet=raw_tokens,                       # keep atoms unchanged :contentReference[oaicite:9]{index=9}
+                special_tokens=special_tokens,             
                 show_progress=True
             )
             tokenizer.train([str(corpus_txt)], trainer)  
@@ -88,7 +87,7 @@ def train_or_load_selfies_tokenizer(config):
             unk_token="[UNK]",
         )
         selfies_tokenizer.save_pretrained("selfies_wordlevel")
-        example = "[C] [Branch1] [=C] as"
+        example = "[C][Branch1][=C]"
         out = selfies_tokenizer(example)
         print(out.tokens())          # ← need parentheses; .tokens is a method
         # ['[BOS]', '[C]', '[Branch1]', '[=C]', '[EOS]']

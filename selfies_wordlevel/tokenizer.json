@@ -1,0 +1,728 @@
+{
+  "version": "1.0",
+  "truncation": null,
+  "padding": {
+    "strategy": "BatchLongest",
+    "direction": "Right",
+    "pad_to_multiple_of": null,
+    "pad_id": 4,
+    "pad_type_id": 0,
+    "pad_token": "[PAD]"
+  },
+  "added_tokens": [
+    {
+      "id": 0,
+      "content": "[BOS]",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    {
+      "id": 1,
+      "content": "[EOS]",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    {
+      "id": 2,
+      "content": "[SEP]",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    {
+      "id": 3,
+      "content": "[CLS]",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    {
+      "id": 4,
+      "content": "[PAD]",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    {
+      "id": 5,
+      "content": "[MASK]",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    {
+      "id": 6,
+      "content": "[UNK]",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    {
+      "id": 61,
+      "content": "[#Branch1]",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    {
+      "id": 62,
+      "content": "[#Branch2]",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    {
+      "id": 63,
+      "content": "[#C]",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    {
+      "id": 64,
+      "content": "[#N]",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    {
+      "id": 65,
+      "content": "[/Br]",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    {
+      "id": 66,
+      "content": "[/C]",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    {
+      "id": 67,
+      "content": "[/N]",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    {
+      "id": 68,
+      "content": "[=Branch1]",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    {
+      "id": 69,
+      "content": "[=Branch2]",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    {
+      "id": 70,
+      "content": "[=C]",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    {
+      "id": 71,
+      "content": "[=N+1]",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    {
+      "id": 72,
+      "content": "[=N]",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    {
+      "id": 73,
+      "content": "[=O]",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    {
+      "id": 74,
+      "content": "[=P]",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    {
+      "id": 75,
+      "content": "[=Ring1]",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    {
+      "id": 76,
+      "content": "[=Ring2]",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    {
+      "id": 77,
+      "content": "[=S]",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    {
+      "id": 78,
+      "content": "[B]",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    {
+      "id": 79,
+      "content": "[Br]",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    {
+      "id": 80,
+      "content": "[Branch1]",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    {
+      "id": 81,
+      "content": "[Branch2]",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    {
+      "id": 82,
+      "content": "[Branch3]",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    {
+      "id": 83,
+      "content": "[C-1]",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    {
+      "id": 84,
+      "content": "[C@@H1]",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    {
+      "id": 85,
+      "content": "[C@@]",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    {
+      "id": 86,
+      "content": "[C@H1]",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    {
+      "id": 87,
+      "content": "[C@]",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    {
+      "id": 88,
+      "content": "[C]",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    {
+      "id": 89,
+      "content": "[Cl]",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    {
+      "id": 90,
+      "content": "[F]",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    {
+      "id": 91,
+      "content": "[Fe]",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    {
+      "id": 92,
+      "content": "[H]",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    {
+      "id": 93,
+      "content": "[I]",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    {
+      "id": 94,
+      "content": "[N+1]",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    {
+      "id": 95,
+      "content": "[NH1]",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    {
+      "id": 96,
+      "content": "[N]",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    {
+      "id": 97,
+      "content": "[O-1]",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    {
+      "id": 98,
+      "content": "[O]",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    {
+      "id": 99,
+      "content": "[P+1]",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    {
+      "id": 100,
+      "content": "[P]",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    {
+      "id": 101,
+      "content": "[Ring1]",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    {
+      "id": 102,
+      "content": "[Ring2]",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    {
+      "id": 103,
+      "content": "[S]",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    {
+      "id": 104,
+      "content": "[Se]",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    {
+      "id": 105,
+      "content": "[Si]",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    {
+      "id": 106,
+      "content": "[Sn]",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    },
+    {
+      "id": 107,
+      "content": "[\\C]",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": false
+    }
+  ],
+  "normalizer": null,
+  "pre_tokenizer": {
+    "type": "ByteLevel",
+    "add_prefix_space": false,
+    "trim_offsets": true,
+    "use_regex": true
+  },
+  "post_processor": {
+    "type": "TemplateProcessing",
+    "single": [
+      {
+        "SpecialToken": {
+          "id": "[BOS]",
+          "type_id": 0
+        }
+      },
+      {
+        "Sequence": {
+          "id": "A",
+          "type_id": 0
+        }
+      },
+      {
+        "SpecialToken": {
+          "id": "[EOS]",
+          "type_id": 0
+        }
+      }
+    ],
+    "pair": [
+      {
+        "Sequence": {
+          "id": "A",
+          "type_id": 0
+        }
+      },
+      {
+        "Sequence": {
+          "id": "B",
+          "type_id": 1
+        }
+      }
+    ],
+    "special_tokens": {
+      "[BOS]": {
+        "id": "[BOS]",
+        "ids": [
+          0
+        ],
+        "tokens": [
+          "[BOS]"
+        ]
+      },
+      "[EOS]": {
+        "id": "[EOS]",
+        "ids": [
+          1
+        ],
+        "tokens": [
+          "[EOS]"
+        ]
+      }
+    }
+  },
+  "decoder": null,
+  "model": {
+    "type": "BPE",
+    "dropout": null,
+    "unk_token": "[UNK]",
+    "continuing_subword_prefix": null,
+    "end_of_word_suffix": null,
+    "fuse_unk": false,
+    "byte_fallback": false,
+    "ignore_merges": false,
+    "vocab": {
+      "[BOS]": 0,
+      "[EOS]": 1,
+      "[SEP]": 2,
+      "[CLS]": 3,
+      "[PAD]": 4,
+      "[MASK]": 5,
+      "[UNK]": 6,
+      "#": 7,
+      "+": 8,
+      "-": 9,
+      "/": 10,
+      "1": 11,
+      "2": 12,
+      "=": 13,
+      "@": 14,
+      "B": 15,
+      "C": 16,
+      "F": 17,
+      "H": 18,
+      "I": 19,
+      "N": 20,
+      "O": 21,
+      "P": 22,
+      "R": 23,
+      "S": 24,
+      "[": 25,
+      "\\": 26,
+      "]": 27,
+      "a": 28,
+      "c": 29,
+      "e": 30,
+      "g": 31,
+      "h": 32,
+      "i": 33,
+      "l": 34,
+      "n": 35,
+      "r": 36,
+      "Ċ": 37,
+      "Ġ": 38,
+      "Ġ[": 39,
+      "Ġ[=": 40,
+      "Br": 41,
+      "an": 42,
+      "ch": 43,
+      "Bran": 44,
+      "Branch": 45,
+      "Ri": 46,
+      "ng": 47,
+      "Ring": 48,
+      "Ġ[#": 49,
+      "Si": 50,
+      "Cl": 51,
+      "Ġ[/": 52,
+      "@@": 53,
+      "NH": 54,
+      "Sn": 55,
+      "Fe": 56,
+      "@]": 57,
+      "Ġ[\\": 58,
+      "@@]": 59,
+      "Se": 60
+    },
+    "merges": [
+      [
+        "Ġ",
+        "["
+      ],
+      [
+        "Ġ[",
+        "="
+      ],
+      [
+        "B",
+        "r"
+      ],
+      [
+        "a",
+        "n"
+      ],
+      [
+        "c",
+        "h"
+      ],
+      [
+        "Br",
+        "an"
+      ],
+      [
+        "Bran",
+        "ch"
+      ],
+      [
+        "R",
+        "i"
+      ],
+      [
+        "n",
+        "g"
+      ],
+      [
+        "Ri",
+        "ng"
+      ],
+      [
+        "Ġ[",
+        "#"
+      ],
+      [
+        "S",
+        "i"
+      ],
+      [
+        "C",
+        "l"
+      ],
+      [
+        "Ġ[",
+        "/"
+      ],
+      [
+        "@",
+        "@"
+      ],
+      [
+        "N",
+        "H"
+      ],
+      [
+        "S",
+        "n"
+      ],
+      [
+        "F",
+        "e"
+      ],
+      [
+        "@",
+        "]"
+      ],
+      [
+        "Ġ[",
+        "\\"
+      ],
+      [
+        "@@",
+        "]"
+      ],
+      [
+        "S",
+        "e"
+      ]
+    ]
+  }
+}
