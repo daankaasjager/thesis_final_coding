@@ -44,6 +44,7 @@ def train_model_from_scratch(config, callbacks, wandb_logger):
         # read in the raw data
         raw_data = fast_csv_to_df_reader(config.directory_paths.raw_data, row_limit=config.row_limit)
         selfies_vocab, data = preprocess_selfies_data(config, raw_data)
+        print(selfies_vocab)
     else:
         logger.info("Training model from scratch. Tokenized data will be loaded.")
         # This just loads the preprocessed data if it can find the path

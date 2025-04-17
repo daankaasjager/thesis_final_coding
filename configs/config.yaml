@@ -20,7 +20,9 @@ directory_paths:
   sampled_data: data/kraken/sampled_data
   metrics_dir: data/kraken/metrics
   synthesize_dir: data/kraken/synthesize
-  selfies_txt: data/kraken/selfies.txt
+  selfies_nospace_txt: data/kraken/selfies_nospace.txt
+  selfies_whitespace_txt: data/kraken/selfies_whitespace.txt
+  selfies_alphabet: data/kraken/selfies_alphabet.txt
 
 seed: 1
 
@@ -32,9 +34,9 @@ time_conditioning: False
 T: 0  # 0 (continuous time) / 1000 
 subs_masking: False #prevents unmasking during training SET TO TRUE LATER FOR TESTING
 plot_dist: True # this is for evaluating samples
-row_limit: 5000
+row_limit: null
 overwrite_original: False # this is for evaluating samples
-tokenizer_type: wordlevel # wordlevel, etc.
+tokenizer_type: bpe # wordlevel, etc.
 vocab_size: 51
 min_frequency: 1
 

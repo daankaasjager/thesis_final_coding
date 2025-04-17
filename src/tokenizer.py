@@ -9,52 +9,24 @@ from transformers import PreTrainedTokenizerFast
 from tokenizers import Tokenizer, NormalizedString, PreTokenizedString, Regex
 from tokenizers.pre_tokenizers import PreTokenizer
 from tokenizers.models import WordLevel, BPE # Import models if used below
-from tokenizers.trainers import WordLevelTrainer, BpeTrainer # Import trainers if used below
-
+from tokenizers.trainers import WordLevelTrainer, BpeTrainer # Import trainers if used belo
+from transformers import PreTrainedTokenizerFast
+from collections import OrderedDict
+from pathlib import Path
+from tokenizers import Tokenizer, models, pre_tokenizers, processors
 
 logger = logging.getLogger(__name__)
 
-# --- Corrected SelfiesPreTokenizer ---
-class SelfiesPreTokenizer:
-    def __init__(self):
-        # Store the raw regex STRING - THIS is what tokenizers needs
-        self.pattern_str: str = r"\[[^\[\]]+?\]|\."
-        # Keep the compiled version for potential use with Python's 're' module (e.g., in pre_tokenize_str)
-        self.compiled_pattern: re.Pattern = re.compile(self.pattern_str)
-
-    def pre_tokenize(self, pretok: PreTokenizedString):
-        """
-        Applies the SELFIES splitting logic to the PreTokenizedString in-place.
-        """
-        def split_function(i: int, normalized_string: NormalizedString) -> list[NormalizedString]:
-            # *** Use the raw string pattern (self.pattern_str) here ***
-            return normalized_string.split(self.pattern_str, behavior='isolated')
-
-        # Apply the split function using the PreTokenizedString's split method
-        pretok.split(split_function)
-
-    def pre_tokenize_str(self, sequence: str) -> list[tuple[str, tuple[int, int]]]:
-        """
-        Pre-tokenizes a raw string, returning tokens and their offsets.
-        Uses the compiled pattern for standard Python 're' operations.
-        """
-        tokens_with_offsets = []
-        # Use the compiled pattern here with re.finditer
-        for match in self.compiled_pattern.finditer(sequence):
-            start, end = match.span()
-            tokens_with_offsets.append((match.group(0), (start, end)))
-        return tokens_with_offsets
-
-# --- The rest of your code remains the same as the previous version ---
-# (SelfiesTokenizer, SPECIAL_TOKENS, train_or_load_selfies_tokenizer, get_tokenizer, tokenize_selfies_vocab)
-
-# Example snippets from the rest of your code that should now work:
-
 class SelfiesTokenizer(PreTrainedTokenizerFast):
-    # ... (as before) ...
-    pass
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
-SPECIAL_TOKENS = ["[BOS]", "[EOS]", "[SEP]", "[CLS]", "[PAD]", "[MASK]", "[UNK]"]
+    def decode(self, token_ids, skip_special_tokens=True, **kwargs):
+        """
+        Decodes token IDS into a string without spaces. E.g., "[C][Branch1]"
+        """
+        decoded = super().decode(token_ids, skip_special_tokens=skip_special_tokens, **kwargs)
+        return decoded.replace(" ", "")
 
 def train_or_load_selfies_tokenizer(config):
     tokenizer_dir = config.directory_paths.tokenizer
@@ -62,50 +34,68 @@ def train_or_load_selfies_tokenizer(config):
         logger.info(f"Loading tokenizer from {tokenizer_dir}")
         return SelfiesTokenizer.from_pretrained(tokenizer_dir)
 
-    selfies_txt_file_path = config.directory_paths.selfies_txt
-    if not selfies_txt_file_path or not os.path.exists(selfies_txt_file_path):
-        logger.error(f"Selfies text file not found or not provided: {selfies_txt_file_path}")
-        raise FileNotFoundError(f"Required selfies data file not found: {selfies_txt_file_path}")
-    else:
-        logger.info(f"Training tokenizer from scratch using {selfies_txt_file_path}")
-        files = [selfies_txt_file_path]
+    selfies_alphabet_path = config.directory_paths.selfies_alphabet
 
-        # Instantiate the custom pre-tokenizer (this is fine)
-        selfies_pre_tokenizer = SelfiesPreTokenizer()
+    if not os.path.exists(selfies_alphabet_path):
+        logger.error(f"Selfies text file not found or not provided: {selfies_alphabet_path}")
+        raise FileNotFoundError(f"Required selfies data file not found: {selfies_alphabet_path}")
+    else:
+        special_tokens = ["[BOS]", "[EOS]", "[SEP]", "[CLS]", "[PAD]", "[MASK]", "[UNK]"]
+        logger.info(f"Training tokenizer from scratch using {selfies_alphabet_path}")
+        # this is a path to a txt file, where each line is a token. Read appropriately.
+        # 1️⃣  read one token per line, keep original order, drop duplicates
+
+        with open(selfies_alphabet_path, encoding="utf-8") as f:
+            raw_tokens = [line.strip() for line in f if line.strip()]
+            unique_tokens = list(OrderedDict.fromkeys(special_tokens + raw_tokens))  # preserves order
+
+        vocab = {tok: idx for idx, tok in enumerate(unique_tokens)}
 
         if config.tokenizer_type == "wordlevel":
-            tokenizer = Tokenizer(WordLevel(unk_token="[UNK]"))
-            tokenizer.pre_tokenizer = PreTokenizer.custom(selfies_pre_tokenizer) # Assign instance
-            trainer = WordLevelTrainer(
-                special_tokens=SPECIAL_TOKENS,
-                vocab_size=config.vocab_size, # Ensure these are in config
-                min_frequency=config.min_frequency # Ensure these are in config
-            )
+            tokenizer = Tokenizer(models.WordLevel(vocab=vocab, unk_token="[UNK]"))
+            tokenizer.pre_tokenizer = pre_tokenizers.WhitespaceSplit()
         elif config.tokenizer_type == "bpe":
-            tokenizer = Tokenizer(BPE(unk_token="[UNK]"))
-            tokenizer.pre_tokenizer = PreTokenizer.custom(selfies_pre_tokenizer) # Assign instance
+            tokenizer = Tokenizer(models.BPE(unk_token="[UNK]"))
+            tokenizer.add_special_tokens(special_tokens)
+            tokenizer.add_tokens(raw_tokens) 
+            tokenizer.pre_tokenizer = pre_tokenizers.WhitespaceSplit()
+            corpus_txt = Path(config.directory_paths.selfies_txt)   # one molecule per line
+            merges_to_learn = 50             # change in config later
             trainer = BpeTrainer(
-                special_tokens=SPECIAL_TOKENS,
-                vocab_size=config.vocab_size, # Ensure these are in config
-                min_frequency=config.min_frequency # Ensure these are in config
+                vocab_size=len(raw_tokens) + merges_to_learn,
+                special_tokens=special_tokens,
+                initial_alphabet=raw_tokens,                       # keep atoms unchanged :contentReference[oaicite:9]{index=9}
+                show_progress=True
             )
+            tokenizer.train([str(corpus_txt)], trainer)  
         else:
              raise ValueError(f"Unsupported tokenizer_type: {config.tokenizer_type}")
 
-        # THIS CALL caused the error, but should now work because the pre_tokenizer uses the string pattern internally
-        logger.info(f"Starting tokenizer training with trainer: {trainer!r}") # Use !r for repr
-        tokenizer.train(files, trainer)
-        logger.info("Tokenizer training complete.")
-
-        # ... (rest of the function: creating Fast tokenizer, testing, saving) ...
-        fast_tokenizer = SelfiesTokenizer( # Use your custom class here!
-            tokenizer_object=tokenizer,
-            # ... other tokens ...
+        tokenizer.post_processor = processors.TemplateProcessing(
+            single="[BOS] $A [EOS]",
+            special_tokens=[("[BOS]", vocab["[BOS]"]), ("[EOS]", vocab["[EOS]"])],
         )
-        # ... testing ...
-        fast_tokenizer.save_pretrained(tokenizer_dir)
-        return fast_tokenizer
 
+        tokenizer.enable_padding(direction="right",
+                        pad_id=vocab["[PAD]"],
+                        pad_token="[PAD]")
+
+        selfies_tokenizer = SelfiesTokenizer(
+            tokenizer_object=tokenizer,
+            bos_token="[BOS]",
+            eos_token="[EOS]",
+            pad_token="[PAD]",
+            unk_token="[UNK]",
+        )
+        selfies_tokenizer.save_pretrained("selfies_wordlevel")
+        example = "[C] [Branch1] [=C] as"
+        out = selfies_tokenizer(example)
+        print(out.tokens())          # ← need parentheses; .tokens is a method
+        # ['[BOS]', '[C]', '[Branch1]', '[=C]', '[EOS]']
+        print(selfies_tokenizer.decode(out["input_ids"]))
+        # [C][Branch1][=C]
+        return selfies_tokenizer
+    
 def get_tokenizer(config):
     try:
         tokenizer = train_or_load_selfies_tokenizer(config)
