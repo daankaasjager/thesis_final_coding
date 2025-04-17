@@ -152,7 +152,7 @@ def calculate_and_plot_metrics(config,
             moses_metrics = moses.get_all_metrics(valid_mols)
             # to do
 
-        print(f"[{name.upper()}] - Standard metric Mols: {len(valid_mols)} valid, {failed_smiles} failed.\n")
+        logger.info(f"[{name.upper()}] - Standard metric Mols: {len(valid_mols)} valid, {failed_smiles} failed.\n")
 
     # Now iterate over requested metrics
     for metric in metrics:
@@ -189,12 +189,11 @@ def calculate_and_plot_metrics(config,
         # Store the results in the dictionary
         numeric_results[metric] = metric_values
         logger.info(f"[{name.upper()}] Metric: {metric} -> {len(metric_values)} values.")   
-        # Print stats & optional distribution
         if len(metric_values) > 0:
             avg_val = sum(metric_values) / len(metric_values)
-            print(f"[{name.upper()}] Metric: {metric}")
-            print(f"  Average {metric}: {avg_val:.3f}")
-            print(f"  Count: {len(metric_values)}")
+            logger.info(f"[{name.upper()}] Metric: {metric}")
+            logger.info(f"  Average {metric}: {avg_val:.3f}")
+            logger.info(f"  Count: {len(metric_values)}")
 
             if config.plot_dist:
                 plt.figure(figsize=(10, 5))

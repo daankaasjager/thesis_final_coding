@@ -3,6 +3,9 @@ from omegaconf import OmegaConf
 import lightning as L
 from pathlib import Path
 from omegaconf import DictConfig
+import logging
+
+logger = logging.getLogger(__name__)
 
 def resolve_paths(config: DictConfig):
     """
@@ -51,12 +54,12 @@ def setup_training_logging(config):
 def print_batch(train_ds, valid_ds, tokenizer, k=8):
   for dl_type, dl in [
     ('train', train_ds), ('valid', valid_ds)]:
-    print(f'Printing {dl_type} dataloader batch.')
+    logger.info(f'Printing {dl_type} dataloader batch.')
     batch = next(iter(dl))
-    print('Batch input_ids.shape', batch['input_ids'].shape)
+    logger.info('Batch input_ids.shape', batch['input_ids'].shape)
     first = batch['input_ids'][0, :k]
     last = batch['input_ids'][0, -k:]
-    print(f'First {k} tokens:', tokenizer.decode(first, skip_special_tokens=True))
-    print('ids:', first)
-    print(f'Last {k} tokens:', tokenizer.decode(last, skip_special_tokens=False))
-    print('ids:', last)
+    logger.info(f'First {k} tokens:', tokenizer.decode(first, skip_special_tokens=True))
+    logger.info('ids:', first)
+    logger.info(f'Last {k} tokens:', tokenizer.decode(last, skip_special_tokens=False))
+    logger.info('ids:', last)

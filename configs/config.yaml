@@ -20,6 +20,7 @@ directory_paths:
   sampled_data: data/kraken/sampled_data
   metrics_dir: data/kraken/metrics
   synthesize_dir: data/kraken/synthesize
+  selfies_txt: data/kraken/selfies.txt
 
 seed: 1
 
@@ -31,15 +32,18 @@ time_conditioning: False
 T: 0  # 0 (continuous time) / 1000 
 subs_masking: False #prevents unmasking during training SET TO TRUE LATER FOR TESTING
 plot_dist: True # this is for evaluating samples
-row_limit: Null
+row_limit: 5000
 overwrite_original: False # this is for evaluating samples
-
+tokenizer_type: wordlevel # wordlevel, etc.
+vocab_size: 51
+min_frequency: 1
 
 checkpointing:
   save_dir: ${cwd:}
   resume_from_ckpt: false
   resume_ckpt_path: ${cwd:}/checkpoints/best-v1.ckpt
   fresh_data: true
+  retrain_tokenizer: True
 
 wandb:
   project: SELFIES-diffusion

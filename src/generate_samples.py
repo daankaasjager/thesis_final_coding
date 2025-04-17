@@ -70,7 +70,7 @@ def generate_samples(config):
 
             for sample in batch_text_samples:
                 sample = sample.strip()
-                print(f"Sample {sample_count + 1}: {sample}")
+                logger.info(f"Sample {sample_count + 1}: {sample}")
                 temp_file.write(json.dumps(sample) + '\n')
                 sample_count += 1
 

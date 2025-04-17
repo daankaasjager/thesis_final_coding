@@ -33,13 +33,13 @@ def resume_training_from_ckpt(config, callbacks, wandb_logger):
     # This just loads the preprocessed data if it can find the path
     selfies_vocab, data = preprocess_selfies_data(config)
     # save selfies vocab somewhere and load that
-    tokenizer = get_tokenizer(config, selfies_vocab)
+    tokenizer = get_tokenizer(config)
     tokenized_data = tokenize_selfies_vocab(config, tokenizer)
     train_dataloader, val_dataloader = get_dataloaders(config, tokenized_data, tokenizer)
     run_model(config, tokenizer, train_dataloader, val_dataloader, config.pointing.resume_ckpt_path, callbacks, wandb_logger)
 
 def train_model_from_scratch(config, callbacks, wandb_logger):
-    if config.checkpointing.fresh_data== True:
+    if config.checkpointing.fresh_data == True:
         logger.info("Training model from scratch. Data will be reprocessed.")
         # read in the raw data
         raw_data = fast_csv_to_df_reader(config.directory_paths.raw_data, row_limit=config.row_limit)
@@ -54,8 +54,8 @@ def train_model_from_scratch(config, callbacks, wandb_logger):
     if config.plot_dist:
       plot_selfies_length_distribution(data)
     
-    # Passes selfies_vocab in case the tokenizer needs to be trained.
-    tokenizer = get_tokenizer(config, selfies_vocab)
+    # Passes the selfies data to the tokenizer, so that it can train from scratch if it doesn't already exist
+    tokenizer = get_tokenizer(config)
     tokenized_data = tokenize_selfies_vocab(config, tokenizer, data)
     train_dataloader, val_dataloader = get_dataloaders(config, tokenized_data, tokenizer)
     run_model(config, tokenizer, train_dataloader, val_dataloader, ckpt_path, callbacks, wandb_logger)

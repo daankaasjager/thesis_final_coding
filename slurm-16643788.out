@@ -1,0 +1,54 @@
+The following modules were not unloaded:
+  (Use "module --force purge" to unload all):
+
+  1) 2023.01   2) StdEnv
+venv, python is: /scratch/s3905845/venvs/thesis/bin/python
+slurmstepd: error: *** JOB 16643788 ON a100gpu6 CANCELLED AT 2025-04-16T15:27:11 DUE TO TIME LIMIT ***
+slurmstepd: error: *** STEP 16643788.0 ON a100gpu6 CANCELLED AT 2025-04-16T15:27:11 DUE TO TIME LIMIT ***
+
+###############################################################################
+Hábrók Cluster
+Job 16643788 for user s3905845
+Finished at: Wed Apr 16 15:27:18 CEST 2025
+
+Job details:
+============
+
+Job ID                         : 16643788
+Name                           : train_fresh.sh
+User                           : s3905845
+Partition                      : gpushort
+Nodes                          : a100gpu6
+Number of Nodes                : 1
+Cores                          : 4
+Number of Tasks                : 1
+State                          : TIMEOUT  
+Submit                         : 2025-04-16T14:25:27
+Start                          : 2025-04-16T15:22:02
+End                            : 2025-04-16T15:27:13
+Reserved walltime              : 00:05:00
+Used walltime                  : 00:05:11
+Used CPU time                  : 00:00:20 (Efficiency:  1.64%)
+% User (Computation)           : 58.65%
+% System (I/O)                 : 41.35%
+Total memory reserved          : 40G
+Maximum memory used            : 347.57M
+Requested GPUs                 : a100=4
+Allocated GPUs                 : a100=4
+Max GPU utilization            : 0%
+Max GPU memory used            : 0.00 
+Hints and tips      :
+ 1) You are running on a GPU node without actually using the GPU, please fix this.
+ 2) You requested much more CPU memory than your program used.
+    Please reduce the requested amount of memory.
+ *) For more information on these issues see:
+    https://wiki.hpc.rug.nl/habrok/additional_information/job_hints
+
+Acknowledgements:
+=================
+
+Please see this page for information about acknowledging Hábrók in your publications:
+
+https://wiki.hpc.rug.nl/habrok/introduction/scientific_output
+
+################################################################################

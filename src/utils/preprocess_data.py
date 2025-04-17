@@ -18,6 +18,31 @@ def load_preprocessed_data(preproc_path):
         exit()
 
 
+import os
+import logging
+
+logger = logging.getLogger(__name__)
+
+def save_selfies_text_file(config, df):
+    """
+    Writes each list of tokens in df['selfies'] as a space-delimited line
+    to config.directory_paths.selfies_txt, skipping if file already exists.
+    """
+    output_path = config.directory_paths.selfies_txt
+    
+    if os.path.exists(output_path):
+        logger.info(f"{output_path} already exists. Skipping creation.")
+        return
+    
+    logger.info(f"Writing SELFIES data to {output_path}")
+    with open(output_path, "w", encoding="utf-8") as f:
+        for token_list in df["selfies"]:
+            # token_list should be something like ["[C]", "[=C]", "[Branch1]", ...]
+            line = " ".join(token_list)
+            f.write(line + "\n")
+    logger.info(f"SELFIES text file saved to {output_path}")
+
+
 def preprocess_selfies_data(config, raw_data=None):
     """
     This function preprocesses raw data by 
@@ -61,5 +86,7 @@ def preprocess_selfies_data(config, raw_data=None):
             logger.info(f"Pre-processed data saved to {preproc_path}.")
         except Exception as e:
             logger.warning(f"Could not save pre-processed data: {e}.")
-
+        save_selfies_text_file(config, filtered_data)
+        print(f"filtered_data: {filtered_data['selfies']}")
+        print(f"alphabet: {alphabet}")
         return alphabet, filtered_data
