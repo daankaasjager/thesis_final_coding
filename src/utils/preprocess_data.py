@@ -57,11 +57,11 @@ def save_selfies_text_file(output_path,  df, whitespace=True):
     if whitespace:
         with open(output_path, "w", encoding="utf-8") as f:
             for token_list in df["selfies"]:
-                f.write("".join(token_list) + "\n")
+                f.write(" ".join(token_list) + "\n")
     else:
         with open(output_path, "w", encoding="utf-8") as f:
             for token_list in df["selfies"]:
-                f.write(" ".join(token_list) + "\n")
+                f.write("".join(token_list) + "\n")
     logger.info(f"SELFIES text file saved to {output_path}")
 
 

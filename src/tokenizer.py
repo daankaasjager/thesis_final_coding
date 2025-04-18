@@ -7,9 +7,10 @@ import torch
 
 from transformers import PreTrainedTokenizerFast
 # Make sure necessary imports are present
-from tokenizers import Tokenizer, AddedToken
+from tokenizers import Tokenizer, AddedToken, Regex
 from tokenizers.models import WordLevel, BPE # Import models if used below
 from tokenizers.trainers import WordLevelTrainer, BpeTrainer # Import trainers if used belo
+from tokenizers.pre_tokenizers import WhitespaceSplit
 from transformers import PreTrainedTokenizerFast
 from collections import OrderedDict
 from pathlib import Path
@@ -27,6 +28,22 @@ class SelfiesTokenizer(PreTrainedTokenizerFast):
         """
         decoded = super().decode(token_ids, skip_special_tokens=skip_special_tokens, **kwargs)
         return decoded.replace(" ", "")
+
+def check_merges_are_atoms(tokenizer, atom_set, max_show=20):
+    """
+    Print merges that contain characters outside the SELFIES atom set.
+    """
+    merges = getattr(tokenizer.model, "merges", [])  # list[tuple] in ≥0.14
+    bad = []
+    for left, right in merges:
+        if left not in atom_set or right not in atom_set:
+            bad.append(f"{left} + {right}")
+            if len(bad) >= max_show:
+                break
+    if bad:
+        logger.warning("⚠️  Found non‑atomic merges, e.g. %s …", ", ".join(bad[:3]))
+    else:
+        logger.info("✅  All merges are between full SELFIES atoms.")
 
 def train_or_load_selfies_tokenizer(config):
     tokenizer_dir = config.directory_paths.tokenizer
@@ -56,10 +73,18 @@ def train_or_load_selfies_tokenizer(config):
             tokenizer.pre_tokenizer = pre_tokenizers.WhitespaceSplit()
         elif config.tokenizer_type == "bpe":
             tokenizer = Tokenizer(models.BPE(unk_token="[UNK]"))
-            tokenizer.pre_tokenizer = pre_tokenizers.ByteLevel(add_prefix_space=False)
-            tokenizer.add_special_tokens(special_tokens)
-            tokenizer.add_tokens([AddedToken(t, normalized=False) for t in raw_tokens])
-            corpus_txt = Path(config.directory_paths.selfies_nospace_txt)   # one molecule per line
+            atom_rgx = Regex(r"\[[^\]]+\]")
+            tokenizer.pre_tokenizer = pre_tokenizers.Split(
+            atom_rgx, behavior="isolated", invert=False        # ← ONLY atoms survive
+            )
+            corpus_txt = Path(config.directory_paths.selfies_nospace_txt)
+            with corpus_txt.open("r", encoding="utf-8") as fin, corpus_txt.with_suffix(".tmp").open("w", encoding="utf-8") as fout:
+                for line in fin:
+                    stripped = line.strip()
+                    if stripped:                     # ← skips blank / whitespace‑only lines
+                        fout.write(stripped + "\n")
+            corpus_txt = corpus_txt.with_suffix(".tmp")   # train on the cleaned file
+
             merges_to_learn = 50             # change in config later
             trainer = BpeTrainer(
                 vocab_size=len(raw_tokens) + merges_to_learn,
@@ -67,6 +92,8 @@ def train_or_load_selfies_tokenizer(config):
                 show_progress=True
             )
             tokenizer.train([str(corpus_txt)], trainer)  
+            tokenizer.add_special_tokens(special_tokens)
+            tokenizer.add_tokens([AddedToken(t, normalized=False) for t in raw_tokens])
         else:
              raise ValueError(f"Unsupported tokenizer_type: {config.tokenizer_type}")
 
@@ -93,6 +120,8 @@ def train_or_load_selfies_tokenizer(config):
         # ['[BOS]', '[C]', '[Branch1]', '[=C]', '[EOS]']
         print(selfies_tokenizer.decode(out["input_ids"]))
         # [C][Branch1][=C]
+        atom_set = set(raw_tokens)
+        check_merges_are_atoms(tokenizer, atom_set)
         return selfies_tokenizer
     
 def get_tokenizer(config):
