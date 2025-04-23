@@ -100,8 +100,8 @@ def preprocess_selfies_data(config, raw_data=None):
         logger.info(f"max length = {max_selfies_length}")
 
         # Replace the original selfies column with the tokenized version
-        filtered_data['selfies'] = filtered_data['tokenized_selfies']
-        filtered_data = filtered_data.drop(columns=['tokenized_selfies'])
+        #filtered_data['selfies'] = filtered_data['tokenized_selfies']
+        #filtered_data = filtered_data.drop(columns=['tokenized_selfies'])
         
         try:
             torch.save({"alphabet": alphabet, "raw_data": filtered_data}, preproc_path)
@@ -111,6 +111,6 @@ def preprocess_selfies_data(config, raw_data=None):
         save_selfies_text_file(config.directory_paths.selfies_nospace_txt, filtered_data, whitespace=False)
         save_selfies_text_file(config.directory_paths.selfies_whitespace_txt, filtered_data, whitespace=True)
         save_selfies_alphabet(config, alphabet)
-        print(f"filtered_data: {filtered_data['selfies']}")
+        print(f"selfies column: {filtered_data['selfies']}")
         print(f"alphabet: {alphabet}")
         return alphabet, filtered_data

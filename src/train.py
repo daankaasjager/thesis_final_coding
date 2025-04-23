@@ -11,7 +11,7 @@ from src.utils.csv_data_reader import fast_csv_to_df_reader
 from src.tokenizer import tokenize_selfies_vocab, get_tokenizer
 from src.utils.setup import setup_training_logging
 from src.utils.plot_dist import plot_selfies_length_distribution
-
+import torch
 
 
 def run_model(config, tokenizer, train_dataloader, val_dataloader, ckpt_path, callbacks, wandb_logger):
@@ -29,14 +29,14 @@ def run_model(config, tokenizer, train_dataloader, val_dataloader, ckpt_path, ca
 
 
 def resume_training_from_ckpt(config, callbacks, wandb_logger):
-    logger.info(f"Resuming training from checkpoint: {config.pointing.resume_ckpt_path}")
+    logger.info(f"Resuming training from checkpoint: {config.checkpointing.resume_ckpt_path}")
     # This just loads the preprocessed data if it can find the path
     selfies_vocab, data = preprocess_selfies_data(config)
     # save selfies vocab somewhere and load that
     tokenizer = get_tokenizer(config)
     tokenized_data = tokenize_selfies_vocab(config, tokenizer)
     train_dataloader, val_dataloader = get_dataloaders(config, tokenized_data, tokenizer)
-    run_model(config, tokenizer, train_dataloader, val_dataloader, config.pointing.resume_ckpt_path, callbacks, wandb_logger)
+    run_model(config, tokenizer, train_dataloader, val_dataloader, config.checkpointing.resume_ckpt_path, callbacks, wandb_logger)
 
 def train_model_from_scratch(config, callbacks, wandb_logger):
     if config.checkpointing.fresh_data == True:
@@ -44,7 +44,6 @@ def train_model_from_scratch(config, callbacks, wandb_logger):
         # read in the raw data
         raw_data = fast_csv_to_df_reader(config.directory_paths.raw_data, row_limit=config.row_limit)
         selfies_vocab, data = preprocess_selfies_data(config, raw_data)
-        print(selfies_vocab)
     else:
         logger.info("Training model from scratch. Tokenized data will be loaded.")
         # This just loads the preprocessed data if it can find the path
@@ -64,6 +63,13 @@ def train_model_from_scratch(config, callbacks, wandb_logger):
 def train(config):
     os.environ['TOKENIZERS_PARALLELISM'] = 'false'
     wandb_logger, callbacks = setup_training_logging(config)
+    if torch.cuda.is_available() and torch.cuda.get_device_capability()[0] >= 7: # Ampere GPUs (like A100) are capability 8.0+
+         try:
+             # Use 'high' for TF32 on Ampere/Hopper, 'medium' might be faster but uses BFloat16 too
+             torch.set_float32_matmul_precision('high')
+             logger.info("Set torch.set_float32_matmul_precision('high') for Tensor Core utilization.")
+         except Exception as e:
+             logger.warning(f"Could not set float32 matmul precision: {e}")
     if config.checkpointing.resume_from_ckpt:
         resume_training_from_ckpt(config, callbacks, wandb_logger)
     else:

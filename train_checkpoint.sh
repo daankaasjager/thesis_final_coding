@@ -19,7 +19,7 @@ echo "venv, python is: $(which python)"
 
 srun python main.py \
     mode=train \
-    row_limit=Null \
+    row_limit=5000 \
     checkpointing.fresh_data=false \
     checkpointing.retrain_tokenizer=false \
     checkpointing.resume_from_ckpt=true \

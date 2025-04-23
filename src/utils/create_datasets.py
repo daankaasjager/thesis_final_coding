@@ -10,6 +10,7 @@ logger = logging.getLogger(__name__)
 def check_gpu_compatibility(config):
     logger.info("Checking GPU compatibility")
     num_gpus = torch.cuda.device_count()
+    logger.info(f"Number of GPUs: {num_gpus}")
     assert (config.loader.global_batch_size ==
             config.loader.batch_size * config.trainer.num_nodes
             * num_gpus * config.trainer.accumulate_grad_batches)
