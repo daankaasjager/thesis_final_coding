@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --time=0:05:00
+#SBATCH --time=12:00:00
 #SBATCH --partition=gpu
 #SBATCH --nodes=1
 #SBATCH --gpus-per-node=a100:4
@@ -20,8 +20,8 @@ echo "venv, python is: $(which python)"
 srun python main.py \
     mode=train \
     row_limit=null \
-    checkpointing.fresh_data=true \
-    checkpointing.retrain_tokenizer=true \
+    checkpointing.fresh_data=false \
+    checkpointing.retrain_tokenizer=false \
     checkpointing.resume_from_ckpt=false \
     wandb.name=train5 \
     trainer.devices=4 \
@@ -29,6 +29,6 @@ srun python main.py \
     trainer.accelerator=cuda \
     wandb.job_type=training \
     trainer.precision='bf16-mixed' \
-    loader.global_batch_size=512 \
-    trainer.log_every_n_steps=16 \
+    loader.global_batch_size=400 \
+    trainer.log_every_n_steps=300 \
     loader.num_workers=16

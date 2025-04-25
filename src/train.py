@@ -1,4 +1,5 @@
 
+import configparser
 import logging
 
 logger = logging.getLogger(__name__)
@@ -12,9 +13,10 @@ from src.tokenizer import tokenize_selfies_vocab, get_tokenizer
 from src.utils.setup import setup_training_logging
 from src.utils.plot_dist import plot_selfies_length_distribution
 import torch
+from lightning.pytorch.utilities.rank_zero import rank_zero_only
 
 
-def run_model(config, tokenizer, train_dataloader, val_dataloader, ckpt_path, callbacks, wandb_logger):
+def run_model(config, tokenizer, train_dataloader, val_dataloader, callbacks, wandb_logger, ckpt_path=None):
     import src.diffusion as diffusion
     model = diffusion.Diffusion(config, tokenizer=tokenizer)
     # print_batch(train_dataloader, val_dataloader, tokenizer) # takes a a long time so only run if necessary.
@@ -27,8 +29,7 @@ def run_model(config, tokenizer, train_dataloader, val_dataloader, ckpt_path, ca
     )
     trainer.fit(model, train_dataloader, val_dataloader, ckpt_path=ckpt_path)
 
-
-def resume_training_from_ckpt(config, callbacks, wandb_logger):
+def resume_training_from_ckpt(config):
     logger.info(f"Resuming training from checkpoint: {config.checkpointing.resume_ckpt_path}")
     # This just loads the preprocessed data if it can find the path
     selfies_vocab, data = preprocess_selfies_data(config)
@@ -36,9 +37,10 @@ def resume_training_from_ckpt(config, callbacks, wandb_logger):
     tokenizer = get_tokenizer(config)
     tokenized_data = tokenize_selfies_vocab(config, tokenizer)
     train_dataloader, val_dataloader = get_dataloaders(config, tokenized_data, tokenizer)
-    run_model(config, tokenizer, train_dataloader, val_dataloader, config.checkpointing.resume_ckpt_path, callbacks, wandb_logger)
+    return tokenizer, train_dataloader, val_dataloader, config.checkpointing.resume_ckpt_path
 
-def train_model_from_scratch(config, callbacks, wandb_logger):
+
+def train_model_from_scratch(config) -> tuple:
     if config.checkpointing.fresh_data == True:
         logger.info("Training model from scratch. Data will be reprocessed.")
         # read in the raw data
@@ -53,12 +55,13 @@ def train_model_from_scratch(config, callbacks, wandb_logger):
 
     if config.plot_dist:
       plot_selfies_length_distribution(data)
-    
+
     # Passes the selfies data to the tokenizer, so that it can train from scratch if it doesn't already exist
     tokenizer = get_tokenizer(config)
     tokenized_data = tokenize_selfies_vocab(config, tokenizer, data)
     train_dataloader, val_dataloader = get_dataloaders(config, tokenized_data, tokenizer)
-    run_model(config, tokenizer, train_dataloader, val_dataloader, ckpt_path, callbacks, wandb_logger)
+    return tokenizer, train_dataloader, val_dataloader, ckpt_path
+
 
 def train(config):
     os.environ['TOKENIZERS_PARALLELISM'] = 'false'
@@ -67,10 +70,11 @@ def train(config):
          try:
              # Use 'high' for TF32 on Ampere/Hopper, 'medium' might be faster but uses BFloat16 too
              torch.set_float32_matmul_precision('high')
-             logger.info("Set torch.set_float32_matmul_precision('high') for Tensor Core utilization.")
+             logger.info("Success torch.set_float32_matmul_precision('high') for Tensor Core utilization.")
          except Exception as e:
              logger.warning(f"Could not set float32 matmul precision: {e}")
     if config.checkpointing.resume_from_ckpt:
-        resume_training_from_ckpt(config, callbacks, wandb_logger)
+        tokenizer, train_dataloader, val_dataloader, ckpt_path = resume_training_from_ckpt(config)
     else:
-        train_model_from_scratch(config, callbacks, wandb_logger)
+        tokenizer, train_dataloader, val_dataloader, ckpt_path = train_model_from_scratch(config)
+    run_model(config, tokenizer, train_dataloader, val_dataloader, callbacks, wandb_logger, ckpt_path)

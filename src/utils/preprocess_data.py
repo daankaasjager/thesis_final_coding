@@ -5,12 +5,11 @@ import selfies
 
 logger = logging.getLogger(__name__)
 
-def load_preprocessed_data(preproc_path):
-    logger.info(f"Pre-processed data found at {preproc_path}. Loading instead of processing anew.")
+def load_preprocessed_data(preproc_path, alphabet_path):
     try:
-        saved_data = torch.load(preproc_path, weights_only=False)
-        alphabet = saved_data["alphabet"]
-        processed_data = saved_data["raw_data"]
+        processed_data = torch.load(preproc_path, weights_only=False)
+        with open(alphabet_path, "r", encoding="utf-8") as f:
+            alphabet = f.read().splitlines()
         logger.info("Pre-processed data loaded successfully.")
         return alphabet, processed_data
     except Exception as e:
@@ -73,9 +72,9 @@ def preprocess_selfies_data(config, raw_data=None):
     it will load that file instead of reprocessing.
     """
     preproc_path = config.directory_paths.pre_processed_data
-
-    if os.path.exists(preproc_path) and config.checkpointing.fresh_data == False:
-        return load_preprocessed_data(preproc_path)
+    alphabet_path = config.directory_paths.selfies_alphabet
+    if os.path.exists(preproc_path) and os.path.exists(alphabet_path) and config.checkpointing.fresh_data == False:
+        return load_preprocessed_data(preproc_path, alphabet_path)
     else: 
         logger.info(f"Starting fresh preprocessing at: {preproc_path}. Proceeding with processing.")
         
