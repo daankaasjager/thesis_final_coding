@@ -46,12 +46,11 @@ def generate_samples(config):
 
     stride_length = config.sampling.stride_length
     num_strides = config.sampling.num_strides
-    timestamp = datetime.isoformat()
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     flat_config = OmegaConf.to_container(config, resolve=True)
 
     # Temp file to store intermediate samples in case of crash
-    temp_path = os.path.join(config.directory_paths.sampled_data, "generated_samples.tmp")
-    os.makedirs(config.directory_paths.sampled_data, exist_ok=True)
+    temp_path = config.directory_paths.temp_path
 
     sample_count = 0
     with open(temp_path, 'a', encoding='utf-8') as temp_file:
@@ -74,8 +73,7 @@ def generate_samples(config):
                 temp_file.write(json.dumps(sample) + '\n')
                 sample_count += 1
 
-    # Now flush everything into the final JSON
-    final_path = os.path.join(config.directory_paths.sampled_data, "generated_samples.json")
+    final_path = config.directory_paths.sampled_data
     with open(temp_path, 'r', encoding='utf-8') as temp_file:
         samples = [json.loads(line.strip()) for line in temp_file]
 

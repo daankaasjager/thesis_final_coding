@@ -12,17 +12,17 @@ train_test_split:
   valid: 0.2
 
 directory_paths:
-  tokenizer: data/vocab_list/tokenizer
-  train_data_encoding: data/vocab_list/train_data_encoding.pt
-  raw_data: data/kraken/descriptors_v3.csv
-  pre_processed_data: data/kraken/preprocessed_data.pt
-  cache_dir: /kraken_cache/data
-  sampled_data: data/kraken/sampled_data
-  metrics_dir: data/kraken/metrics
-  synthesize_dir: data/kraken/synthesize
-  selfies_nospace_txt: data/kraken/selfies_nospace_cpy.txt
-  selfies_whitespace_txt: data/kraken/selfies_whitespace.txt
-  selfies_alphabet: data/kraken/selfies_alphabet.txt
+  tokenizer: data/kraken/tokenizer
+  train_data_encoding: data/kraken/training_data/train_data_encoding.pt
+  raw_data: data/kraken/training_data/descriptors_v3.csv
+  pre_processed_data: data/kraken/training_data/preprocessed_data.pt
+  sampled_data: data/kraken/sampled_data/generated_samples.json
+  temp_path: data/kraken/sampled_data/temp.tmp
+  metrics_dir: data/kraken/metric_plots
+  synthesize_dir: data/kraken/synthesized_molecules
+  selfies_nospace_txt: data/kraken/training_data/selfies_nospace_5000.txt
+  selfies_whitespace_txt: data/kraken/training_data/selfies_whitespace.txt
+  selfies_alphabet: data/kraken/training_data/selfies_alphabet.txt
 
 seed: 1
 
@@ -32,7 +32,6 @@ backbone: dit  # dit / dimamba / ar
 parameterization: subs  # subs / d3pm / sedd
 time_conditioning: False
 T: 0  # 0 (continuous time) / 1000 
-subs_masking: False #prevents unmasking during training SET TO TRUE LATER FOR TESTING
 plot_dist: False # this is for evaluating samples
 row_limit: null
 overwrite_original: False # this is for evaluating samples
@@ -67,7 +66,7 @@ training:
   change_of_variables: False
 
 eval:
-  checkpoint_path: ${cwd:}/checkpoints/best.ckpt # Used to evaluate a checkpoint after training.
+  checkpoint_path: ${cwd:}/checkpoints/12_hour_run_24_april.ckpt # Used to evaluate a checkpoint after training.
   disable_ema: False
   generate_samples: True
 
@@ -80,7 +79,7 @@ sampling:
   num_sample_log: 2
   semi_ar: False
   num_strides: 0
-  stride_length: 
+  stride_length: 0
 
 optim:
   weight_decay: 0

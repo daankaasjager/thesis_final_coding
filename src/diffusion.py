@@ -78,15 +78,9 @@ class Diffusion(L.LightningModule):
     else:
       self.mask_index = self.tokenizer.mask_token_id
     self.parameterization = self.config.parameterization
-    if self.config.backbone == 'dit':
-      self.backbone = src.models.dit.DIT(
-        self.config, vocab_size=self.vocab_size)
-    else:
-      raise ValueError(
-        f'Unknown backbone: {self.config.backbone}')
+    self.backbone = src.models.dit.DIT(self.config, vocab_size=self.vocab_size)
 
     self.T = self.config.T
-    self.subs_masking = self.config.subs_masking
 
     self.softplus = torch.nn.Softplus()
     # metrics are automatically reset at end of epoch
@@ -124,15 +118,8 @@ class Diffusion(L.LightningModule):
   def _validate_configuration(self):
     assert not (self.change_of_variables
                 and self.importance_sampling)
-    if self.parameterization == 'sedd':
-      assert not self.importance_sampling
-      assert not self.change_of_variables
-    if self.parameterization == 'd3pm':
-      assert self.T > 0
     if self.T > 0:
-      assert self.parameterization in {'d3pm', 'subs'}
-    if self.subs_masking:
-      assert self.parameterization == 'd3pm'
+      assert self.parameterization in {'subs'}
 
   def on_load_checkpoint(self, checkpoint):
     if self.ema:
@@ -244,7 +231,7 @@ class Diffusion(L.LightningModule):
     # a probability distribution over vocab_size.
     logits = logits - torch.logsumexp(logits, dim=-1,
                                       keepdim=True)
-
+    # NOTE: Interesting to see that this was the same as d3pm up to here.
     # Apply updates directly in the logits matrix.
     # For the logits of the unmasked tokens, set all values
     # to -infinity except for the indices corresponding to
@@ -254,27 +241,6 @@ class Diffusion(L.LightningModule):
     logits[unmasked_indices, xt[unmasked_indices]] = 0
     return logits
 
-  def _d3pm_parameterization(self, logits):
-    if self.subs_masking:
-      logits[:, :, self.mask_index] += self.neg_infinity
-    logits = logits - torch.logsumexp(logits, dim=-1,
-                                      keepdim=True)
-    return logits
-
-  def _sedd_parameterization(self, logits, xt, sigma):
-    esigm1_log = torch.where(
-      sigma < 0.5,
-      torch.expm1(sigma),
-      sigma.exp() - 1).log().to(logits.dtype)
-    # logits shape
-    # (batch_size, diffusion_model_input_length, vocab_size)
-    logits = logits - esigm1_log[:, None, None] - np.log(
-      logits.shape[-1] - 1)
-    # The below scatter operation sets the log score
-    # for the input word to 0.
-    logits = torch.scatter(logits, -1, xt[..., None],
-                           torch.zeros_like(logits[..., :1]))
-    return logits
 
   def _process_sigma(self, sigma):
     if sigma is None:
@@ -298,14 +264,7 @@ class Diffusion(L.LightningModule):
 
     logits = self.backbone(x, sigma)  # Now both inputs & backbone are on same device
     
-    if self.parameterization == 'subs':
-        return self._subs_parameterization(logits=logits, xt=x)
-    elif self.parameterization == 'sedd':
-        return self._sedd_parameterization(logits=logits, xt=x, sigma=sigma)
-    elif self.parameterization == 'd3pm':
-        return self._d3pm_parameterization(logits=logits)
-
-    return logits
+    return self._subs_parameterization(logits=logits, xt=x)
 
   def _d3pm_loss(self, model_output, xt, x0, t):
     dt = 1 / self.T
@@ -337,6 +296,7 @@ class Diffusion(L.LightningModule):
     L_vb = L_vb_masked * (xt == self.mask_index)
 
     return self.T * L_vb
+
 
   def _compute_loss(self, batch, prefix):
     if 'attention_mask' in batch:
@@ -429,18 +389,31 @@ class Diffusion(L.LightningModule):
     return [optimizer], [scheduler_dict]
 
 
-  def q_xt(self, x, move_chance):
-    """Computes the noisy sample xt.
+  def q_xt(self, x, move_chance, attention_mask): # <-- Add attention_mask here
+      """Computes the noisy sample xt, ensuring BOS/EOS are not masked."""
+      move_probs = torch.rand(*x.shape, device=x.device)
+      eligible_mask = torch.ones_like(x, dtype=torch.bool)
 
-    Args:
-      x: int torch.Tensor with shape (batch_size,
-          diffusion_model_input_length), input. 
-      move_chance: float torch.Tensor with shape (batch_size, 1).
-    """
-    move_indices = torch.rand(
-      * x.shape, device=x.device) < move_chance
-    xt = torch.where(move_indices, self.mask_index, x)
-    return xt
+      # prevent BOS masking
+      eligible_mask[:, 0] = False
+
+      # prevent EOS masking using attention_mask
+      if attention_mask is not None:
+          lengths = attention_mask.sum(dim=1).long()
+          valid_lengths = torch.clamp(lengths, min=2) # Assuming BOS/EOS always present
+          eos_indices = valid_lengths - 1
+          batch_indices = torch.arange(x.shape[0], device=x.device)
+          try:
+            eligible_mask[batch_indices, eos_indices] = False
+          except IndexError as e:
+              logger.error(f"IndexError in q_xt: EOS masking prevention failed. Indices: {eos_indices.tolist()}, Shape: {eligible_mask.shape}, Lengths: {lengths.tolist()}")
+      else:
+            logger.warning("q_xt called without attention_mask. Cannot prevent EOS masking.")
+
+      move_chance_expanded = move_chance.expand_as(x)
+      move_indices = (move_probs < move_chance_expanded) & eligible_mask
+      xt = torch.where(move_indices, self.mask_index, x)
+      return xt
 
   def _sample_prior(self, *batch_dims):
     return self.mask_index * torch.ones(
@@ -493,31 +466,10 @@ class Diffusion(L.LightningModule):
     copy_flag = (x != self.mask_index).to(x.dtype)
     return copy_flag * x + (1 - copy_flag) * _x
 
-  def _ar_sampler(self, bsz):
-    # precompute token buffer
-    num_pred_tokens = self.config.model.length - 1
-    x = torch.zeros(
-      (bsz, num_pred_tokens + 1),
-      dtype=torch.long,
-      device=self.device)
-    x[:, 0] = self.tokenizer.bos_token_id
-    # precompute noise
-    noise = (torch.distributions.Gumbel(0, 1)
-             .sample((bsz, num_pred_tokens, self.vocab_size))
-             .to(self.device))
-    for i in range(num_pred_tokens):
-      next_logits = self.forward(x[:, :i + 1], None)[:, -1]
-      y = (next_logits + noise[:, i]).argmax(-1)
-      x[:, i + 1] = y
-    return x
-
   @torch.no_grad()
   def _sample(self, num_steps=None, eps=1e-5):
       """Generate samples from the model with progress tracking."""
       batch_size_per_gpu = self.config.loader.eval_batch_size
-      if self.parameterization == 'ar':
-          return self._ar_sampler(batch_size_per_gpu)
-
       if num_steps is None:
           num_steps = self.config.sampling.steps
 
@@ -659,6 +611,7 @@ class Diffusion(L.LightningModule):
       return self.noise.importance_sampling_transformation(t)
     return t
 
+# CHECK THIS OUT AND USE CASE
   def _maybe_sub_sample(self, x0, attention_mask):
     seqlen = x0.shape[1]
     if seqlen > self.config.model.length:
@@ -675,10 +628,6 @@ class Diffusion(L.LightningModule):
       # examples will all start and end with BOS/EOS
       input_tokens[:, 0] = self.tokenizer.bos_token_id
       output_tokens[:, -1] = self.tokenizer.eos_token_id
-    elif self.parameterization == 'ar':
-      input_tokens = x0[:, :-1]
-      output_tokens = x0[:, 1:]
-      new_attention_mask = attention_mask[:, 1:]
     else:
       input_tokens = x0
       output_tokens = None
@@ -696,7 +645,7 @@ class Diffusion(L.LightningModule):
                           dim=-1,
                           index=x0[:, :, None]).squeeze(-1)
 
-  def _forward_pass_diffusion(self, x0):
+  def _forward_pass_diffusion(self, x0, attention_mask):
     t = self._sample_t(x0.shape[0], x0.device)
     if self.T > 0:
       t = (t * self.T).to(torch.int)
@@ -715,21 +664,15 @@ class Diffusion(L.LightningModule):
       unet_conditioning = sigma[:, None]
       move_chance = 1 - torch.exp(-sigma[:, None])
 
-    xt = self.q_xt(x0, move_chance)
+    xt = self.q_xt(x0, move_chance, attention_mask=attention_mask)
     model_output = self.forward(xt, unet_conditioning)
     if torch.isnan(model_output).any():
       logger.info("model output", model_output)
-
-    if self.parameterization == 'sedd':
-      return dsigma[:, None] * self._score_entropy(
-        model_output, sigma[:, None], xt, x0)
     
     if self.T > 0:
       diffusion_loss = self._d3pm_loss(
         model_output=model_output, xt=xt, x0=x0, t=t)
-      if self.parameterization == 'd3pm':
-        reconstruction_loss = self._reconstruction_loss(x0)
-      elif self.parameterization == 'subs':
+      if self.parameterization == 'subs':
         reconstruction_loss = 0
       return reconstruction_loss + diffusion_loss
     
@@ -751,15 +694,13 @@ class Diffusion(L.LightningModule):
      attention_mask) = self._maybe_sub_sample(
        x0, attention_mask)
 
-    if self.parameterization == 'ar':
-      logprobs = self.backbone(input_tokens, None)
-      loss = - logprobs.gather(
-        -1, output_tokens[:, :, None])[:, :, 0]
-    else:
-      loss = self._forward_pass_diffusion(input_tokens)
+    loss = self._forward_pass_diffusion(input_tokens, attention_mask=attention_mask)
     
     nlls = loss * attention_mask
     count = attention_mask.sum()
+
+    if count == 0:
+      logger.warning("check this out, count is 0")
 
     batch_nll = nlls.sum()
     token_nll = batch_nll / count
@@ -767,45 +708,6 @@ class Diffusion(L.LightningModule):
     return Loss(loss=token_nll,
                 nlls=nlls,
                 token_mask=attention_mask)
-
-  def _score_entropy(self, log_score, sigma, xt, x0):
-    """Computes the SEDD loss.
-
-    Args:
-      log_score: float torch.Tensor with shape (batch_size,
-          diffusion_model_input_length, vocab_size),
-          log score, output of the denoising network.
-      xt: int torch.Tensor with shape (batch_size,
-          diffusion_model_input_length), input.
-      x0: int torch.Tensor with shape (batch_size,
-          diffusion_model_input_length), input.
-      sigma: float torch.Tensor with shape (batch_size, 1).
-
-    Returns:
-      loss with shape (batch_size, diffusion_model_input_length)
-    """
-    masked_indices = xt == self.mask_index
-
-    expsig_minus_1 = torch.expm1(sigma).expand_as(xt)
-    q_ratio = 1 / expsig_minus_1[masked_indices]
-
-    words_that_were_masked = x0[masked_indices]
-
-    neg_term = q_ratio * torch.gather(
-      log_score[masked_indices],
-      -1,
-      words_that_were_masked[..., None]).squeeze(-1)
-    score = log_score[masked_indices].exp()
-    if self.mask_index == self.vocab_size - 1:
-      pos_term = score[:, :-1].sum(dim=-1)
-    else:
-      pos_term = score[:, : self.mask_index].sum(
-        dim=-1) + score[:, self.mask_index + 1:].sum(dim=-1)
-    const = q_ratio * (q_ratio.log() - 1)
-
-    entropy = torch.zeros(* xt.shape, device=xt.device)
-    entropy[masked_indices] += pos_term - neg_term + const
-    return entropy
 
   @torch.no_grad
   def sample_subs_guidance(

@@ -7,7 +7,7 @@ from src.evaluate.metrics import calculate_and_plot_metrics
 
 def evaluate_samples(config):
     # Load generated samples
-    file_path = os.path.join(config.directory_paths.sampled_data, "generated_samples.json")
+    file_path = config.directory_paths.sampled_data
     with open(file_path, "r") as f:
         data = json.load(f)
         generated_samples = data["samples"]
