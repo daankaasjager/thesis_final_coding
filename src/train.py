@@ -50,9 +50,11 @@ def train_model_from_scratch(config) -> tuple:
         logger.info("Training model from scratch. Tokenized data will be loaded.")
         # This just loads the preprocessed data if it can find the path
         selfies_vocab, data = preprocess_selfies_data(config)
+        print("selfies_vocab: ", selfies_vocab)
+        print("data: ", data)   
 
     ckpt_path = None
-
+    
     if config.plot_dist:
       plot_selfies_length_distribution(data)
 

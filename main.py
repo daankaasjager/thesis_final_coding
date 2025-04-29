@@ -40,14 +40,16 @@ def run(config: DictConfig):
       logger.info(OmegaConf.to_yaml(config))
     L.seed_everything(config.seed, verbose=False)
     config = resolve_paths(config)
-
-    if config.mode.name == 'train':
+    if config.mode == 'augment':
+        from src.utils.augment_dataset import augment_dataset
+        augment_dataset(config)
+    if config.mode == 'train':
         from src.train import train
         train(config)
-    elif config.mode.name == "sample":
+    elif config.mode == "sample":
         from src.generate_samples import generate_samples
         generate_samples(config)
-    elif config.mode.name == "evaluate_samples":
+    elif config.mode == "evaluate_samples":
         from src.evaluate_samples import evaluate_samples
         evaluate_samples(config)
 

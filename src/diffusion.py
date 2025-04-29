@@ -16,6 +16,8 @@ import src.modeling.ema
 import src.modeling.samplers
 import src.models
 import logging
+from lightning.pytorch.utilities.rank_zero import rank_zero_only
+import torch
 
 logger = logging.getLogger(__name__)
 
@@ -664,7 +666,9 @@ class Diffusion(L.LightningModule):
       unet_conditioning = sigma[:, None]
       move_chance = 1 - torch.exp(-sigma[:, None])
 
+    # Call the modified q_xt
     xt = self.q_xt(x0, move_chance, attention_mask=attention_mask)
+
     model_output = self.forward(xt, unet_conditioning)
     if torch.isnan(model_output).any():
       logger.info("model output", model_output)

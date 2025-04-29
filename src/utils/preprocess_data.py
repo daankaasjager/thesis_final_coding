@@ -1,115 +1,161 @@
+# ──────────────────────────────────────────────────────────────────────────────
+#  utils/preprocess_data.py
+#  ──────────────────────────────────────────────────────────────────────────────
+#  One-stop SELFIES preprocessing + caching utilities
+#  * alphabet lives exactly once  →  <run-dir>/selfies_alphabet.txt
+#  * dataframe cache lives once   →  <run-dir>/pre_processed_data.pt
+#    (old cache files that contained a {"alphabet": …, "raw_data": …} dict
+#     are still read correctly – the loader unwraps them.)
+# ──────────────────────────────────────────────────────────────────────────────
+from __future__ import annotations
+
 import logging
 import os
+from pathlib import Path
+from typing import List, Tuple, Optional
+
 import torch
 import selfies
+import pandas as pd
 
 logger = logging.getLogger(__name__)
 
-def load_preprocessed_data(preproc_path, alphabet_path):
+
+# ──────────────────────────────────────────────────────────────────────────────
+# IO helpers
+# ──────────────────────────────────────────────────────────────────────────────
+def _load_alphabet_from_txt(path: str | Path) -> List[str]:
+    with open(path, encoding="utf-8") as f:
+        return f.read().splitlines()
+
+
+def load_preprocessed_data(
+    preproc_path: str | Path,
+    alphabet_path: str | Path,
+) -> Tuple[List[str], pd.DataFrame]:
+    """
+    Load cached dataframe (+ alphabet txt).
+
+    Accepts *both* the new format (file == DataFrame) **and** the legacy
+    dict format ``{"alphabet": …, "raw_data": …}``.
+    """
     try:
-        processed_data = torch.load(preproc_path, weights_only=False)
-        with open(alphabet_path, "r", encoding="utf-8") as f:
-            alphabet = f.read().splitlines()
+        obj = torch.load(preproc_path, weights_only=False)
+
+        # unwrap legacy dict
+        if isinstance(obj, dict) and "raw_data" in obj:
+            data = obj["raw_data"]
+        else:
+            data = obj  # already a DataFrame
+
+        alphabet = _load_alphabet_from_txt(alphabet_path)
         logger.info("Pre-processed data loaded successfully.")
-        return alphabet, processed_data
-    except Exception as e:
-        logger.warning(f"Could not load pre-processed data: {e}. Proceeding with re-processing.")
-        exit()
+        return alphabet, data
+
+    except Exception as e:  # pragma: no cover
+        logger.warning(
+            f"Could not load pre-processed data: {e!s}. Will recompute."
+        )
+        raise
 
 
-def save_selfies_alphabet(config, alphabet, *, include_special_tokens=True):
-    """
-    Write one token per line to `config.directory_paths.selfies_alphabet`
-    (creates the parent folder if needed).  Skips writing when the file
-    is already present.
+def save_selfies_alphabet(
+    config,
+    alphabet: list[str],
+    *,
+    include_special_tokens: bool = True,
+) -> None:
+    """Dump ``alphabet`` (one token/line) to *config.directory_paths.selfies_alphabet*."""
+    path = Path(config.directory_paths.selfies_alphabet)
+    path.parent.mkdir(parents=True, exist_ok=True)
 
-    The resulting text file can be fed straight into HuggingFace's
-    WordLevelTrainer / BpeTrainer as `vocab_file=…`.
-    """
-    path = config.directory_paths.selfies_alphabet
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-
-    if os.path.exists(path):
-        logger.info(f"{path} already exists skipping alphabet dump.")
+    if path.exists():
+        logger.info("%s already exists – skipping alphabet dump.", path)
         return
 
-    # Add the usual special tokens up front, if desired
     specials = ["[PAD]", "[BOS]", "[EOS]", "[UNK]"] if include_special_tokens else []
     vocab_lines = specials + sorted(alphabet)
 
-    logger.info(f"Saving SELFIES alphabet ({len(vocab_lines)} tokens) → {path}")
-    with open(path, "w", encoding="utf-8") as f:
-        f.write("\n".join(vocab_lines))
-    logger.info("Alphabet saved.")
+    logger.info("Saving SELFIES alphabet (%d tokens) → %s", len(vocab_lines), path)
+    path.write_text("\n".join(vocab_lines), encoding="utf-8")
 
 
-def save_selfies_text_file(output_path,  df, whitespace=True):
-    """
-    Writes each list of tokens in df['selfies'] as a space-delimited line
-    to config.directory_paths.selfies_txt, skipping if file already exists.
-    """
-    if os.path.exists(output_path):
-        logger.info(f"{output_path} already exists. Skipping creation.")
+def _write_selfies_txt(
+    lines_path: str | Path,
+    df: pd.DataFrame,
+    *,
+    whitespace: bool,
+) -> None:
+    """Write every list in `df["tokenized_selfies"]` to *lines_path*."""
+    if Path(lines_path).exists():
+        logger.info("%s already exists – skipping.", lines_path)
         return
-    
-    logger.info(f"Writing SELFIES data to {output_path}")
-    if whitespace:
-        with open(output_path, "w", encoding="utf-8") as f:
-            for token_list in df["selfies"]:
-                f.write(" ".join(token_list) + "\n")
-    else:
-        with open(output_path, "w", encoding="utf-8") as f:
-            for token_list in df["selfies"]:
-                f.write("".join(token_list) + "\n")
-    logger.info(f"SELFIES text file saved to {output_path}")
+
+    logger.info("Writing SELFIES data → %s", lines_path)
+    with open(lines_path, "w", encoding="utf-8") as fh:
+        for tok_list in df["tokenized_selfies"]:
+            fh.write((" " if whitespace else "").join(tok_list) + "\n")
 
 
-def preprocess_selfies_data(config, raw_data=None):
+# ──────────────────────────────────────────────────────────────────────────────
+# Main entry-point
+# ──────────────────────────────────────────────────────────────────────────────
+def preprocess_selfies_data(
+    config,
+    raw_data: Optional[pd.DataFrame] = None,
+) -> Tuple[List[str], pd.DataFrame]:
     """
-    This function preprocesses raw data by 
-    splitting the selfies data and returning the alphabet of the selfies data.
-    If a preprocessed file is found at config.directory_paths.pre_processed_data,
-    it will load that file instead of reprocessing.
+    Returns
+    -------
+    alphabet : list[str]
+    dataframe : pd.DataFrame   (with column “tokenized_selfies”)
     """
-    preproc_path = config.directory_paths.pre_processed_data
-    alphabet_path = config.directory_paths.selfies_alphabet
-    if os.path.exists(preproc_path) and os.path.exists(alphabet_path) and config.checkpointing.fresh_data == False:
+    preproc_path = Path(config.directory_paths.pre_processed_data)
+    alphabet_path = Path(config.directory_paths.selfies_alphabet)
+
+    # ── 1. use cache when allowed ────────────────────────────────────────────
+    if (
+        not config.checkpointing.fresh_data
+        and preproc_path.exists()
+        and alphabet_path.exists()
+    ):
         return load_preprocessed_data(preproc_path, alphabet_path)
-    else: 
-        logger.info(f"Starting fresh preprocessing at: {preproc_path}. Proceeding with processing.")
-        
-    if 'selfies' not in raw_data.columns:
-        logger.warning("'selfies' column not found in raw_data. Cannot create vocabulary.")
-        exit()
-    else:
-        logger.info("'selfies' column found. Creating vocabulary from SELFIES data...")
-        
-        alphabet = selfies.get_alphabet_from_selfies(raw_data['selfies'])
-        
-        # splits and checks the SELFIES length.
-        def tokenize_if_valid(s):
-            tokenized = list(selfies.split_selfies(s))
-            return tokenized if len(tokenized) <= config.permitted_selfies_length else None
 
-        raw_data['tokenized_selfies'] = raw_data['selfies'].apply(tokenize_if_valid)
-        filtered_data = raw_data[raw_data['tokenized_selfies'].notnull()].copy()
+    if not config.checkpointing.fresh_data and not preproc_path.exists():
+        raise ValueError("Data load requested but no pre-processed data found.")
+    if raw_data is None:
+        raise ValueError("raw_data must be provided when fresh_data=True")
 
-        # compute max_lengt (might remove later)
-        max_selfies_length = filtered_data['tokenized_selfies'].apply(len).max()
-        logger.info(f"max length = {max_selfies_length}")
+    if "selfies" not in raw_data.columns:
+        raise ValueError("'selfies' column not found in raw_data")
 
-        # Replace the original selfies column with the tokenized version
-        #filtered_data['selfies'] = filtered_data['tokenized_selfies']
-        #filtered_data = filtered_data.drop(columns=['tokenized_selfies'])
-        
-        try:
-            torch.save({"alphabet": alphabet, "raw_data": filtered_data}, preproc_path)
-            logger.info(f"Pre-processed data saved to {preproc_path}.")
-        except Exception as e:
-            logger.warning(f"Could not save pre-processed data: {e}.")
-        save_selfies_text_file(config.directory_paths.selfies_nospace_txt, filtered_data, whitespace=False)
-        save_selfies_text_file(config.directory_paths.selfies_whitespace_txt, filtered_data, whitespace=True)
-        save_selfies_alphabet(config, alphabet)
-        print(f"selfies column: {filtered_data['selfies']}")
-        print(f"alphabet: {alphabet}")
-        return alphabet, filtered_data
+    logger.info("Creating vocabulary from SELFIES column …")
+    alphabet = selfies.get_alphabet_from_selfies(raw_data["selfies"])
+
+    # TOKENISE & FILTER ------------------------------------------------------
+    def _tok_if_valid(s: str) -> Optional[list[str]]:
+        toks = list(selfies.split_selfies(s))
+        return toks if len(toks) <= config.permitted_selfies_length else None
+
+    raw_data["tokenized_selfies"] = raw_data["selfies"].apply(_tok_if_valid)
+    df = raw_data[raw_data["tokenized_selfies"].notnull()].copy()
+
+    max_len = df["tokenized_selfies"].apply(len).max()
+    logger.info("Longest SELFIES sequence kept: %d tokens", max_len)
+
+    # CACHE ------------------------------------------------------------------
+    preproc_path.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        torch.save(df, preproc_path)        # ⚠️  save *only* the dataframe
+        logger.info("Pre-processed data saved → %s", preproc_path)
+    except Exception as e:  # pragma: no cover
+        logger.warning("Could not save pre-processed data: %s", e)
+
+    # AUXILIARY TXT CORPORA --------------------------------------------------
+    _write_selfies_txt(config.directory_paths.selfies_nospace_txt, df, whitespace=False)
+    _write_selfies_txt(config.directory_paths.selfies_whitespace_txt, df, whitespace=True)
+
+    # ALPHABET TXT -----------------------------------------------------------
+    save_selfies_alphabet(config, alphabet)
+
+    return alphabet, df
