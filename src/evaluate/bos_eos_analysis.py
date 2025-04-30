@@ -62,7 +62,7 @@ def analyze_bos_eos_and_trim(samples, config, name="default"):
         )
         plt.title(f"Molecules: Start w/ [BOS] vs. No [BOS] ({name})")
         plt.tight_layout()
-        plt.savefig(os.path.join(config.directory_paths.metrics_dir, f"bos_start_bar_{name}.png"))
+        plt.savefig(os.path.join(config.local_paths.metrics_dir, f"bos_start_bar_{name}.png"))
         plt.close()
 
         # ii) Molecules that end vs. do not end with [EOS]
@@ -74,7 +74,7 @@ def analyze_bos_eos_and_trim(samples, config, name="default"):
         )
         plt.title(f"Molecules: End w/ [EOS] vs. No [EOS] ({name})")
         plt.tight_layout()
-        plt.savefig(os.path.join(config.directory_paths.metrics_dir, f"eos_end_bar_{name}.png"))
+        plt.savefig(os.path.join(config.local_paths.metrics_dir, f"eos_end_bar_{name}.png"))
         plt.close()
 
         # iii) Molecules that have [BOS]/[EOS] in the middle
@@ -86,7 +86,7 @@ def analyze_bos_eos_and_trim(samples, config, name="default"):
         )
         plt.title(f"Molecules: [BOS] or [EOS] in Middle ({name})")
         plt.tight_layout()
-        plt.savefig(os.path.join(config.directory_paths.metrics_dir, f"bos_eos_middle_bar_{name}.png"))
+        plt.savefig(os.path.join(config.local_paths.metrics_dir, f"bos_eos_middle_bar_{name}.png"))
         plt.close()
 
     # Possibly overwrite the original data

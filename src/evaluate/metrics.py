@@ -68,7 +68,7 @@ def compute_token_frequency(config, samples, name):
     plt.ylabel("Normalized Frequency")
     plt.tight_layout()
 
-    save_path = os.path.join(config.directory_paths.metrics_dir, f"token_frequency_histogram_{name}.png")
+    save_path = os.path.join(config.local_paths.metrics_dir, f"token_frequency_histogram_{name}.png")
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
     plt.savefig(save_path)
     plt.close()
@@ -100,7 +100,7 @@ def compute_length_distribution(config, samples, name):
     plt.ylabel("Frequency")
     plt.tight_layout()
 
-    save_path = os.path.join(config.directory_paths.metrics_dir, f"molecule_length_histogram_{name}.png")
+    save_path = os.path.join(config.local_paths.metrics_dir, f"molecule_length_histogram_{name}.png")
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
     plt.savefig(save_path)
     plt.close()
@@ -178,7 +178,7 @@ def calculate_and_plot_metrics(config,
             # e.g. if metric is sascore < 4 => save image
             if metric == 'sascore' and value != None and value < 4:
                 outpath = os.path.join(
-                    config.directory_paths.synthesize_dir,
+                    config.local_paths.synthesize_dir,
                     f"synthesized_{name}_{synth_counter}"
                 )
                 synthesize_molecule(mol, outpath)
@@ -207,7 +207,7 @@ def calculate_and_plot_metrics(config,
                 plt.tight_layout()
 
                 save_path = os.path.join(
-                    config.directory_paths.metrics_dir,
+                    config.local_paths.metrics_dir,
                     f"{metric}_distribution_{name}.png"
                 )
                 os.makedirs(os.path.dirname(save_path), exist_ok=True)

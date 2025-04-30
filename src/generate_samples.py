@@ -30,10 +30,10 @@ def _load_from_checkpoint(config, tokenizer):
 
 def generate_samples(config):
     logger.info('Generating samples.')
-    if os.path.exists(config.directory_paths.tokenizer):
+    if os.path.exists(config.local_paths.tokenizer):
         logger.info("Tokenizer folder found. Loading...")
         try:
-            tokenizer = SelfiesTokenizer.from_pretrained(config.directory_paths.tokenizer)
+            tokenizer = SelfiesTokenizer.from_pretrained(config.local_paths.tokenizer)
         except Exception as e:
             logger.error(f"Error loading tokenizer: {e}")
             exit()
@@ -50,7 +50,7 @@ def generate_samples(config):
     flat_config = OmegaConf.to_container(config, resolve=True)
 
     # Temp file to store intermediate samples in case of crash
-    temp_path = config.directory_paths.temp_path
+    temp_path = config.local_paths.temp_path
 
     sample_count = 0
     with open(temp_path, 'a', encoding='utf-8') as temp_file:
@@ -73,7 +73,7 @@ def generate_samples(config):
                 temp_file.write(json.dumps(sample) + '\n')
                 sample_count += 1
 
-    final_path = config.directory_paths.sampled_data
+    final_path = config.local_paths.sampled_data
     with open(temp_path, 'r', encoding='utf-8') as temp_file:
         samples = [json.loads(line.strip()) for line in temp_file]
 

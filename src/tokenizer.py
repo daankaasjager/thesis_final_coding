@@ -1,160 +1,134 @@
-from curses import raw
 import os
 import logging
-import re
-import selfies as sf
 import torch
 import math
 from collections import defaultdict
-
-from transformers import PreTrainedTokenizerFast
+import json
 # Make sure necessary imports are present
-from tokenizers import Tokenizer, AddedToken, Regex
-from tokenizers.models import WordLevel, BPE # Import models if used below
-from tokenizers.trainers import WordLevelTrainer, UnigramTrainer # Import trainers if used belo
-from tokenizers.pre_tokenizers import WhitespaceSplit
-from transformers import PreTrainedTokenizerFast
+from tokenizers import Tokenizer, Regex
+from tokenizers.models import WordLevel
 from collections import OrderedDict
-from pathlib import Path
-from tokenizers import Tokenizer, models, pre_tokenizers, processors
+from tokenizers import Tokenizer, pre_tokenizers, processors
+from src.tokenizing.learn_ape_vocab import train_selfies_bpe_vocab
+from src.tokenizing.selfies_tokenizer import SelfiesTokenizer
 
 logger = logging.getLogger(__name__)
 
-class SelfiesTokenizer(PreTrainedTokenizerFast):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
 
-    def decode(
-        self,
-        token_ids,
-        skip_special_tokens: bool = True,
-        clean_up_tokenization_spaces: bool = False, # Added default argument to match base class
-        **kwargs,
-    ) -> str:
-        """
-        Decodes a list of token IDs back into a SELFIES string.
+def load_tokenizer(config):
+    tokenizer_dir = config.local_paths.tokenizer
+    logger.info(f"Loading tokenizer from {tokenizer_dir}")
+    return SelfiesTokenizer.from_pretrained(tokenizer_dir)
 
-        Args:
-            token_ids: List of token IDs to decode.
-            skip_special_tokens: Whether to remove special tokens (like BOS, EOS, PAD)
-                                 from the output string. Defaults to True.
-            clean_up_tokenization_spaces: Whether to clean up spaces before/after tokens.
-                                          Defaults to False for SELFIES to keep tokens like '[C]' intact.
-            **kwargs: Additional decoding arguments passed to the underlying tokenizer.
-
-        Returns:
-            The decoded SELFIES string.
-        """
-        # ➊ Convert ids → token strings using the base class method
-        #    but ensure skip_special_tokens is False initially so we can handle it manually
-        tokens = self.convert_ids_to_tokens(token_ids, skip_special_tokens=False)
-
-        # ➋ Filter out special tokens if requested
-        if skip_special_tokens:
-            # Use the standard all_special_tokens attribute from the base class
-            special_tokens_set = set(self.all_special_tokens)
-            tokens = [tok for tok in tokens if tok not in special_tokens_set]
-
-        # ➌ Join tokens without spaces, suitable for SELFIES format '[C][Branch1][C]'
-        #    The clean_up_tokenization_spaces=False argument in the signature helps
-        #    signal that we handle spacing manually here.
-        text = "".join(tokens)
-
-        # Optional: If needed, implement clean_up_tokenization_spaces logic here,
-        # but for SELFIES, direct joining is usually desired.
-
-        return text
-
-
-def train_or_load_selfies_tokenizer(config):
-    tokenizer_dir = config.directory_paths.tokenizer
-    if os.path.isdir(tokenizer_dir) and os.listdir(tokenizer_dir) and not config.checkpointing.retrain_tokenizer:
-        logger.info(f"Loading tokenizer from {tokenizer_dir}")
-        return SelfiesTokenizer.from_pretrained(tokenizer_dir)
-
-    selfies_alphabet_path = config.directory_paths.selfies_alphabet
-
-    if not os.path.exists(selfies_alphabet_path):
-        logger.error(f"Selfies text file not found or not provided: {selfies_alphabet_path}")
-        raise FileNotFoundError(f"Required selfies data file not found: {selfies_alphabet_path}")
-    else:
-        special_tokens = ["[BOS]", "[EOS]", "[SEP]", "[CLS]", "[PAD]", "[MASK]", "[UNK]"]
-        logger.info(f"Training tokenizer from scratch using {selfies_alphabet_path}")
-        # this is a path to a txt file, where each line is a token. Read appropriately.
-        # 1️⃣  read one token per line, keep original order, drop duplicates
-
-        with open(selfies_alphabet_path, encoding="utf-8") as f:
-            raw_tokens = [line.strip() for line in f if line.strip()]
-            unique_tokens = list(OrderedDict.fromkeys(special_tokens + raw_tokens))
-        vocab = {tok: idx for idx, tok in enumerate(unique_tokens)}
-        if config.tokenizer_type == "wordlevel":
-            atom_rgx = Regex(r"\[[^\]]+\]") 
-            tokenizer = Tokenizer(WordLevel(vocab=vocab, unk_token="[UNK]"))
-            tokenizer.pre_tokenizer = pre_tokenizers.Split(
-                atom_rgx, behavior="isolated"
-            )  
-        elif config.tokenizer_type == "unigram":
-            tokenizer = Tokenizer(models.Unigram())            # <──  only line that really changes
-            tokenizer.pre_tokenizer = pre_tokenizers.Whitespace()   # atoms already have spaces
-            corpus_txt = Path(config.directory_paths.selfies_whitespace_txt)
-            trainer = UnigramTrainer(
-                vocab_size=len(vocab) + 50,              # learn ≈50 new motifs
-                initial_alphabet=[],                     # not used by Unigram
-                special_tokens=unique_tokens,   # just the framework specials
-                unk_token="[UNK]",
-            )
-            tokenizer.train([str(corpus_txt)], trainer)
-        else:
-             raise ValueError(f"Unsupported tokenizer_type: {config.tokenizer_type}")
-
-        tokenizer.post_processor = processors.TemplateProcessing(
-            single="[BOS] $A [EOS]",
-            special_tokens=[("[BOS]", vocab["[BOS]"]), ("[EOS]", vocab["[EOS]"])],
-        )
-
-        tokenizer.enable_padding(direction="right",
-                        pad_id=vocab["[PAD]"],
-                        pad_token="[PAD]")
-
-        selfies_tokenizer = SelfiesTokenizer(
-            tokenizer_object=tokenizer,
-            bos_token="[BOS]",
-            eos_token="[EOS]",
-            pad_token="[PAD]",
-            unk_token="[UNK]",
-            sep_token="[SEP]",
-            cls_token="[CLS]",
-            mask_token="[MASK]",
-        )
-        print(f"vocab of tokenizer: {selfies_tokenizer.get_vocab()}")
-
-        #selfies_tokenizer._real_specials = set(special_tokens)   # only BOS/EOS/… – not atoms
-
-        selfies_tokenizer.save_pretrained(config.directory_paths.tokenizer)
-        example = "[C][Branch1][=C]"
-        out = selfies_tokenizer(example)
-        print(out.tokens())          # ← need parentheses; .tokens is a method
-        # ['[BOS]', '[C]', '[Branch1]', '[=C]', '[EOS]']
-        print(selfies_tokenizer.decode(out["input_ids"], skip_special_tokens=True))
-        # [C][Branch1][=C]
-        atom_set = set(raw_tokens)
-        return selfies_tokenizer
-    
-def get_tokenizer(config):
+def load_selfies_vocab(alphabet_path: str, special_tokens: list):
+    logger.info(f"Loading alphabet from: {alphabet_path}")
     try:
-        tokenizer = train_or_load_selfies_tokenizer(config)
-        return tokenizer
+        with open(alphabet_path, encoding="utf-8") as f:
+            raw_tokens = [line.strip() for line in f if line.strip()]
+        unique_tokens = list(OrderedDict.fromkeys(special_tokens + raw_tokens))
+        vocab = {tok: idx for idx, tok in enumerate(unique_tokens)}
+        return vocab, unique_tokens
     except Exception as e:
-        logger.error(f"Failed to get tokenizer: {e}", exc_info=True) # Log traceback
-        # It's helpful to see the original exception type as well
-        logger.error(f"Original exception type: {type(e).__name__}")
+        logger.error(f"Error loading SELFIES alphabet: {e}")
         raise
 
+def build_wordlevel_tokenizer(vocab: dict):
+    atom_rgx = Regex(r"\[[^\]]+\]")
+    tokenizer = Tokenizer(WordLevel(vocab=vocab, unk_token="[UNK]"))
+    tokenizer.pre_tokenizer = pre_tokenizers.Split(atom_rgx, behavior="isolated")
+    return tokenizer
+
+
+def build_ape_tokenizer(config, data, vocab):
+    vocab_path = config.local_paths.selfies_ape_vocab
+
+    if os.path.exists(vocab_path):
+        logger.info(f"Loading JSON vocab from {vocab_path}")
+        with open(vocab_path, "r", encoding="utf-8") as f:
+            tokenizer_json = json.load(f)
+        return Tokenizer(WordLevel.from_json(tokenizer_json))
+
+    if config.checkpointing.retrain_ape_vocab:
+        logger.info("Training APE tokenizer from scratch using raw data")
+        selfies_vocab = train_selfies_bpe_vocab(
+            config,
+            data["selfies"].tolist(),
+            vocab,
+            config.tokenizer.max_vocab_size,
+            config.tokenizer.min_freq_for_merge,
+            verbose=True
+        )
+        return Tokenizer(WordLevel(vocab=selfies_vocab, unk_token="[UNK]"))
+
+    raise ValueError("No valid APE vocab found and retrain flag is not set.")
+
+
+def configure_tokenizer(tokenizer: Tokenizer, vocab: dict) -> Tokenizer:
+    tokenizer.post_processor = processors.TemplateProcessing(
+        single="[BOS] $A [EOS]",
+        special_tokens=[("[BOS]", vocab["[BOS]"]), ("[EOS]", vocab["[EOS]"])],
+    )
+    tokenizer.enable_padding(
+        direction="right",
+        pad_id=vocab["[PAD]"],
+        pad_token="[PAD]",
+    )
+    return tokenizer
+
+
+def train_tokenizer(config, data=None):
+    special_tokens = ["[BOS]", "[EOS]", "[SEP]", "[CLS]", "[PAD]", "[MASK]", "[UNK]"]
+    vocab, _ = load_selfies_vocab(config.local_paths.selfies_alphabet, special_tokens)
+
+    tokenizer_type = config.tokenizer.tokenizer_type
+    if tokenizer_type == "wordlevel":
+        tokenizer = build_wordlevel_tokenizer(vocab)
+    elif tokenizer_type == "APE":
+        tokenizer = build_ape_tokenizer(config, data, vocab)
+    else:
+        raise ValueError(f"Unsupported tokenizer_type: {tokenizer_type}")
+
+    tokenizer = configure_tokenizer(tokenizer, vocab)
+
+    selfies_tokenizer = SelfiesTokenizer(
+        tokenizer_object=tokenizer,
+        bos_token="[BOS]",
+        eos_token="[EOS]",
+        pad_token="[PAD]",
+        unk_token="[UNK]",
+        sep_token="[SEP]",
+        cls_token="[CLS]",
+        mask_token="[MASK]",
+    )
+
+    logger.info(f"Tokenizer vocabulary is: {selfies_tokenizer.get_vocab()}")
+    selfies_tokenizer.save_pretrained(config.local_paths.tokenizer)
+
+    return selfies_tokenizer
+
+
+
+def get_tokenizer(config, data=None):
+    try:
+        should_load = (
+            os.path.isdir(config.local_paths.tokenizer)
+            and os.listdir(config.local_paths.tokenizer)
+            and not config.checkpointing.retrain_tokenizer
+        )
+        if should_load:
+            return load_tokenizer(config)
+        else:
+            return train_tokenizer(config, data)
+    except Exception as e:
+        logger.exception("Failed to get tokenizer")  # includes traceback
+        raise
+
+
 def tokenize_selfies_vocab(config, tokenizer, raw_data=None, chunk_size=50000, max_length=310):
-    if os.path.exists(config.directory_paths.train_data_encoding) and not config.checkpointing.retrain_tokenizer:
-        logger.info(f"SELFIES training data encoding found at {config.directory_paths.train_data_encoding}")
+    if os.path.exists(config.local_paths.train_data_encoding) and not config.checkpointing.retrain_tokenizer:
+        logger.info(f"SELFIES training data encoding found at {config.local_paths.train_data_encoding}")
         try:
-            tokenized_data = torch.load(config.directory_paths.train_data_encoding, map_location="cpu", weights_only = False)
+            tokenized_data = torch.load(config.local_paths.train_data_encoding, map_location="cpu", weights_only = False)
             logger.info(f"SELFIES data loaded successfully. Vocab size: {tokenizer.vocab_size}")
             return tokenized_data
         except Exception as e:
@@ -190,8 +164,8 @@ def tokenize_selfies_vocab(config, tokenizer, raw_data=None, chunk_size=50000, m
         )
         tokenized_data["token_type_ids"].extend(token_type_ids)
     try:
-        torch.save(tokenized_data, config.directory_paths.train_data_encoding, pickle_protocol=4)
-        logger.info(f"Tokenized data saved to {config.directory_paths.train_data_encoding}")
+        torch.save(tokenized_data, config.local_paths.train_data_encoding, pickle_protocol=4)
+        logger.info(f"Tokenized data saved to {config.local_paths.train_data_encoding}")
     except Exception as e:
         logger.error(f"Error saving tokenized SELFIES data: {e}")
     logger.info(f"Done tokenizing. Vocab size: {tokenizer.vocab_size}")

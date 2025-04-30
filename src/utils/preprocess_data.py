@@ -1,16 +1,5 @@
-# ──────────────────────────────────────────────────────────────────────────────
-#  utils/preprocess_data.py
-#  ──────────────────────────────────────────────────────────────────────────────
-#  One-stop SELFIES preprocessing + caching utilities
-#  * alphabet lives exactly once  →  <run-dir>/selfies_alphabet.txt
-#  * dataframe cache lives once   →  <run-dir>/pre_processed_data.pt
-#    (old cache files that contained a {"alphabet": …, "raw_data": …} dict
-#     are still read correctly – the loader unwraps them.)
-# ──────────────────────────────────────────────────────────────────────────────
 from __future__ import annotations
-
 import logging
-import os
 from pathlib import Path
 from typing import List, Tuple, Optional
 
@@ -21,9 +10,6 @@ import pandas as pd
 logger = logging.getLogger(__name__)
 
 
-# ──────────────────────────────────────────────────────────────────────────────
-# IO helpers
-# ──────────────────────────────────────────────────────────────────────────────
 def _load_alphabet_from_txt(path: str | Path) -> List[str]:
     with open(path, encoding="utf-8") as f:
         return f.read().splitlines()
@@ -65,12 +51,12 @@ def save_selfies_alphabet(
     *,
     include_special_tokens: bool = True,
 ) -> None:
-    """Dump ``alphabet`` (one token/line) to *config.directory_paths.selfies_alphabet*."""
-    path = Path(config.directory_paths.selfies_alphabet)
+    """Dump ``alphabet`` (one token/line) to *config.local_paths.selfies_alphabet*."""
+    path = Path(config.local_paths.selfies_alphabet)
     path.parent.mkdir(parents=True, exist_ok=True)
 
     if path.exists():
-        logger.info("%s already exists – skipping alphabet dump.", path)
+        logger.info("%s already exists – skipping.", path)
         return
 
     specials = ["[PAD]", "[BOS]", "[EOS]", "[UNK]"] if include_special_tokens else []
@@ -96,11 +82,7 @@ def _write_selfies_txt(
         for tok_list in df["tokenized_selfies"]:
             fh.write((" " if whitespace else "").join(tok_list) + "\n")
 
-
-# ──────────────────────────────────────────────────────────────────────────────
-# Main entry-point
-# ──────────────────────────────────────────────────────────────────────────────
-def preprocess_selfies_data(
+def preprocess_data(
     config,
     raw_data: Optional[pd.DataFrame] = None,
 ) -> Tuple[List[str], pd.DataFrame]:
@@ -110,10 +92,9 @@ def preprocess_selfies_data(
     alphabet : list[str]
     dataframe : pd.DataFrame   (with column “tokenized_selfies”)
     """
-    preproc_path = Path(config.directory_paths.pre_processed_data)
-    alphabet_path = Path(config.directory_paths.selfies_alphabet)
+    preproc_path = Path(config.local_paths.pre_processed_data)
+    alphabet_path = Path(config.local_paths.selfies_alphabet)
 
-    # ── 1. use cache when allowed ────────────────────────────────────────────
     if (
         not config.checkpointing.fresh_data
         and preproc_path.exists()
@@ -152,8 +133,8 @@ def preprocess_selfies_data(
         logger.warning("Could not save pre-processed data: %s", e)
 
     # AUXILIARY TXT CORPORA --------------------------------------------------
-    _write_selfies_txt(config.directory_paths.selfies_nospace_txt, df, whitespace=False)
-    _write_selfies_txt(config.directory_paths.selfies_whitespace_txt, df, whitespace=True)
+    _write_selfies_txt(config.local_paths.selfies_nospace_txt, df, whitespace=False)
+    _write_selfies_txt(config.local_paths.selfies_whitespace_txt, df, whitespace=True)
 
     # ALPHABET TXT -----------------------------------------------------------
     save_selfies_alphabet(config, alphabet)

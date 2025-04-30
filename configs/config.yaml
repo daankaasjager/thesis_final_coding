@@ -11,22 +11,23 @@ train_test_split:
   train: 0.8
   valid: 0.2
 
-directory_paths:
+local_paths:
   tokenizer: data/kraken/tokenizer
   train_data_encoding: data/kraken/training_data/train_data_encoding.pt
-  raw_data: data/kraken/training_data/descriptors_v3.csv
+  raw_data: data/kraken/training_data/augmented_descriptors_v3.csv
   augmented_data: data/kraken/training_data/augmented_descriptors_v3.csv
   pre_processed_data: data/kraken/training_data/preprocessed_data.pt
   sampled_data: data/kraken/sampled_data/generated_samples.json
   temp_path: data/kraken/sampled_data/temp.tmp
   metrics_dir: data/kraken/metric_plots
   synthesize_dir: data/kraken/synthesized_molecules
-  selfies_nospace_txt: data/kraken/training_data/selfies_nospace_5000.txt
+  selfies_nospace_txt: data/kraken/training_data/selfies_nospace.txt
   selfies_whitespace_txt: data/kraken/training_data/selfies_whitespace.txt
   selfies_alphabet: data/kraken/training_data/selfies_alphabet.txt
+  selfies_ape_vocab: data/kraken/tokenizer/selfies_ape_vocab.json
 
 
-mode: augment  # augment / train / sample /evaluate_samples
+mode: train  # augment / train / sample /evaluate_samples
 seed: 1
 permitted_selfies_length: 175 # CHANGE THIS TO THE ACTUAL PERCENTILE LATER
 diffusion: absorbing_state
@@ -34,12 +35,13 @@ backbone: dit  # dit / dimamba / ar
 parameterization: subs  # subs / d3pm / sedd
 time_conditioning: False
 T: 0  # 0 (continuous time) / 1000 
-plot_dist: False # this is for evaluating samples
 row_limit: null
-overwrite_original: False # this is for evaluating samples
-tokenizer_type: wordlevel # wordlevel, etc.
-vocab_size: 54
-min_frequency: 1
+
+tokenizer:
+  tokenizer_type: APE # wordlevel, etc.
+  vocab_size: 54
+  max_vocab_size: 200 # EXPERIMENT WITH THIS!!!! pairs for APE
+  min_freq_for_merge: 10 #min frequency of pairs for APE
 
 checkpointing:
   save_dir: ${cwd:}
@@ -47,6 +49,7 @@ checkpointing:
   resume_ckpt_path: ${cwd:}/checkpoints/best-v6.ckpt
   fresh_data: false
   retrain_tokenizer: True
+  retrain_ape_vocab: True
 
 wandb:
   project: SELFIES-diffusion
@@ -71,6 +74,8 @@ eval:
   checkpoint_path: ${cwd:}/checkpoints/12_hour_run_24_april.ckpt # Used to evaluate a checkpoint after training.
   disable_ema: False
   generate_samples: True
+  overwrite_original: False
+  plot_dist: False
 
 
 sampling:

@@ -7,7 +7,7 @@ from tqdm import tqdm
 
 def augment_dataset(config):
     # Load the original dataset
-    df = pd.read_csv(config.directory_paths.raw_data)
+    df = pd.read_csv(config.local_paths.raw_data)
 
     augmented_rows = []
 
@@ -49,9 +49,5 @@ def augment_dataset(config):
 
 
     augmented_df = pd.DataFrame(augmented_rows)
+    augmented_df.to_csv(config.local_paths.augmented_data, index=False)
 
-    os.makedirs(config.directory_paths.augmented_data, exist_ok=True)
-
-    output_path = os.path.join(config.directory_paths.augmented_data)
-    augmented_df.to_csv(output_path, index=False)
-    return

@@ -7,13 +7,13 @@ from src.evaluate.metrics import calculate_and_plot_metrics
 
 def evaluate_samples(config):
     # Load generated samples
-    file_path = config.directory_paths.sampled_data
+    file_path = config.local_paths.sampled_data
     with open(file_path, "r") as f:
         data = json.load(f)
         generated_samples = data["samples"]
 
     # Load original samples
-    original_df = fast_csv_to_df_reader(config.directory_paths.raw_data, row_limit=config.row_limit)
+    original_df = fast_csv_to_df_reader(config.local_paths.raw_data, row_limit=config.row_limit)
     original_samples = original_df["selfies"].tolist()
 
     # 3) Decide which set to pass to metrics
