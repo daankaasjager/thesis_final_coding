@@ -1,5 +1,6 @@
 from transformers import PreTrainedTokenizerFast
 
+
 class SelfiesTokenizer(PreTrainedTokenizerFast):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -8,7 +9,7 @@ class SelfiesTokenizer(PreTrainedTokenizerFast):
         self,
         token_ids,
         skip_special_tokens: bool = True,
-        clean_up_tokenization_spaces: bool = False, # Added default argument to match base class
+        clean_up_tokenization_spaces: bool = False,  # Added default argument to match base class
         **kwargs,
     ) -> str:
         """

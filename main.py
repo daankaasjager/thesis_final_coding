@@ -3,16 +3,15 @@ from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parent / "src"))
 
-import hydra
-from omegaconf import OmegaConf, DictConfig
-import lightning as L
-import torch
-
 import logging
 import os
 
-from src.utils import resolve_paths
-from src.utils import configure_logging
+import hydra
+import lightning as L
+import torch
+from omegaconf import DictConfig, OmegaConf
+
+from src.utils import configure_logging, resolve_paths
 
 configure_logging()
 logger = logging.getLogger(__name__)
@@ -23,17 +22,13 @@ doi: 10.48550/arXiv.2406.07524
 repository: https://github.com/kuleshov-group/mdlm/tree/bbc8fb61077a3ca38eab2423d0f81a5484754f51"""
 
 
-OmegaConf.register_new_resolver(
-  'cwd', os.getcwd)
-OmegaConf.register_new_resolver(
-  'device_count', torch.cuda.device_count)
-OmegaConf.register_new_resolver(
-  'eval', eval)
-OmegaConf.register_new_resolver(
-  'div_up', lambda x, y: (x + y - 1) // y)
+OmegaConf.register_new_resolver("cwd", os.getcwd)
+OmegaConf.register_new_resolver("device_count", torch.cuda.device_count)
+OmegaConf.register_new_resolver("eval", eval)
+OmegaConf.register_new_resolver("div_up", lambda x, y: (x + y - 1) // y)
 
-@hydra.main(version_base=None, config_path='configs',
-            config_name='config')
+
+@hydra.main(version_base=None, config_path="configs", config_name="config")
 def run(config: DictConfig):
     """Main function to run the script.
     Args:
@@ -43,20 +38,24 @@ def run(config: DictConfig):
     """sets up seeding, logging, and the config file"""
     rank = int(os.environ.get("LOCAL_RANK", 0))
     if rank == 0:
-      logger.info(OmegaConf.to_yaml(config))
+        logger.info(OmegaConf.to_yaml(config))
     L.seed_everything(config.seed, verbose=False)
     config = resolve_paths(config)
-    if config.mode == 'augment':
+    if config.mode == "augment":
         from src.preprocessing import augment_dataset
+
         augment_dataset(config)
-    if config.mode == 'train':
+    if config.mode == "train":
         from src import train
+
         train(config)
     elif config.mode == "generate":
         from src import generate_samples
+
         generate_samples(config)
     elif config.mode == "evaluate":
         from src import evaluate_samples
+
         evaluate_samples(config)
 
 

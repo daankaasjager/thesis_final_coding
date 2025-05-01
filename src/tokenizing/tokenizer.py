@@ -1,18 +1,19 @@
-import os
-import logging
-import torch
-import math
-from collections import defaultdict
 import json
+import logging
+import math
+import os
+from collections import OrderedDict, defaultdict
+
+import torch
 # Make sure necessary imports are present
-from tokenizers import Tokenizer, Regex
+from tokenizers import Regex, Tokenizer, pre_tokenizers, processors
 from tokenizers.models import WordLevel
-from collections import OrderedDict
-from tokenizers import Tokenizer, pre_tokenizers, processors
+
 from tokenizing.learn_ape_vocab import train_selfies_bpe_vocab
 from tokenizing.selfies_tokenizer import SelfiesTokenizer
 
 logger = logging.getLogger(__name__)
+
 
 def _load_selfies_vocab(alphabet_path: str, special_tokens: list):
     logger.info(f"Loading alphabet from: {alphabet_path}")
@@ -25,6 +26,7 @@ def _load_selfies_vocab(alphabet_path: str, special_tokens: list):
     except Exception as e:
         logger.error(f"Error loading SELFIES alphabet: {e}")
         raise
+
 
 def _build_wordlevel_tokenizer(vocab: dict):
     atom_rgx = Regex(r"\[[^\]]+\]")
@@ -50,7 +52,7 @@ def _build_ape_tokenizer(config, data, vocab):
             vocab,
             config.tokenizer.max_vocab_size,
             config.tokenizer.min_freq_for_merge,
-            verbose=True
+            verbose=True,
         )
         return Tokenizer(WordLevel(vocab=selfies_vocab, unk_token="[UNK]"))
 
@@ -99,10 +101,12 @@ def _train_tokenizer(config, data=None):
     selfies_tokenizer.save_pretrained(config.local_paths.tokenizer)
     return selfies_tokenizer
 
+
 def _load_tokenizer(config):
     tokenizer_dir = config.local_paths.tokenizer
     logger.info(f"Loading tokenizer from {tokenizer_dir}")
     return SelfiesTokenizer.from_pretrained(tokenizer_dir)
+
 
 def get_tokenizer(config, data=None):
     try:
@@ -115,52 +119,69 @@ def get_tokenizer(config, data=None):
             return _load_tokenizer(config)
         else:
             return _train_tokenizer(config, data)
-    except Exception as e:
+    except Exception:
         logger.exception("Failed to get tokenizer")  # includes traceback
         raise
 
 
-def tokenize_selfies_vocab(config, tokenizer, raw_data=None, chunk_size=50000, max_length=310):
-    if os.path.exists(config.local_paths.train_data_encoding) and not config.checkpointing.retrain_tokenizer:
-        logger.info(f"SELFIES training data encoding found at {config.local_paths.train_data_encoding}")
+def tokenize_selfies_vocab(
+    config, tokenizer, raw_data=None, chunk_size=50000, max_length=310
+):
+    if (
+        os.path.exists(config.local_paths.train_data_encoding)
+        and not config.checkpointing.retrain_tokenizer
+    ):
+        logger.info(
+            f"SELFIES training data encoding found at {config.local_paths.train_data_encoding}"
+        )
         try:
-            tokenized_data = torch.load(config.local_paths.train_data_encoding, map_location="cpu", weights_only = False)
-            logger.info(f"SELFIES data loaded successfully. Vocab size: {tokenizer.vocab_size}")
+            tokenized_data = torch.load(
+                config.local_paths.train_data_encoding,
+                map_location="cpu",
+                weights_only=False,
+            )
+            logger.info(
+                f"SELFIES data loaded successfully. Vocab size: {tokenizer.vocab_size}"
+            )
             return tokenized_data
         except Exception as e:
             logger.error(f"Error loading SELFIES data: {e}")
             return None
-    if 'selfies' not in raw_data.columns:
+    if "selfies" not in raw_data.columns:
         logger.info("'selfies' column not found in raw_data.")
         return None
-    
-    input_selfies = raw_data['selfies'].tolist()
+
+    input_selfies = raw_data["selfies"].tolist()
     total_samples = len(input_selfies)
     logger.info(f"Tokenizing {total_samples} SELFIES in chunks of {chunk_size}...")
     num_chunks = math.ceil(total_samples / chunk_size)
-    tokenized_data = defaultdict(list) 
+    tokenized_data = defaultdict(list)
     for chunk_idx in range(num_chunks):
         start_idx = chunk_idx * chunk_size
         end_idx = min((chunk_idx + 1) * chunk_size, total_samples)
         chunk = input_selfies[start_idx:end_idx]
-        logger.info(f"Processing chunk {chunk_idx+1}/{num_chunks}: {len(chunk)} sequences")
+        logger.info(
+            f"Processing chunk {chunk_idx+1}/{num_chunks}: {len(chunk)} sequences"
+        )
         tokenized_chunk = tokenizer(
             chunk,
             is_split_into_words=False,
             max_length=max_length,
-            padding='longest',
+            padding="longest",
             truncation=False,
-            add_special_tokens=True
+            add_special_tokens=True,
         )
-        tokenized_data['input_ids'].extend(tokenized_chunk['input_ids'])
-        tokenized_data['attention_mask'].extend(tokenized_chunk['attention_mask'])
+        tokenized_data["input_ids"].extend(tokenized_chunk["input_ids"])
+        tokenized_data["attention_mask"].extend(tokenized_chunk["attention_mask"])
         token_type_ids = tokenized_chunk.get(
             "token_type_ids",
             [[0] * len(ids) for ids in tokenized_chunk["input_ids"]],
         )
         tokenized_data["token_type_ids"].extend(token_type_ids)
     try:
-        torch.save(tokenized_data, config.local_paths.train_data_encoding, pickle_protocol=4)
+        torch.save(
+            tokenized_data, config.local_paths.train_data_encoding, pickle_protocol=4
+        )
         logger.info(f"Tokenized data saved to {config.local_paths.train_data_encoding}")
     except Exception as e:
         logger.error(f"Error saving tokenized SELFIES data: {e}")

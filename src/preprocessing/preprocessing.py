@@ -1,11 +1,12 @@
 from __future__ import annotations
+
 import logging
 from pathlib import Path
-from typing import List, Tuple, Optional
+from typing import List, Optional, Tuple
 
-import torch
-import selfies
 import pandas as pd
+import selfies
+import torch
 
 logger = logging.getLogger(__name__)
 
@@ -39,9 +40,7 @@ def _load_preprocessed_data(
         return alphabet, data
 
     except Exception as e:  # pragma: no cover
-        logger.warning(
-            f"Could not load pre-processed data: {e!s}. Will recompute."
-        )
+        logger.warning(f"Could not load pre-processed data: {e!s}. Will recompute.")
         raise
 
 
@@ -82,6 +81,7 @@ def _write_selfies_txt(
         for tok_list in df["tokenized_selfies"]:
             fh.write((" " if whitespace else "").join(tok_list) + "\n")
 
+
 def preprocess_data(
     config,
     raw_data: Optional[pd.DataFrame] = None,
@@ -95,7 +95,11 @@ def preprocess_data(
     preproc_path = Path(config.local_paths.pre_processed_data)
     alphabet_path = Path(config.local_paths.selfies_alphabet)
 
-    if (not config.checkpointing.fresh_data and preproc_path.exists() and alphabet_path.exists()):
+    if (
+        not config.checkpointing.fresh_data
+        and preproc_path.exists()
+        and alphabet_path.exists()
+    ):
         return _load_preprocessed_data(preproc_path, alphabet_path)
 
     if not config.checkpointing.fresh_data and not preproc_path.exists():
@@ -108,7 +112,6 @@ def preprocess_data(
 
     logger.info("Creating vocabulary from SELFIES column …")
     alphabet = selfies.get_alphabet_from_selfies(raw_data["selfies"])
-
 
     def _tok_if_valid(s: str) -> Optional[list[str]]:
         toks = list(selfies.split_selfies(s))
@@ -124,7 +127,7 @@ def preprocess_data(
     try:
         torch.save(df, preproc_path)
         logger.info("Pre-processed data saved → %s", preproc_path)
-    except Exception as e:  
+    except Exception as e:
         logger.warning("Could not save pre-processed data: %s", e)
 
     _write_selfies_txt(config.local_paths.selfies_nospace_txt, df, whitespace=False)

@@ -1,7 +1,9 @@
+import logging
+
 import pandas as pd
 
-import logging
 logger = logging.getLogger(__name__)
+
 
 def read_csv(file_path: str, row_limit) -> pd.DataFrame:
     """
@@ -20,9 +22,10 @@ def read_csv(file_path: str, row_limit) -> pd.DataFrame:
 
     if row_limit is None:
         data = pd.read_csv(file_path, names=column_names, skiprows=1)
-    else: 
+    else:
         data = pd.read_csv(file_path, names=column_names, skiprows=1, nrows=row_limit)
 
-    logger.info(f"Data loaded from {file_path}. row limit = {row_limit}. Number of rows read: {len(data)}")
+    logger.info(
+        f"Data loaded from {file_path}. row limit = {row_limit}. Number of rows read: {len(data)}"
+    )
     return data
-

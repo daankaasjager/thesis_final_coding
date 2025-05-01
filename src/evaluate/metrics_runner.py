@@ -1,12 +1,9 @@
-from .metrics_core import get_valid_molecules, compute_standard_metric, METRIC_REGISTRY
-from .metrics_plotting import (
-    plot_token_frequency,
-    plot_length_distribution,
-    plot_metric_distribution,
-    plot_overlay_distribution,
-)
-
 import logging
+
+from .metrics_core import compute_standard_metric, get_valid_molecules
+from .metrics_plotting import (plot_length_distribution,
+                               plot_metric_distribution,
+                               plot_overlay_distribution, plot_token_frequency)
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +25,9 @@ def calculate_and_plot_metrics(config, samples, metrics, name: str):
         values = [compute_standard_metric(mol, metric) for mol in mols]
         values = [v for v in values if v is not None]
         results[metric] = values
-        logger.info(f"[{name}] {metric}: avg={sum(values)/len(values):.3f}, n={len(values)}")
+        logger.info(
+            f"[{name}] {metric}: avg={sum(values)/len(values):.3f}, n={len(values)}"
+        )
         plot_metric_distribution(config, values, metric, name)
 
     return results

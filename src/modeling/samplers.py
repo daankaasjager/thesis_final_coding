@@ -1,18 +1,20 @@
-from typing import Iterator
 import math
+from typing import Iterator
+
 import torch
-from torch.utils.data import RandomSampler, DistributedSampler
+from torch.utils.data import DistributedSampler, RandomSampler
 
 # Adapted from https://github.com/Lightning-AI/lightning/blob/2845e7565dbe6b765ae32870e7d2bc456529c30a/tests/tests_pytorch/utilities/test_auto_restart.py#L1397
+
 
 class RandomFaultTolerantSampler(RandomSampler):
     def __init__(self, *args, generator=None, **kwargs):
         if generator is None:
             seed = int(torch.empty((), dtype=torch.int64).random_().item())
             generator = torch.Generator().manual_seed(seed)
-        kwargs.pop('shuffle', None)
+        kwargs.pop("shuffle", None)
         super().__init__(*args, generator=generator, **kwargs)
-        
+
         self.counter = 0
         self.restarting = False
         self.state = self.generator.get_state()  # <-- FIX: Initialize self.state
@@ -21,11 +23,12 @@ class RandomFaultTolerantSampler(RandomSampler):
         return {"random_state": self.state, "counter": self.counter}
 
     def load_state_dict(self, state_dict):
-        self.state = state_dict.get("random_state")  # <-- FIX: Restore self.state properly
+        self.state = state_dict.get(
+            "random_state"
+        )  # <-- FIX: Restore self.state properly
         self.generator.set_state(self.state)  # <-- Use self.state to set generator
         self.counter = state_dict["counter"]
         self.restarting = True  # Indicate that we are restarting
-
 
     def __iter__(self) -> Iterator[int]:
         """
@@ -35,9 +38,9 @@ class RandomFaultTolerantSampler(RandomSampler):
         n = len(self.data_source)
         self.state = self.generator.get_state()
         indices = torch.randperm(n, generator=self.generator).tolist()
-        
+
         if self.restarting:
-            indices = indices[self.counter:]
+            indices = indices[self.counter :]
             self.restarting = False
         else:
             self.counter = 0
@@ -45,7 +48,7 @@ class RandomFaultTolerantSampler(RandomSampler):
         for index in indices:
             self.counter += 1
             yield index
-        
+
         self.counter = 0
 
 
@@ -54,6 +57,7 @@ class FaultTolerantDistributedSampler(DistributedSampler):
     A distributed sampler that supports fault tolerance by tracking sampling progress.
     Ensures consistent sample distribution across multiple GPUs/nodes.
     """
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.counter = 0
@@ -92,17 +96,19 @@ class FaultTolerantDistributedSampler(DistributedSampler):
             if padding_size <= len(indices):
                 indices += indices[:padding_size]
             else:
-                indices += (indices * math.ceil(padding_size / len(indices)))[:padding_size]
+                indices += (indices * math.ceil(padding_size / len(indices)))[
+                    :padding_size
+                ]
         else:
-            indices = indices[:self.total_size]
+            indices = indices[: self.total_size]
         assert len(indices) == self.total_size
 
         # Subsample the dataset for the current rank
-        indices = indices[self.rank:self.total_size:self.num_replicas]
+        indices = indices[self.rank : self.total_size : self.num_replicas]
         assert len(indices) == self.num_samples
 
         if self.restarting:
-            indices = indices[self.counter:]
+            indices = indices[self.counter :]
             self.restarting = False
         else:
             self.counter = 0
@@ -110,5 +116,5 @@ class FaultTolerantDistributedSampler(DistributedSampler):
         for index in indices:
             self.counter += 1
             yield index
-        
+
         self.counter = 0

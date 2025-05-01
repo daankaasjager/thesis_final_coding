@@ -1,9 +1,11 @@
+import logging
 import os
 import re
+
 import matplotlib.pyplot as plt
-import logging
 
 logger = logging.getLogger(__name__)
+
 
 def bos_eos_analysis(samples, config, name="default"):
     """
@@ -13,7 +15,7 @@ def bos_eos_analysis(samples, config, name="default"):
     3) Trim each SELFIES after the first [EOS] token (inclusive).
     4) If config.eval.overwrite_original == True, replace 'samples' in-place,
        otherwise, return a new list 'trimmed_samples'.
-    
+
     Returns:
         (list) The final "active" samples (trimmed).
     """
@@ -22,7 +24,7 @@ def bos_eos_analysis(samples, config, name="default"):
     eos_end_count = 0
     bos_eos_middle_count = 0
 
-    token_pattern = re.compile(r'\[[^\]]*\]')
+    token_pattern = re.compile(r"\[[^\]]*\]")
     trimmed_samples = []
 
     for sample in samples:
@@ -58,11 +60,13 @@ def bos_eos_analysis(samples, config, name="default"):
         plt.bar(
             ["Starts w/ [BOS]", "No [BOS] at start"],
             [bos_start_count, total_mols - bos_start_count],
-            color=["orange", "blue"]
+            color=["orange", "blue"],
         )
         plt.title(f"Molecules: Start w/ [BOS] vs. No [BOS] ({name})")
         plt.tight_layout()
-        plt.savefig(os.path.join(config.local_paths.metrics_dir, f"bos_start_bar_{name}.png"))
+        plt.savefig(
+            os.path.join(config.local_paths.metrics_dir, f"bos_start_bar_{name}.png")
+        )
         plt.close()
 
         # ii) Molecules that end vs. do not end with [EOS]
@@ -70,11 +74,13 @@ def bos_eos_analysis(samples, config, name="default"):
         plt.bar(
             ["Ends w/ [EOS]", "No [EOS] at end"],
             [eos_end_count, total_mols - eos_end_count],
-            color=["green", "red"]
+            color=["green", "red"],
         )
         plt.title(f"Molecules: End w/ [EOS] vs. No [EOS] ({name})")
         plt.tight_layout()
-        plt.savefig(os.path.join(config.local_paths.metrics_dir, f"eos_end_bar_{name}.png"))
+        plt.savefig(
+            os.path.join(config.local_paths.metrics_dir, f"eos_end_bar_{name}.png")
+        )
         plt.close()
 
         # iii) Molecules that have [BOS]/[EOS] in the middle
@@ -82,11 +88,15 @@ def bos_eos_analysis(samples, config, name="default"):
         plt.bar(
             ["Has [BOS]/[EOS] in middle", "No [BOS]/[EOS] in middle"],
             [bos_eos_middle_count, total_mols - bos_eos_middle_count],
-            color=["purple", "gray"]
+            color=["purple", "gray"],
         )
         plt.title(f"Molecules: [BOS] or [EOS] in Middle ({name})")
         plt.tight_layout()
-        plt.savefig(os.path.join(config.local_paths.metrics_dir, f"bos_eos_middle_bar_{name}.png"))
+        plt.savefig(
+            os.path.join(
+                config.local_paths.metrics_dir, f"bos_eos_middle_bar_{name}.png"
+            )
+        )
         plt.close()
 
     # Possibly overwrite the original data

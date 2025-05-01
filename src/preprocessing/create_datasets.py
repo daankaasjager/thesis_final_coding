@@ -1,28 +1,39 @@
-import torch
+import logging
+
 import datasets
+import torch
 from transformers import DataCollatorWithPadding
 
-import logging
 logger = logging.getLogger(__name__)
 
+
 def _check_gpu_compatibility(config) -> None:
-    """ Check if the GPU is compatible with the batch size and number of GPUs."""
+    """Check if the GPU is compatible with the batch size and number of GPUs."""
     logger.info("Checking GPU compatibility")
     num_gpus = torch.cuda.device_count()
     logger.info(f"Number of GPUs: {num_gpus}")
-    assert (config.loader.global_batch_size ==
-            config.loader.batch_size * config.trainer.num_nodes
-            * num_gpus * config.trainer.accumulate_grad_batches)
-    if config.loader.global_batch_size % (num_gpus * config.trainer.accumulate_grad_batches) != 0:
+    assert (
+        config.loader.global_batch_size
+        == config.loader.batch_size
+        * config.trainer.num_nodes
+        * num_gpus
+        * config.trainer.accumulate_grad_batches
+    )
+    if (
+        config.loader.global_batch_size
+        % (num_gpus * config.trainer.accumulate_grad_batches)
+        != 0
+    ):
         raise ValueError(
-            f'Train Batch Size {config.loader.global_batch_size}'
-            f' not divisible by {num_gpus * config.trainer.accumulate_grad_batches} gpus with accumulation.'
+            f"Train Batch Size {config.loader.global_batch_size}"
+            f" not divisible by {num_gpus * config.trainer.accumulate_grad_batches} gpus with accumulation."
         )
     if config.loader.eval_global_batch_size % num_gpus != 0:
         raise ValueError(
-            f'Eval Batch Size for {config.loader.eval_global_batch_size}'
-            f' not divisible by {num_gpus}.'
+            f"Eval Batch Size for {config.loader.eval_global_batch_size}"
+            f" not divisible by {num_gpus}."
         )
+
 
 def _create_train_val_dataloaders(config, tokenized_selfies_data, tokenizer) -> tuple:
     """
@@ -31,15 +42,15 @@ def _create_train_val_dataloaders(config, tokenized_selfies_data, tokenizer) -> 
     """
     dataset = datasets.Dataset.from_dict(tokenized_selfies_data)
     # Potentially also include the column "conditioning". First requires adding that to the tokenized selfies data
-    
+
     if config.train_test_split.train < 1.0:
         split_dataset = dataset.train_test_split(
             test_size=1 - config.train_test_split.train,
-            seed=getattr(config, 'seed', 42),
-            shuffle=True
+            seed=getattr(config, "seed", 42),
+            shuffle=True,
         )
-        train_dataset = split_dataset['train']
-        val_dataset = split_dataset['test']
+        train_dataset = split_dataset["train"]
+        val_dataset = split_dataset["test"]
     else:
         logger.warning("train_test_split.train=1.0, no separate validation dataset.")
         train_dataset = dataset
@@ -54,7 +65,7 @@ def _create_train_val_dataloaders(config, tokenized_selfies_data, tokenizer) -> 
         pin_memory=config.loader.pin_memory,
         shuffle=not config.data.streaming,
         collate_fn=data_collator,
-        persistent_workers=True
+        persistent_workers=True,
     )
 
     if val_dataset is not None and len(val_dataset) > 0:
@@ -64,7 +75,7 @@ def _create_train_val_dataloaders(config, tokenized_selfies_data, tokenizer) -> 
             num_workers=config.loader.num_workers,
             pin_memory=config.loader.pin_memory,
             shuffle=False,
-            collate_fn=data_collator
+            collate_fn=data_collator,
         )
     else:
         val_loader = None
@@ -75,6 +86,7 @@ def _create_train_val_dataloaders(config, tokenized_selfies_data, tokenizer) -> 
     logger.info("Train and validation DataLoaders created succesfully.")
     return train_loader, val_loader
 
+
 def get_dataloaders(config, tokenized_selfies_data, tokenizer):
     """
     This function creates the train and validation dataloaders.
@@ -82,5 +94,7 @@ def get_dataloaders(config, tokenized_selfies_data, tokenizer):
     It is only called during training.
     """
     _check_gpu_compatibility(config)
-    train_set, valid_set = _create_train_val_dataloaders(config, tokenized_selfies_data, tokenizer)
+    train_set, valid_set = _create_train_val_dataloaders(
+        config, tokenized_selfies_data, tokenizer
+    )
     return train_set, valid_set

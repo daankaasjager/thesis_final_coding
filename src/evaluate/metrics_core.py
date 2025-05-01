@@ -1,17 +1,21 @@
-import re
-import selfies
-from rdkit import Chem
-from rdkit.Chem import Crippen, rdMolDescriptors
-from rdkit.Chem import RDConfig
 import os
+import re
 import sys
 
-sys.path.append(os.path.join(RDConfig.RDContribDir, 'SA_Score'))
+import selfies
+from rdkit import Chem
+from rdkit.Chem import Crippen, RDConfig, rdMolDescriptors
+
+sys.path.append(os.path.join(RDConfig.RDContribDir, "SA_Score"))
 import sascorer
 
 
 def remove_bos_eos(sample: str):
-    return "".join(tok for tok in re.findall(r'\[[^\]]+\]', sample) if tok not in ("[BOS]", "[EOS]"))
+    return "".join(
+        tok
+        for tok in re.findall(r"\[[^\]]+\]", sample)
+        if tok not in ("[BOS]", "[EOS]")
+    )
 
 
 def get_valid_molecules(samples, name):

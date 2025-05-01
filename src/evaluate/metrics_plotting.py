@@ -1,14 +1,15 @@
 import os
 import re
-import matplotlib.pyplot as plt
 from collections import Counter
+
+import matplotlib.pyplot as plt
 
 
 def plot_token_frequency(config, samples, name):
     if not config.eval.plot_dist:
         return
 
-    token_pattern = re.compile(r'\[[^\]]+\]')
+    token_pattern = re.compile(r"\[[^\]]+\]")
     token_counts = Counter()
 
     for s in samples:
@@ -35,13 +36,18 @@ def plot_length_distribution(config, samples, name):
     if not config.eval.plot_dist:
         return
 
-    token_pattern = re.compile(r'\[[^\]]+\]')
+    token_pattern = re.compile(r"\[[^\]]+\]")
     lengths = [len(token_pattern.findall(s)) for s in samples]
     if not lengths:
         return
 
     plt.figure(figsize=(10, 5))
-    plt.hist(lengths, bins=range(min(lengths), max(lengths) + 2), align='left', edgecolor='black')
+    plt.hist(
+        lengths,
+        bins=range(min(lengths), max(lengths) + 2),
+        align="left",
+        edgecolor="black",
+    )
     plt.title(f"Length Distribution ({name})")
     plt.xlabel("Tokens")
     plt.ylabel("Frequency")
@@ -57,8 +63,10 @@ def plot_metric_distribution(config, values, metric, name):
     avg = sum(values) / len(values)
 
     plt.figure(figsize=(10, 5))
-    plt.hist(values, bins=50, alpha=0.75, edgecolor='black', density=True)
-    plt.axvline(avg, color='red', linestyle='dotted', linewidth=2, label=f"Mean={avg:.2f}")
+    plt.hist(values, bins=50, alpha=0.75, edgecolor="black", density=True)
+    plt.axvline(
+        avg, color="red", linestyle="dotted", linewidth=2, label=f"Mean={avg:.2f}"
+    )
     plt.title(f"{metric.title()} Distribution ({name})")
     plt.xlabel(metric.title())
     plt.ylabel("Density")

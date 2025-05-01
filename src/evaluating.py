@@ -1,7 +1,9 @@
 import json
 import logging
+
+from evaluate import (bos_eos_analysis, calculate_and_plot_metrics,
+                      calculate_and_plot_metrics_multi)
 from preprocessing import read_csv
-from evaluate import bos_eos_analysis, calculate_and_plot_metrics, calculate_and_plot_metrics_multi
 
 logger = logging.getLogger(__name__)
 
@@ -36,29 +38,29 @@ def evaluate_samples(config):
         return
 
     # This takes the path of the original data because it has the same distribution as the augmented data
-    original_samples = load_original_samples(config.local_paths.original_data, config.row_limit)
+    original_samples = load_original_samples(
+        config.local_paths.original_data, config.row_limit
+    )
     if not original_samples:
         logger.warning("No original samples found.")
         return
 
-    metrics = [
-        "token_frequency",
-        "length_distribution",
-        "sascore",
-        "num_rings"
-    ]
+    metrics = ["token_frequency", "length_distribution", "sascore", "num_rings"]
     if config.eval.overlay:
         logger.info("Evaluating original and generated samples with overlay...")
-        calculate_and_plot_metrics_multi(config, {
-            "original": original_samples,
-            "generated": generated_samples
-        }, metrics,)
+        calculate_and_plot_metrics_multi(
+            config,
+            {"original": original_samples, "generated": generated_samples},
+            metrics,
+        )
     else:
         logger.info("Evaluating original samples...")
         calculate_and_plot_metrics(config, original_samples, metrics, name="original")
 
         logger.info("Evaluating generated samples...")
-        trimmed_generated = bos_eos_analysis(generated_samples, config, name="generated")
+        trimmed_generated = bos_eos_analysis(
+            generated_samples, config, name="generated"
+        )
         calculate_and_plot_metrics(config, trimmed_generated, metrics, name="generated")
 
     logger.info("✅ Evaluation complete.")
