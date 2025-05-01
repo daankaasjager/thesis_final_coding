@@ -9,18 +9,12 @@ from tokenizers import Tokenizer, Regex
 from tokenizers.models import WordLevel
 from collections import OrderedDict
 from tokenizers import Tokenizer, pre_tokenizers, processors
-from src.tokenizing.learn_ape_vocab import train_selfies_bpe_vocab
-from src.tokenizing.selfies_tokenizer import SelfiesTokenizer
+from tokenizing.learn_ape_vocab import train_selfies_bpe_vocab
+from tokenizing.selfies_tokenizer import SelfiesTokenizer
 
 logger = logging.getLogger(__name__)
 
-
-def load_tokenizer(config):
-    tokenizer_dir = config.local_paths.tokenizer
-    logger.info(f"Loading tokenizer from {tokenizer_dir}")
-    return SelfiesTokenizer.from_pretrained(tokenizer_dir)
-
-def load_selfies_vocab(alphabet_path: str, special_tokens: list):
+def _load_selfies_vocab(alphabet_path: str, special_tokens: list):
     logger.info(f"Loading alphabet from: {alphabet_path}")
     try:
         with open(alphabet_path, encoding="utf-8") as f:
@@ -32,14 +26,14 @@ def load_selfies_vocab(alphabet_path: str, special_tokens: list):
         logger.error(f"Error loading SELFIES alphabet: {e}")
         raise
 
-def build_wordlevel_tokenizer(vocab: dict):
+def _build_wordlevel_tokenizer(vocab: dict):
     atom_rgx = Regex(r"\[[^\]]+\]")
     tokenizer = Tokenizer(WordLevel(vocab=vocab, unk_token="[UNK]"))
     tokenizer.pre_tokenizer = pre_tokenizers.Split(atom_rgx, behavior="isolated")
     return tokenizer
 
 
-def build_ape_tokenizer(config, data, vocab):
+def _build_ape_tokenizer(config, data, vocab):
     vocab_path = config.local_paths.selfies_ape_vocab
 
     if os.path.exists(vocab_path):
@@ -63,7 +57,7 @@ def build_ape_tokenizer(config, data, vocab):
     raise ValueError("No valid APE vocab found and retrain flag is not set.")
 
 
-def configure_tokenizer(tokenizer: Tokenizer, vocab: dict) -> Tokenizer:
+def _configure_tokenizer(tokenizer: Tokenizer, vocab: dict) -> Tokenizer:
     tokenizer.post_processor = processors.TemplateProcessing(
         single="[BOS] $A [EOS]",
         special_tokens=[("[BOS]", vocab["[BOS]"]), ("[EOS]", vocab["[EOS]"])],
@@ -76,19 +70,19 @@ def configure_tokenizer(tokenizer: Tokenizer, vocab: dict) -> Tokenizer:
     return tokenizer
 
 
-def train_tokenizer(config, data=None):
+def _train_tokenizer(config, data=None):
     special_tokens = ["[BOS]", "[EOS]", "[SEP]", "[CLS]", "[PAD]", "[MASK]", "[UNK]"]
-    vocab, _ = load_selfies_vocab(config.local_paths.selfies_alphabet, special_tokens)
+    vocab, _ = _load_selfies_vocab(config.local_paths.selfies_alphabet, special_tokens)
 
     tokenizer_type = config.tokenizer.tokenizer_type
     if tokenizer_type == "wordlevel":
-        tokenizer = build_wordlevel_tokenizer(vocab)
+        tokenizer = _build_wordlevel_tokenizer(vocab)
     elif tokenizer_type == "APE":
-        tokenizer = build_ape_tokenizer(config, data, vocab)
+        tokenizer = _build_ape_tokenizer(config, data, vocab)
     else:
         raise ValueError(f"Unsupported tokenizer_type: {tokenizer_type}")
 
-    tokenizer = configure_tokenizer(tokenizer, vocab)
+    tokenizer = _configure_tokenizer(tokenizer, vocab)
 
     selfies_tokenizer = SelfiesTokenizer(
         tokenizer_object=tokenizer,
@@ -103,10 +97,12 @@ def train_tokenizer(config, data=None):
 
     logger.info(f"Tokenizer vocabulary is: {selfies_tokenizer.get_vocab()}")
     selfies_tokenizer.save_pretrained(config.local_paths.tokenizer)
-
     return selfies_tokenizer
 
-
+def _load_tokenizer(config):
+    tokenizer_dir = config.local_paths.tokenizer
+    logger.info(f"Loading tokenizer from {tokenizer_dir}")
+    return SelfiesTokenizer.from_pretrained(tokenizer_dir)
 
 def get_tokenizer(config, data=None):
     try:
@@ -116,9 +112,9 @@ def get_tokenizer(config, data=None):
             and not config.checkpointing.retrain_tokenizer
         )
         if should_load:
-            return load_tokenizer(config)
+            return _load_tokenizer(config)
         else:
-            return train_tokenizer(config, data)
+            return _train_tokenizer(config, data)
     except Exception as e:
         logger.exception("Failed to get tokenizer")  # includes traceback
         raise

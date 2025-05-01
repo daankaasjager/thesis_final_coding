@@ -8,7 +8,7 @@ from typing import List, Dict
 # Assume logger is configured elsewhere as in your original code
 logger = logging.getLogger(__name__)
 
-def selfies_pre_tokenizer(molecule: str) -> List[str]:
+def _selfies_pre_tokenizer(molecule: str) -> List[str]:
     """
     Basic pre-tokenizer for SELFIES strings.
     Splits the string into individual SELFIES symbols like '[C]', '[Branch1]', etc.
@@ -63,7 +63,7 @@ def train_selfies_bpe_vocab(
     # Make a copy to avoid modifying the original initial_vocab
     current_vocab = dict(initial_vocab)
 
-    word_sequences = [selfies_pre_tokenizer(sentence) for sentence in corpus]
+    word_sequences = [_selfies_pre_tokenizer(sentence) for sentence in corpus]
 
     num_merges_to_do = max_vocab_size - len(current_vocab)
     if num_merges_to_do <= 0:

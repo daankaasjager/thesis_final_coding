@@ -1,16 +1,13 @@
 
-import logging
-
-
-logger = logging.getLogger(__name__)
-import os
 import hydra
 
-from src.utils.preprocess_data import preprocess_data
-from src.utils.create_datasets import get_dataloaders
-from src.utils.csv_data_reader import fast_csv_to_df_reader
-from src.tokenizer import tokenize_selfies_vocab, get_tokenizer
-from src.utils.setup import setup_training_logging
+import os
+import logging
+logger = logging.getLogger(__name__)
+
+from preprocessing import preprocess_data, get_dataloaders, read_csv
+from tokenizing  import tokenize_selfies_vocab, get_tokenizer
+from utils import setup_training_logging
 import torch
 
 
@@ -42,7 +39,7 @@ def train_model_from_scratch(config) -> tuple:
     if config.checkpointing.fresh_data == True:
         logger.info("Training model from scratch. Data will be reprocessed.")
         # read in the raw data
-        raw_data = fast_csv_to_df_reader(config.local_paths.raw_data, row_limit=config.row_limit)
+        raw_data = read_csv(config.local_paths.augmented_data, row_limit=config.row_limit)
         selfies_vocab, data = preprocess_data(config, raw_data)
     else:
         logger.info("Training model from scratch. Tokenized data will be loaded.")

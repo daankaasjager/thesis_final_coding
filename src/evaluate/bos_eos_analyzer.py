@@ -5,13 +5,13 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-def analyze_bos_eos_and_trim(samples, config, name="default"):
+def bos_eos_analysis(samples, config, name="default"):
     """
     1) Analyze how often molecules start with [BOS], end with [EOS],
        or have [BOS]/[EOS] in the middle.
-    2) Plot bar charts if config.plot_dist is True.
+    2) Plot bar charts if config.eval.plot_dist is True.
     3) Trim each SELFIES after the first [EOS] token (inclusive).
-    4) If config.overwrite_original == True, replace 'samples' in-place,
+    4) If config.eval.overwrite_original == True, replace 'samples' in-place,
        otherwise, return a new list 'trimmed_samples'.
     
     Returns:
@@ -51,8 +51,8 @@ def analyze_bos_eos_and_trim(samples, config, name="default"):
                 break
         trimmed_samples.append("".join(new_tokens))
 
-    # Plot bar charts if config.plot_dist
-    if config.plot_dist:
+    # Plot bar charts if config.eval.plot_dist
+    if config.eval.plot_dist:
         # i) Molecules that start vs. do not start with [BOS]
         plt.figure(figsize=(4, 4))
         plt.bar(
@@ -90,7 +90,7 @@ def analyze_bos_eos_and_trim(samples, config, name="default"):
         plt.close()
 
     # Possibly overwrite the original data
-    if config.overwrite_original:
+    if config.eval.overwrite_original:
         logger.error("implement this")
     else:
         # Return the trimmed version as a new list

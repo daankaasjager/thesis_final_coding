@@ -1,11 +1,9 @@
 import pandas as pd
+
 import logging
-
 logger = logging.getLogger(__name__)
-import selfies as sf
 
-
-def fast_csv_to_df_reader(file_path: str, row_limit) -> pd.Series:
+def read_csv(file_path: str, row_limit) -> pd.DataFrame:
     """
     Gets the column names from a large CSV file and then loads the rest of the data.
 

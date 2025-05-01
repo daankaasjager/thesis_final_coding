@@ -14,7 +14,7 @@ train_test_split:
 local_paths:
   tokenizer: data/kraken/tokenizer
   train_data_encoding: data/kraken/training_data/train_data_encoding.pt
-  raw_data: data/kraken/training_data/augmented_descriptors_v3.csv
+  original_data: data/kraken/training_data/descriptors_v3.csv
   augmented_data: data/kraken/training_data/augmented_descriptors_v3.csv
   pre_processed_data: data/kraken/training_data/preprocessed_data.pt
   sampled_data: data/kraken/sampled_data/generated_samples.json
@@ -27,7 +27,7 @@ local_paths:
   selfies_ape_vocab: data/kraken/tokenizer/selfies_ape_vocab.json
 
 
-mode: train  # augment / train / sample /evaluate_samples
+mode: train  # augment / train / generate /evaluate
 seed: 1
 permitted_selfies_length: 175 # CHANGE THIS TO THE ACTUAL PERCENTILE LATER
 diffusion: absorbing_state
@@ -36,6 +36,7 @@ parameterization: subs  # subs / d3pm / sedd
 time_conditioning: False
 T: 0  # 0 (continuous time) / 1000 
 row_limit: null
+augmentation_n: 10 # Number of augmentations per molecule
 
 tokenizer:
   tokenizer_type: APE # wordlevel, etc.

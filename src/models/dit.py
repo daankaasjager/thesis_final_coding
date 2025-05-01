@@ -8,7 +8,7 @@ import torch.nn.functional as F
 from einops import rearrange
 import logging
 import sys
-from src.utils.get_torch_dtype import get_torch_dtype
+from utils.torch_utils import get_torch_dtype
 
 
 logger = logging.getLogger(__name__)

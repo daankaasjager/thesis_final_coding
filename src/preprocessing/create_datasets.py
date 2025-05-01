@@ -1,19 +1,18 @@
-from functools import cache
 import torch
-import os
-import logging
 import datasets
 from transformers import DataCollatorWithPadding
 
+import logging
 logger = logging.getLogger(__name__)
 
-def check_gpu_compatibility(config):
+def _check_gpu_compatibility(config) -> None:
+    """ Check if the GPU is compatible with the batch size and number of GPUs."""
     logger.info("Checking GPU compatibility")
-    num_gpus = config.trainer.devices # CHANGE LATER to torch.device.count() or somth
+    num_gpus = torch.cuda.device_count()
     logger.info(f"Number of GPUs: {num_gpus}")
-    """assert (config.loader.global_batch_size ==
+    assert (config.loader.global_batch_size ==
             config.loader.batch_size * config.trainer.num_nodes
-            * num_gpus * config.trainer.accumulate_grad_batches)"""
+            * num_gpus * config.trainer.accumulate_grad_batches)
     if config.loader.global_batch_size % (num_gpus * config.trainer.accumulate_grad_batches) != 0:
         raise ValueError(
             f'Train Batch Size {config.loader.global_batch_size}'
@@ -25,7 +24,7 @@ def check_gpu_compatibility(config):
             f' not divisible by {num_gpus}.'
         )
 
-def create_train_val_dataloaders(config, tokenized_selfies_data, tokenizer):
+def _create_train_val_dataloaders(config, tokenized_selfies_data, tokenizer) -> tuple:
     """
     Creates a Hugging Face Dataset from tokenized_selfies_data,
     splits into train and validation sets, then returns PyTorch DataLoaders.
@@ -82,6 +81,6 @@ def get_dataloaders(config, tokenized_selfies_data, tokenizer):
     It also checks GPU compatibility and sets up the DataLoader.
     It is only called during training.
     """
-    check_gpu_compatibility(config)
-    train_set, valid_set = create_train_val_dataloaders(config, tokenized_selfies_data, tokenizer)
+    _check_gpu_compatibility(config)
+    train_set, valid_set = _create_train_val_dataloaders(config, tokenized_selfies_data, tokenizer)
     return train_set, valid_set

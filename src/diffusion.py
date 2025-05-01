@@ -11,13 +11,9 @@ import torch.nn.functional as F
 import torchmetrics
 import transformers
 from torch import Tensor
-import src.modeling.noise_schedule
-import src.modeling.ema
-import src.modeling.samplers
-import src.models
+from modeling import get_noise, ExponentialMovingAverage, RandomFaultTolerantSampler, FaultTolerantDistributedSampler
+from models import DIT
 import logging
-from lightning.pytorch.utilities.rank_zero import rank_zero_only
-import torch
 
 logger = logging.getLogger(__name__)
 
@@ -80,7 +76,7 @@ class Diffusion(L.LightningModule):
     else:
       self.mask_index = self.tokenizer.mask_token_id
     self.parameterization = self.config.parameterization
-    self.backbone = src.models.dit.DIT(self.config, vocab_size=self.vocab_size)
+    self.backbone = DIT(self.config, vocab_size=self.vocab_size)
 
     self.T = self.config.T
 
@@ -99,10 +95,10 @@ class Diffusion(L.LightningModule):
     # generative perplexity
     self.gen_ppl_metric = Perplexity()
 
-    self.noise = src.modeling.noise_schedule.get_noise(self.config,
+    self.noise = get_noise(self.config,
                                           dtype=self.dtype)
     if self.config.training.ema > 0:
-      self.ema = src.modeling.ema.ExponentialMovingAverage(
+      self.ema = ExponentialMovingAverage(
         itertools.chain(self.backbone.parameters(),
                         self.noise.parameters()),
         decay=self.config.training.ema)
@@ -183,9 +179,9 @@ class Diffusion(L.LightningModule):
     )
 
     sampler_cls = (
-        src.modeling.samplers.FaultTolerantDistributedSampler
+        FaultTolerantDistributedSampler
         if distributed
-        else src.modeling.samplers.RandomFaultTolerantSampler
+        else RandomFaultTolerantSampler
     )
 
     updated_dls = []

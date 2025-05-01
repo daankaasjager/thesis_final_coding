@@ -4,7 +4,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-def plot_selfies_length_distribution(processed_data, column='tokenized_selfies', bins=50, save_path='molecule_length_distribution.png'):
+def plot_length(processed_data, column='tokenized_selfies', bins=50, save_path='molecule_length_distribution.png'):
     """
     Plots and saves a histogram of molecule lengths from preprocessed SELFIES data.
 

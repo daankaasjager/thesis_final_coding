@@ -15,7 +15,7 @@ def _load_alphabet_from_txt(path: str | Path) -> List[str]:
         return f.read().splitlines()
 
 
-def load_preprocessed_data(
+def _load_preprocessed_data(
     preproc_path: str | Path,
     alphabet_path: str | Path,
 ) -> Tuple[List[str], pd.DataFrame]:
@@ -45,7 +45,7 @@ def load_preprocessed_data(
         raise
 
 
-def save_selfies_alphabet(
+def _save_selfies_alphabet(
     config,
     alphabet: list[str],
     *,
@@ -95,12 +95,8 @@ def preprocess_data(
     preproc_path = Path(config.local_paths.pre_processed_data)
     alphabet_path = Path(config.local_paths.selfies_alphabet)
 
-    if (
-        not config.checkpointing.fresh_data
-        and preproc_path.exists()
-        and alphabet_path.exists()
-    ):
-        return load_preprocessed_data(preproc_path, alphabet_path)
+    if (not config.checkpointing.fresh_data and preproc_path.exists() and alphabet_path.exists()):
+        return _load_preprocessed_data(preproc_path, alphabet_path)
 
     if not config.checkpointing.fresh_data and not preproc_path.exists():
         raise ValueError("Data load requested but no pre-processed data found.")
@@ -113,7 +109,7 @@ def preprocess_data(
     logger.info("Creating vocabulary from SELFIES column …")
     alphabet = selfies.get_alphabet_from_selfies(raw_data["selfies"])
 
-    # TOKENISE & FILTER ------------------------------------------------------
+
     def _tok_if_valid(s: str) -> Optional[list[str]]:
         toks = list(selfies.split_selfies(s))
         return toks if len(toks) <= config.permitted_selfies_length else None
@@ -124,19 +120,16 @@ def preprocess_data(
     max_len = df["tokenized_selfies"].apply(len).max()
     logger.info("Longest SELFIES sequence kept: %d tokens", max_len)
 
-    # CACHE ------------------------------------------------------------------
     preproc_path.parent.mkdir(parents=True, exist_ok=True)
     try:
-        torch.save(df, preproc_path)        # ⚠️  save *only* the dataframe
+        torch.save(df, preproc_path)
         logger.info("Pre-processed data saved → %s", preproc_path)
-    except Exception as e:  # pragma: no cover
+    except Exception as e:  
         logger.warning("Could not save pre-processed data: %s", e)
 
-    # AUXILIARY TXT CORPORA --------------------------------------------------
     _write_selfies_txt(config.local_paths.selfies_nospace_txt, df, whitespace=False)
     _write_selfies_txt(config.local_paths.selfies_whitespace_txt, df, whitespace=True)
 
-    # ALPHABET TXT -----------------------------------------------------------
-    save_selfies_alphabet(config, alphabet)
+    _save_selfies_alphabet(config, alphabet)
 
     return alphabet, df

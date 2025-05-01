@@ -1,13 +1,14 @@
 import hydra
 from omegaconf import OmegaConf
-import lightning as L
 from pathlib import Path
 from omegaconf import DictConfig
+from lightning.pytorch.loggers import WandbLogger
 import logging
+
 
 logger = logging.getLogger(__name__)
 
-def resolve_paths(config: DictConfig):
+def resolve_paths(config: DictConfig) -> DictConfig:
     """
     Recursively resolves all paths in a Hydra configuration
     while ignoring non-path fields like metric names.
@@ -30,15 +31,14 @@ def resolve_paths(config: DictConfig):
             return [_resolve(v) for v in obj]
         
         return obj  # Leave everything else unchanged
-
     return DictConfig(_resolve(config))
 
 
-def setup_training_logging(config):
+def setup_training_logging(config) -> tuple:
     """Sets up wandb logging for training. Also checks for any checkpoints to resume from and implements callbacks"""
     wandb_logger = None
     if config.get('wandb', None) is not None:
-        wandb_logger = L.pytorch.loggers.WandbLogger(
+        wandb_logger = WandbLogger(
         config=OmegaConf.to_object(config),
         ** config.wandb)
 
@@ -49,17 +49,3 @@ def setup_training_logging(config):
         for _, callback in config.callbacks.items():
             callbacks.append(hydra.utils.instantiate(callback))
     return wandb_logger, callbacks
-
-@L.pytorch.utilities.rank_zero_only
-def print_batch(train_ds, valid_ds, tokenizer, k=8):
-  for dl_type, dl in [
-    ('train', train_ds), ('valid', valid_ds)]:
-    logger.info(f'Printing {dl_type} dataloader batch.')
-    batch = next(iter(dl))
-    logger.info('Batch input_ids.shape', batch['input_ids'].shape)
-    first = batch['input_ids'][0, :k]
-    last = batch['input_ids'][0, -k:]
-    logger.info(f'First {k} tokens:', tokenizer.decode(first, skip_special_tokens=True))
-    logger.info('ids:', first)
-    logger.info(f'Last {k} tokens:', tokenizer.decode(last, skip_special_tokens=False))
-    logger.info('ids:', last)

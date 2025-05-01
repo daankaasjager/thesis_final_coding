@@ -1,13 +1,13 @@
-import os
 import pandas as pd
 from rdkit import Chem
 import selfies as sf
 from tqdm import tqdm
 
 
-def augment_dataset(config):
-    # Load the original dataset
-    df = pd.read_csv(config.local_paths.raw_data)
+def augment_dataset(config) -> None:
+    """Augments the original csv dataset with rearranged SMILES and SELFIES strings (same properties, just a 
+    different representation)."""
+    df = pd.read_csv(config.local_paths.original_data)
 
     augmented_rows = []
 
@@ -22,7 +22,7 @@ def augment_dataset(config):
 
         seen = set()
         attempts = 0
-        while len(seen) < 10 and attempts < 50:
+        while len(seen) < config.augmentation_n and attempts < 50:
             rand_smiles = Chem.MolToSmiles(
                 mol,
                 canonical=False,
@@ -46,7 +46,6 @@ def augment_dataset(config):
             new_row['smiles'] = rand_smiles
             new_row['selfies'] = rand_selfies
             augmented_rows.append(new_row.to_dict())
-
 
     augmented_df = pd.DataFrame(augmented_rows)
     augmented_df.to_csv(config.local_paths.augmented_data, index=False)

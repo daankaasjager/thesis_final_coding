@@ -1,13 +1,19 @@
+import sys
+from pathlib import Path
+
+sys.path.append(str(Path(__file__).resolve().parent / "src"))
+
 import hydra
 from omegaconf import OmegaConf, DictConfig
 import lightning as L
-import logging
 import torch
+
+import logging
 import os
 
-from src.utils.setup import resolve_paths
+from src.utils import resolve_paths
+from src.utils import configure_logging
 
-from src.utils.logging_config import configure_logging
 configure_logging()
 logger = logging.getLogger(__name__)
 
@@ -41,16 +47,16 @@ def run(config: DictConfig):
     L.seed_everything(config.seed, verbose=False)
     config = resolve_paths(config)
     if config.mode == 'augment':
-        from src.utils.augment_dataset import augment_dataset
+        from src.preprocessing import augment_dataset
         augment_dataset(config)
     if config.mode == 'train':
-        from src.train import train
+        from src import train
         train(config)
-    elif config.mode == "sample":
-        from src.generate_samples import generate_samples
+    elif config.mode == "generate":
+        from src import generate_samples
         generate_samples(config)
-    elif config.mode == "evaluate_samples":
-        from src.evaluate_samples import evaluate_samples
+    elif config.mode == "evaluate":
+        from src import evaluate_samples
         evaluate_samples(config)
 
 
@@ -60,6 +66,3 @@ if __name__ == "__main__":
     print("CUDA version (compiled):", torch.version.cuda)
     print("CUDA available:", torch.cuda.is_available())
     run()
-
-    # TO DO: Check even fast GPUs, check configuration for different loader sizes, do more epochs and faster training.
-    # Perhaps even try different models and then just run it on a job

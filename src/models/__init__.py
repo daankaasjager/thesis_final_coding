@@ -1,1 +1,3 @@
-from . import dit
+from .dit import DIT
+
+__all__ = ["DIT"]

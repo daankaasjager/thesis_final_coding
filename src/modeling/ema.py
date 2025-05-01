@@ -1,6 +1,5 @@
 import torch
 
-
 class ExponentialMovingAverage:
   """
   Maintains (exponential) moving average of a set of parameters.
