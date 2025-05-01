@@ -5,8 +5,12 @@ import logging
 from collections import defaultdict
 from typing import List, Dict
 
-# Assume logger is configured elsewhere as in your original code
+
 logger = logging.getLogger(__name__)
+
+
+"""This code is based on the training functionality of https://github.com/mikemayuare/apetokenizer/tree/main/src
+and adapted to work as a separate function for APE tokenization. """
 
 def _selfies_pre_tokenizer(molecule: str) -> List[str]:
     """
