@@ -1,6 +1,7 @@
-from .augmentation import augment_dataset
+from .augmentation import apply_augmentation
 from .create_datasets import get_dataloaders
 from .csv_reader import read_csv
-from .preprocessing import preprocess_data
+from .preprocessing_pipeline import prepare_data_for_training
+from .discretization import apply_discretization
 
-__all__ = ["augment_dataset", "get_dataloaders", "preprocess_data", "read_csv"]
+__all__ = ["apply_augmentation", "get_dataloaders", "read_csv", "prepare_data_for_training", "apply_discretization"]

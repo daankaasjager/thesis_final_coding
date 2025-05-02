@@ -4,6 +4,8 @@ import math
 import os
 from collections import OrderedDict, defaultdict
 
+import pandas as pd
+from regex import F
 import torch
 # Make sure necessary imports are present
 from tokenizers import Regex, Tokenizer, pre_tokenizers, processors
@@ -41,9 +43,9 @@ def _build_ape_tokenizer(config, data, vocab):
     if os.path.exists(vocab_path):
         logger.info(f"Loading JSON vocab from {vocab_path}")
         with open(vocab_path, "r", encoding="utf-8") as f:
-            tokenizer_json = json.load(f)
-        return Tokenizer(WordLevel.from_json(tokenizer_json))
-
+            vocab_json = json.load(f)
+        return Tokenizer(WordLevel(vocab=vocab_json, unk_token="[UNK]"))
+    
     if config.checkpointing.retrain_ape_vocab:
         logger.info("Training APE tokenizer from scratch using raw data")
         selfies_vocab = train_selfies_bpe_vocab(
@@ -71,10 +73,21 @@ def _configure_tokenizer(tokenizer: Tokenizer, vocab: dict) -> Tokenizer:
     )
     return tokenizer
 
+def _add_conditioning_tokens(config, vocab: dict) -> dict:
+    number_of_properties = len(config.conditioning.properties)
+    for i in range(number_of_properties):
+        for j in range(config.preprocessing.discretize_num_bins):
+            token = f"[{config.conditioning.properties[i]}_bin_{j+1}|{config.preprocessing.discretize_num_bins}]"
+            if token not in vocab:
+                vocab[token] = len(vocab)
+    return vocab
 
 def _train_tokenizer(config, data=None):
     special_tokens = ["[BOS]", "[EOS]", "[SEP]", "[CLS]", "[PAD]", "[MASK]", "[UNK]"]
     vocab, _ = _load_selfies_vocab(config.local_paths.selfies_alphabet, special_tokens)
+
+    if config.conditioning.properties is not None:
+        vocab = _add_conditioning_tokens(config, vocab)
 
     tokenizer_type = config.tokenizer.tokenizer_type
     if tokenizer_type == "wordlevel":
@@ -123,6 +136,28 @@ def get_tokenizer(config, data=None):
         logger.exception("Failed to get tokenizer")  # includes traceback
         raise
 
+def _prepend_conditioning_tokens(config, raw_data):
+    input_selfies = []
+    num_bins = config.preprocessing.discretize_num_bins
+    bin_column_names = [
+        f"{prop}_bin" for prop in config.conditioning.properties
+    ]
+    for col in bin_column_names:
+        if col not in raw_data.columns:
+            raise ValueError(f"Expected discretized column '{col}' not found in data")
+
+    for _, row in raw_data.iterrows():
+        bin_tokens = [
+            str(row[f"{prop}_bin"]) for prop in config.conditioning.properties
+        ]
+        if any(pd.isna(tok) for tok in bin_tokens):
+            continue
+        prefix = "".join(bin_tokens)
+        full_sequence = f"{prefix}{row['selfies']}"
+        input_selfies.append(full_sequence)
+    print(f"Prepending conditioning tokens: {input_selfies[:5]}")
+    return input_selfies
+    
 
 def tokenize_selfies_vocab(
     config, tokenizer, raw_data=None, chunk_size=50000, max_length=310
@@ -148,10 +183,14 @@ def tokenize_selfies_vocab(
             logger.error(f"Error loading SELFIES data: {e}")
             return None
     if "selfies" not in raw_data.columns:
-        logger.info("'selfies' column not found in raw_data.")
-        return None
+        logger.warning("'selfies' column not found in raw_data.")
+        raise
 
-    input_selfies = raw_data["selfies"].tolist()
+    if config.conditioning.properties:
+        input_selfies = _prepend_conditioning_tokens(config, raw_data)
+    else:
+        input_selfies = raw_data["selfies"].tolist()
+
     total_samples = len(input_selfies)
     logger.info(f"Tokenizing {total_samples} SELFIES in chunks of {chunk_size}...")
     num_chunks = math.ceil(total_samples / chunk_size)

@@ -6,33 +6,39 @@ from transformers import DataCollatorWithPadding
 
 logger = logging.getLogger(__name__)
 
-
 def _check_gpu_compatibility(config) -> None:
-    """Check if the GPU is compatible with the batch size and number of GPUs."""
+    """
+    Check if the batch sizes are consistent with the *configured* number of GPUs.
+    Do NOT use all visible GPUs, only what Lightning is instructed to use.
+    """
     logger.info("Checking GPU compatibility")
-    num_gpus = torch.cuda.device_count()
-    logger.info(f"Number of GPUs: {num_gpus}")
+
+    # Use what you passed in config (devices=1) instead of all visible GPUs
+    requested_gpus = config.trainer.devices
+    accumulate = config.trainer.accumulate_grad_batches
+    nodes = config.trainer.num_nodes
+    batch_size = config.loader.batch_size
+
+    expected_global = requested_gpus * nodes * accumulate * batch_size
+    logger.info(f"Configured GPUs: {requested_gpus} | Accumulate: {accumulate} | Nodes: {nodes} | Batch size: {batch_size}")
+    logger.info(f"Expected global batch size: {expected_global} | Actual: {config.loader.global_batch_size}")
+    
     assert (
-        config.loader.global_batch_size
-        == config.loader.batch_size
-        * config.trainer.num_nodes
-        * num_gpus
-        * config.trainer.accumulate_grad_batches
-    )
-    if (
-        config.loader.global_batch_size
-        % (num_gpus * config.trainer.accumulate_grad_batches)
-        != 0
-    ):
+        config.loader.global_batch_size == expected_global
+    ), f"Mismatch: expected global_batch_size={expected_global}, got {config.loader.global_batch_size}"
+
+    if config.loader.global_batch_size % (requested_gpus * accumulate) != 0:
         raise ValueError(
-            f"Train Batch Size {config.loader.global_batch_size}"
-            f" not divisible by {num_gpus * config.trainer.accumulate_grad_batches} gpus with accumulation."
+            f"Train Batch Size {config.loader.global_batch_size} is not divisible "
+            f"by GPUs * accumulation ({requested_gpus} * {accumulate})."
         )
-    if config.loader.eval_global_batch_size % num_gpus != 0:
+
+    if config.loader.eval_global_batch_size % requested_gpus != 0:
         raise ValueError(
-            f"Eval Batch Size for {config.loader.eval_global_batch_size}"
-            f" not divisible by {num_gpus}."
+            f"Eval Batch Size {config.loader.eval_global_batch_size} not divisible "
+            f"by number of GPUs ({requested_gpus})."
         )
+
 
 
 def _create_train_val_dataloaders(config, tokenized_selfies_data, tokenizer) -> tuple:

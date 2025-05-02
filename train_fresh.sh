@@ -19,17 +19,19 @@ echo "venv, python is: $(which python)"
 
 srun python main.py \
     mode=train \
-    row_limit=null \
+    model=tiny \
+    row_limit=1000 \
     checkpointing.fresh_data=true \
     checkpointing.retrain_tokenizer=true \
     checkpointing.resume_from_ckpt=false \
-    wandb.name=test \
     trainer.devices=1 \
     trainer.strategy=auto \
     trainer.accelerator=cuda \
-    wandb.job_type=training \
     trainer.precision='bf16-mixed' \
-    loader.global_batch_size=20 \
     trainer.log_every_n_steps=300 \
+    loader.global_batch_size=20 \
     loader.num_workers=4 \
-    model=tiny
+    wandb.job_type=training \
+    wandb.name=test
+    
+

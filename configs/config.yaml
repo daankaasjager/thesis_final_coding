@@ -27,22 +27,28 @@ local_paths:
   selfies_ape_vocab: data/kraken/tokenizer/selfies_ape_vocab.json
 
 
-mode: train  # augment / train / generate /evaluate
+mode: train
 seed: 1
-permitted_selfies_length: 175 # CHANGE THIS TO THE ACTUAL PERCENTILE LATER
 diffusion: absorbing_state
 backbone: dit  # dit / dimamba / ar
 parameterization: subs  # subs / d3pm / sedd
 time_conditioning: False
 T: 0  # 0 (continuous time) / 1000 
 row_limit: null
-augmentation_n: 10 # Number of augmentations per molecule
+
+preprocessing:
+  augment: True
+  augmentations_per_molecule: 10
+  augmentations_max_attempts: 50
+  discretize: True
+  discretize_num_bins: 3
+  permitted_selfies_length: 175 # CHANGE THIS TO THE ACTUAL PERCENTILE LATER
 
 tokenizer:
   tokenizer_type: APE # wordlevel, etc.
   vocab_size: 54
   max_vocab_size: 200 # EXPERIMENT WITH THIS!!!! pairs for APE
-  min_freq_for_merge: 10 #min frequency of pairs for APE
+  min_freq_for_merge: 500 #min frequency of pairs for APE
 
 checkpointing:
   save_dir: ${cwd:}
@@ -64,39 +70,6 @@ wandb:
     - ${data.train}
     - ${data.valid}
 
-training:
-  ema: 0.9999
-  antithetic_sampling: True
-  importance_sampling: False
-  sampling_eps: 1e-3
-  change_of_variables: False
-
-eval:
-  checkpoint_path: ${cwd:}/checkpoints/12_hour_run_24_april.ckpt # Used to evaluate a checkpoint after training.
-  disable_ema: False
-  generate_samples: True
-  overwrite_original: False
-  plot_dist: False
-
-
-sampling:
-  predictor: ddpm_cache  # analytic, ddpm, ddpm_cache
-  steps: 128
-  noise_removal: True
-  num_sample_batches: 12  # Total samples: `loader.eval_batch_size` * num_sample_batches
-  num_sample_log: 2
-  semi_ar: False
-  num_strides: 0
-  stride_length: 0
-
-optim:
-  weight_decay: 0
-  lr: 3e-4
-  beta1: 0.9
-  beta2: 0.999
-  eps: 1e-8
-
-
 # This is important when working with multi-GPU training, to ensure that 
 # the batch size is divided evenly among all GPUs.
 loader:
@@ -107,6 +80,23 @@ loader:
   eval_batch_size: ${div_up:${.eval_global_batch_size}, ${eval:${trainer.devices} * ${trainer.num_nodes}}}
   num_workers: 4
   pin_memory: True
+
+conditioning: 
+  properties: ["mol_wt", "sa_score"]
+
+training:
+  ema: 0.9999
+  antithetic_sampling: True
+  importance_sampling: False
+  sampling_eps: 1e-3
+  change_of_variables: False
+
+optim:
+  weight_decay: 0
+  lr: 3e-4
+  beta1: 0.9
+  beta2: 0.999
+  eps: 1e-8
 
 # This is the config for training the Lightning trainer model
 trainer:
@@ -124,3 +114,21 @@ trainer:
   limit_train_batches: 1.0   # train on full dataset, can be used to toggle quick run
   limit_val_batches: 0.5     # validate on full dataset, can be used to toggle quick run
   check_val_every_n_epoch: 1 # validate every epoch
+
+eval:
+  checkpoint_path: ${cwd:}/checkpoints/12_hour_run_24_april.ckpt # Used to evaluate a checkpoint after training.
+  disable_ema: False
+  generate_samples: True
+  overwrite_original: False
+  plot_dist: False
+
+sampling:
+  predictor: ddpm_cache  # analytic, ddpm, ddpm_cache
+  steps: 128
+  noise_removal: True
+  num_sample_batches: 12  # Total samples: `loader.eval_batch_size` * num_sample_batches
+  num_sample_log: 2
+  semi_ar: False
+  num_strides: 0
+  stride_length: 0
+

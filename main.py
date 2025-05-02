@@ -41,23 +41,16 @@ def run(config: DictConfig):
         logger.info(OmegaConf.to_yaml(config))
     L.seed_everything(config.seed, verbose=False)
     config = resolve_paths(config)
-    if config.mode == "augment":
-        from src.preprocessing import augment_dataset
 
-        augment_dataset(config)
     if config.mode == "train":
         from src import train
-
         train(config)
     elif config.mode == "generate":
         from src import generate_samples
-
         generate_samples(config)
     elif config.mode == "evaluate":
         from src import evaluate_samples
-
         evaluate_samples(config)
-
 
 if __name__ == "__main__":
     print("Program initiated")
