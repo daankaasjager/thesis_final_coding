@@ -4,6 +4,7 @@ import logging
 from pathlib import Path
 from typing import List, Optional, Tuple
 
+from networkx import dfs_edges
 import pandas as pd
 import selfies as sf
 from tqdm import tqdm
@@ -245,7 +246,7 @@ def prepare_data_for_training(config: DictConfig) -> Tuple[List[str], pd.DataFra
 
     try:
         #2. Tokenize selfies and filter by length
-        alphabet, processed_df = _tokenize_selfies_and_filter(df, config)
+        alphabet, df = _tokenize_selfies_and_filter(df, config)
 
         #3 Apply discretization
         if config.preprocessing.discretize:
@@ -260,7 +261,7 @@ def prepare_data_for_training(config: DictConfig) -> Tuple[List[str], pd.DataFra
          logger.error(f"Error during preprocessing pipeline (augmentation/discretization/tokenization): {e}", exc_info=True)
          raise
 
-    if processed_df.empty:
+    if df.empty:
         logger.error("Preprocessing resulted in an empty DataFrame. Cannot proceed.")
         raise ValueError("No data remaining after preprocessing steps.")
     
@@ -268,20 +269,18 @@ def prepare_data_for_training(config: DictConfig) -> Tuple[List[str], pd.DataFra
     logger.info("Saving final preprocessed artifacts...")
     preproc_path.parent.mkdir(parents=True, exist_ok=True) 
     try:
-        torch.save(processed_df, preproc_path)
+        torch.save(df, preproc_path)
         logger.info(f"Final pre-processed DataFrame saved -> {preproc_path}")
 
         _save_selfies_alphabet(alphabet_path, alphabet)
 
         if selfies_nospace_path:
-             _write_selfies_txt(selfies_nospace_path, processed_df, whitespace=False)
+             _write_selfies_txt(selfies_nospace_path, df, whitespace=False)
         if selfies_whitespace_path:
-             _write_selfies_txt(selfies_whitespace_path, processed_df, whitespace=True)
+             _write_selfies_txt(selfies_whitespace_path, df, whitespace=True)
 
     except Exception as e:
         logger.error(f"Failed to save one or more preprocessing artifacts: {e}", exc_info=True)
         raise 
-    print(processed_df.info()) #CHECK WHY DF IS NOT BEING ADDED WITH NEW COLUMNS  FOR BIN
-    exit()
     logger.info("Preprocessing pipeline finished successfully.")
-    return alphabet, processed_df
+    return alphabet, df

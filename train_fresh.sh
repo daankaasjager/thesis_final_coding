@@ -24,6 +24,8 @@ srun python main.py \
     checkpointing.fresh_data=true \
     checkpointing.retrain_tokenizer=true \
     checkpointing.resume_from_ckpt=false \
+    preprocessing.augment=true \
+    preprocessing.discretize=true \
     trainer.devices=1 \
     trainer.strategy=auto \
     trainer.accelerator=cuda \

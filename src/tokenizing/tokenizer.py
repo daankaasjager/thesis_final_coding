@@ -39,13 +39,6 @@ def _build_wordlevel_tokenizer(vocab: dict):
 
 def _build_ape_tokenizer(config, data, vocab):
     vocab_path = config.local_paths.selfies_ape_vocab
-
-    if os.path.exists(vocab_path):
-        logger.info(f"Loading JSON vocab from {vocab_path}")
-        with open(vocab_path, "r", encoding="utf-8") as f:
-            vocab_json = json.load(f)
-        return Tokenizer(WordLevel(vocab=vocab_json, unk_token="[UNK]"))
-    
     if config.checkpointing.retrain_ape_vocab:
         logger.info("Training APE tokenizer from scratch using raw data")
         selfies_vocab = train_selfies_bpe_vocab(
@@ -57,9 +50,16 @@ def _build_ape_tokenizer(config, data, vocab):
             verbose=True,
         )
         return Tokenizer(WordLevel(vocab=selfies_vocab, unk_token="[UNK]"))
-
+    elif os.path.exists(vocab_path):
+        logger.info(f"Loading APE vocab from {vocab_path}")
+        with open(vocab_path, "r", encoding="utf-8") as f:
+            vocab_json = json.load(f)
+        # if each token of the vocab is not in the json dictionary version, we need to update the tokenizer vocab
+        for token in vocab:
+            if token not in vocab_json:
+                vocab_json[token] = len(vocab_json)
+        return Tokenizer(WordLevel(vocab=vocab_json, unk_token="[UNK]"))
     raise ValueError("No valid APE vocab found and retrain flag is not set.")
-
 
 def _configure_tokenizer(tokenizer: Tokenizer, vocab: dict) -> Tokenizer:
     tokenizer.post_processor = processors.TemplateProcessing(
@@ -138,14 +138,12 @@ def get_tokenizer(config, data=None):
 
 def _prepend_conditioning_tokens(config, raw_data):
     input_selfies = []
-    num_bins = config.preprocessing.discretize_num_bins
     bin_column_names = [
         f"{prop}_bin" for prop in config.conditioning.properties
     ]
     for col in bin_column_names:
         if col not in raw_data.columns:
             raise ValueError(f"Expected discretized column '{col}' not found in data")
-
     for _, row in raw_data.iterrows():
         bin_tokens = [
             str(row[f"{prop}_bin"]) for prop in config.conditioning.properties
@@ -155,7 +153,7 @@ def _prepend_conditioning_tokens(config, raw_data):
         prefix = "".join(bin_tokens)
         full_sequence = f"{prefix}{row['selfies']}"
         input_selfies.append(full_sequence)
-    print(f"Prepending conditioning tokens: {input_selfies[:5]}")
+    logger.info(f"show some examples of conditioning tokens: {input_selfies[:5]}")  
     return input_selfies
     
 
