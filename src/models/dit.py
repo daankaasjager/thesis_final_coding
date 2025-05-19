@@ -14,7 +14,6 @@ from utils.torch_utils import get_torch_dtype
 
 logger = logging.getLogger(__name__)
 
-# Detect OS and import appropriate efficient attention library.
 if sys.platform.startswith("win"):
     USE_FLASH_ATTN = False
 else:
@@ -164,7 +163,7 @@ def residual_linear(x, W, x_skip, residual_scale):
 
 
 #################################################################################
-#               Embedding Layers for Timesteps and Class Labels                 #
+#               Embedding Layers for Timesteps and Conditionals                #
 #################################################################################
 class TimestepEmbedder(nn.Module):
     """
@@ -200,18 +199,19 @@ class TimestepEmbedder(nn.Module):
         return t_emb
 
 
-class LabelEmbedder(nn.Module):
-    """Embeds class labels into vector representations.
-    Also handles label dropout for classifier-free guidance.
+class ContinuousPropertyEmbedder(nn.Module):
     """
-
-    def __init__(self, num_classes, cond_size):
+    Maps a (B, P) vector of normalised scalars to (B, cond_dim).
+    """
+    def __init__(self, in_dim: int, out_dim: int):
         super().__init__()
-        self.embedding_table = nn.Embedding(num_classes + 1, cond_size)
-        self.num_classes = num_classes
-
-    def forward(self, labels):
-        return self.embedding_table(labels)
+        self.p_emb = nn.Sequential(
+            nn.Linear(in_dim, out_dim),
+            nn.SiLU(),
+            nn.Linear(out_dim, out_dim),
+        )
+    def forward(self, x):        # x: (B, P)
+        return self.p_emb(x.float())
 
 
 #################################################################################
@@ -344,6 +344,12 @@ class DIT(nn.Module, huggingface_hub.PyTorchModelHubMixin):
         self.vocab_embed = EmbeddingLayer(config.model.hidden_size, vocab_size)
         self.sigma_map = TimestepEmbedder(config.model.cond_dim)
         self.rotary_emb = Rotary(config.model.hidden_size // config.model.n_heads)
+        if self.config.conditioning.embeddings and self.config.conditioning.properties:
+            self.property_map = ContinuousPropertyEmbedder(
+                len(self.config.conditioning.properties), config.model.cond_dim)
+        else:
+            self.property_map = None
+
         blocks = []
         for _ in range(config.model.n_blocks):
             blocks.append(
@@ -358,7 +364,6 @@ class DIT(nn.Module, huggingface_hub.PyTorchModelHubMixin):
         self.output_layer = DDitFinalLayer(
             config.model.hidden_size, vocab_size, config.model.cond_dim
         )
-        self.scale_by_sigma = config.model.scale_by_sigma
 
     def _get_bias_dropout_scale(self):
         if self.training:
@@ -366,31 +371,33 @@ class DIT(nn.Module, huggingface_hub.PyTorchModelHubMixin):
         else:
             return bias_dropout_add_scale_fused_inference
 
-    def forward(self, indices, sigma):
-        # --- START FIX ---
-        # Ensure sigma is 1D before passing to TimestepEmbedder
-        if sigma.ndim > 1:
-            # Squeeze the last dimension if it exists and is 1
-            if sigma.shape[-1] == 1:
-                sigma = sigma.squeeze(-1)
-            else:
-                # Handle unexpected shape if necessary, or raise error
-                logger.warning(
-                    f"Received sigma with unexpected shape {sigma.shape} in DIT.forward"
-                )
-                # Attempt to squeeze anyway, or raise error if ambiguous
-                sigma = sigma.squeeze()  # Be cautious with general squeeze
-
-        # Ensure it's 1D now, otherwise TimestepEmbedder will likely fail
-        if sigma.ndim != 1:
-            raise ValueError(
-                f"Sigma must be 1D after processing, but got shape {sigma.shape}"
-            )
-        # --- END FIX ---
-
+    def forward(self, indices, sigma, property_conditioning_vector=None, force_unconditional_pass: bool = False):
         x = self.vocab_embed(indices)
-        # Now pass the 1D sigma to sigma_map
-        c = F.silu(self.sigma_map(sigma))  # sigma_map now receives (B,)
+
+        time_cond_embedding = F.silu(self.sigma_map(sigma))
+
+        final_cond_embedding = time_cond_embedding
+
+        if self.property_map is not None: 
+            # Training-time CFG
+            if self.training and self.config.conditioning.cfg and property_conditioning_vector is not None:
+                if torch.rand(1).item() < self.config.conditioning.cfg_prob:
+                    current_props_for_map = torch.zeros_like(property_conditioning_vector, device=x.device, dtype=torch.float)
+                else:
+                    current_props_for_map = property_conditioning_vector.to(x.device, dtype=torch.float)
+                
+                prop_cond_embedding = self.property_map(current_props_for_map)
+                final_cond_embedding = final_cond_embedding + prop_cond_embedding
+
+            # Sampling-time CFG
+            elif not self.training and property_conditioning_vector is not None:
+                if force_unconditional_pass:
+                    uncond_props_input = torch.zeros_like(property_conditioning_vector, device=x.device, dtype=torch.float)
+                    prop_cond_embedding = self.property_map(uncond_props_input)
+                    final_cond_embedding = final_cond_embedding + prop_cond_embedding
+                else:
+                    prop_cond_embedding = self.property_map(property_conditioning_vector.to(x.device, dtype=torch.float))
+                    final_cond_embedding = final_cond_embedding + prop_cond_embedding
 
         rotary_cos_sin = self.rotary_emb(x)
         with torch.amp.autocast(
@@ -399,6 +406,6 @@ class DIT(nn.Module, huggingface_hub.PyTorchModelHubMixin):
         ):
             for i in range(len(self.blocks)):
                 # c passed to blocks will now have the correct shape (B, cond_dim)
-                x = self.blocks[i](x, rotary_cos_sin, c, seqlens=None)
-            x = self.output_layer(x, c)
+                x = self.blocks[i](x, rotary_cos_sin, final_cond_embedding, seqlens=None)
+            x = self.output_layer(x, final_cond_embedding)
         return x

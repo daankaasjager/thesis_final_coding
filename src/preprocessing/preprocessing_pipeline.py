@@ -2,20 +2,34 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import List, Tuple
 
-from networkx import dfs_edges
 import pandas as pd
 import selfies as sf
 from tqdm import tqdm
 import torch
 from omegaconf import DictConfig
+import pyarrow.parquet as pq
+import pyarrow as pa
 
 from .csv_reader import read_csv
 from .discretization import apply_discretization
 from .augmentation import apply_augmentation
+from .normalization import apply_normalization
 
 logger = logging.getLogger(__name__)
+
+def _optimize_memory(df: pd.DataFrame) -> pd.DataFrame:
+    """Down‑cast float64 → float32 and pack token lists to strings."""
+
+    float_cols = df.select_dtypes(include=["float64"]).columns
+    if float_cols.any():
+        df[float_cols] = df[float_cols].apply(pd.to_numeric, downcast="float")
+
+    if "tokenized_selfies" in df.columns and df["tokenized_selfies"].apply(lambda x: isinstance(x, list)).any():
+        df["tokenized_selfies"] = df["tokenized_selfies"].apply(lambda lst: " ".join(lst) if isinstance(lst, list) else lst)
+
+    return df
 
 
 def _load_alphabet_from_txt(path: str | Path) -> List[str]:
@@ -43,18 +57,13 @@ def _load_preprocessed_data(
          raise FileNotFoundError(f"Alphabet file not found: {alphabet_path}")
 
     try:
-        map_location = 'cuda' if torch.cuda.is_available() else 'cpu'
-        obj = torch.load(preproc_path, map_location=map_location, weights_only=False)
-
-        if isinstance(obj, dict) and "raw_data" in obj and isinstance(obj["raw_data"], pd.DataFrame):
-            data = obj["raw_data"]
-            logger.info("Loaded pre-processed data (legacy dict format).")
-        elif isinstance(obj, pd.DataFrame):
-            data = obj
-            logger.info("Loaded pre-processed data (DataFrame format).")
+        if preproc_path.suffix == ".parquet":
+            table = pq.ParquetFile(preproc_path)            # zero-copy mmap
+            data  = table.read().to_pandas()
+            logger.info("Loaded pre-processed data (Parquet format).")  
         else:
-            raise TypeError(f"Expected DataFrame or legacy dict, but loaded type {type(obj)} from {preproc_path}")
-
+            logger.warning(f"Unsupported file format for preprocessed data: {preproc_path.suffix}. Expected .parquet.")
+            raise ValueError(f"Unsupported file format: {preproc_path.suffix}")
         alphabet = _load_alphabet_from_txt(alphabet_path)
         logger.info("Pre-processed data and alphabet loaded successfully.")
         return alphabet, data
@@ -92,49 +101,9 @@ def _save_selfies_alphabet(
         logger.error(f"Failed to write alphabet file to {path}: {e}")
         raise
 
-def _write_selfies_txt(
-    lines_path: str | Path,
-    df: pd.DataFrame,
-    selfies_col: str = "tokenized_selfies",
-    *,
-    whitespace: bool,
-) -> None:
-    """Write tokenized SELFIES from DataFrame column to a text file."""
-    path = Path(lines_path)
-    path.parent.mkdir(parents=True, exist_ok=True)
-
-    if selfies_col not in df.columns:
-        logger.error(f"Column '{selfies_col}' not found in DataFrame for writing SELFIES text.")
-        return
-
-    num_lines = len(df)
-    logger.info("Writing %d tokenized SELFIES sequences -> %s", num_lines, path)
-
-    try:
-        with open(path, "w", encoding="utf-8") as fh:
-            sep = " " if whitespace else ""
-            count = 0
-            for tok_list in df[selfies_col]:
-                # Check if it's a valid list of strings (tokens)
-                if isinstance(tok_list, list) and all(isinstance(t, str) for t in tok_list):
-                    fh.write(sep.join(tok_list) + "\n")
-                    count += 1
-                else:
-                    logger.warning(f"Skipping invalid or non-list entry in '{selfies_col}' at index {df[df[selfies_col].isnotnull()].index[count] if count < len(df[df[selfies_col].isnotnull()]) else 'unknown'}: type={type(tok_list)}") # Log type
-            if count != num_lines:
-                 logger.warning(f"Wrote {count} lines, but DataFrame had {num_lines} rows. This might be due to invalid entries in '{selfies_col}'.")
-
-    except IOError as e:
-        logger.error(f"Failed to write SELFIES text file to {path}: {e}")
-        raise
-    except Exception as e:
-        logger.error(f"An unexpected error occurred while writing {path}: {e}", exc_info=True)
-        raise
-
-
 def _tokenize_selfies_and_filter(
-    df: pd.DataFrame,
     config: DictConfig,
+    df: pd.DataFrame,
     selfies_col: str = "selfies"
 ) -> Tuple[list[str], pd.DataFrame]:
     """
@@ -223,8 +192,6 @@ def prepare_data_for_training(config: DictConfig) -> Tuple[List[str], pd.DataFra
         preproc_path = Path(config.local_paths.pre_processed_data)
         alphabet_path = Path(config.local_paths.selfies_alphabet)
         raw_data_path = Path(config.local_paths.original_data)
-        selfies_nospace_path = config.local_paths.selfies_nospace_txt
-        selfies_whitespace_path = config.local_paths.selfies_whitespace_txt
     except AttributeError as e:
         logger.error(f"Missing path configuration in `config.local_paths`: {e}")
         raise ValueError(f"Missing path configuration: {e}")
@@ -246,16 +213,19 @@ def prepare_data_for_training(config: DictConfig) -> Tuple[List[str], pd.DataFra
 
     try:
         #2. Tokenize selfies and filter by length
-        alphabet, df = _tokenize_selfies_and_filter(df, config)
-
+        alphabet, df = _tokenize_selfies_and_filter(config, df)
         #3 Apply discretization
         if config.preprocessing.discretize:
             logger.info("Applying discretization to DataFrame...")
-            df = apply_discretization(df, config)
-        #4. Apply augmentation
+            df = apply_discretization(config, df)
+        #4. Apply normalization
+        if config.preprocessing.normalize:
+            logger.info("Applying normalization to DataFrame...")
+            df = apply_normalization(config, df)
+        #5. Apply augmentation
         if config.preprocessing.augment:
             logger.info("Applying data augmentation to DataFrame...")
-            df = apply_augmentation(df, config)
+            df = apply_augmentation(config, df)
 
     except Exception as e:
          logger.error(f"Error during preprocessing pipeline (augmentation/discretization/tokenization): {e}", exc_info=True)
@@ -268,16 +238,11 @@ def prepare_data_for_training(config: DictConfig) -> Tuple[List[str], pd.DataFra
     #5. Save final preprocessed artifacts
     logger.info("Saving final preprocessed artifacts...")
     preproc_path.parent.mkdir(parents=True, exist_ok=True) 
+    df = _optimize_memory(df)  # Optimize memory usage before saving
     try:
-        torch.save(df, preproc_path)
-        logger.info(f"Final pre-processed DataFrame saved -> {preproc_path}")
+        pq.write_table(pa.Table.from_pandas(df, preserve_index=False), preproc_path, compression="zstd")
 
         _save_selfies_alphabet(alphabet_path, alphabet)
-
-        if selfies_nospace_path:
-             _write_selfies_txt(selfies_nospace_path, df, whitespace=False)
-        if selfies_whitespace_path:
-             _write_selfies_txt(selfies_whitespace_path, df, whitespace=True)
 
     except Exception as e:
         logger.error(f"Failed to save one or more preprocessing artifacts: {e}", exc_info=True)

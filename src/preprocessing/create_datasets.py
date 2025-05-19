@@ -1,5 +1,5 @@
 import logging
-
+from omegaconf import DictConfig
 import datasets
 import torch
 from transformers import DataCollatorWithPadding
@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 def _check_gpu_compatibility(config) -> None:
     """
-    Check if the batch sizes are consistent with the *configured* number of GPUs.
+    Check if the batch sizes are consistent with the configured number of GPUs.
     Do NOT use all visible GPUs, only what Lightning is instructed to use.
     """
     logger.info("Checking GPU compatibility")
@@ -39,30 +39,51 @@ def _check_gpu_compatibility(config) -> None:
             f"by number of GPUs ({requested_gpus})."
         )
 
+class CondPropertyCollator(DataCollatorWithPadding):
+    """
+    Pads the usual sequence fields and stacks the conditional properties
+    into a float tensor of shape (Batch_size, Properties).
+    """
+    def __call__(self, features):
+        # let HF collator pad input_ids, attention_mask, …
+        padded = super().__call__(features)
 
+        if "cond_props" in features[0]:
+            # list[dict] -> list[list[float]] -> tensor
+            props = [f["cond_props"] for f in features]
+            padded["cond_props"] = torch.tensor(props, dtype=torch.float32)
+
+        return padded
 
 def _create_train_val_dataloaders(config, tokenized_selfies_data, tokenizer) -> tuple:
     """
     Creates a Hugging Face Dataset from tokenized_selfies_data,
     splits into train and validation sets, then returns PyTorch DataLoaders.
     """
-    dataset = datasets.Dataset.from_dict(tokenized_selfies_data)
-    # Potentially also include the column "conditioning". First requires adding that to the tokenized selfies data
+    if isinstance(tokenized_selfies_data, dict):
+        data = datasets.Dataset.from_dict(tokenized_selfies_data)
+        logger.info("Converted dictionary to datasets.Dataset")
+    elif isinstance(tokenized_selfies_data, datasets.Dataset):
+        data = tokenized_selfies_data
+        logger.info("Using provided datasets.Dataset")
+    else:
+        raise TypeError(f"Expected dict or datasets.Dataset, got {type(tokenized_selfies_data)}")
 
     if config.train_test_split.train < 1.0:
-        split_dataset = dataset.train_test_split(
+        split_dataset = data.train_test_split(
             test_size=1 - config.train_test_split.train,
-            seed=getattr(config, "seed", 42),
+            seed=config.seed,
             shuffle=True,
         )
         train_dataset = split_dataset["train"]
         val_dataset = split_dataset["test"]
     else:
         logger.warning("train_test_split.train=1.0, no separate validation dataset.")
-        train_dataset = dataset
+        train_dataset = data
+
         val_dataset = None
 
-    data_collator = DataCollatorWithPadding(tokenizer=tokenizer, padding="longest")
+    data_collator = CondPropertyCollator(tokenizer=tokenizer, padding="longest")
 
     train_loader = torch.utils.data.DataLoader(
         train_dataset,

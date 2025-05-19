@@ -1,7 +1,7 @@
 import json
 import logging
 
-from evaluate import (bos_eos_analysis, calculate_and_plot_metrics,
+from analysis import (bos_eos_analysis, calculate_and_plot_metrics,
                       calculate_and_plot_metrics_multi)
 from preprocessing import read_csv
 

@@ -78,6 +78,8 @@ class Diffusion(L.LightningModule):
 
         self.T = self.config.T
 
+        self.default_guidance_scale = self.config.conditioning.guidance_scale
+
         self.softplus = torch.nn.Softplus()
         # metrics are automatically reset at end of epoch
         metrics = torchmetrics.MetricCollection(
@@ -111,6 +113,7 @@ class Diffusion(L.LightningModule):
         self.fast_forward_epochs = None
         self.fast_forward_batches = None
         self._validate_configuration()
+
 
     def _validate_configuration(self):
         assert not (self.change_of_variables and self.importance_sampling)
@@ -264,18 +267,19 @@ class Diffusion(L.LightningModule):
         assert sigma.ndim == 1, sigma.shape
         return sigma
 
-    def forward(self, x, sigma):
+    def forward(self, x, sigma, property_conditioning_vector=None):
         """Ensure all inputs are on the correct device before computation."""
 
         # Ensure device consistency
         device = next(self.backbone.parameters()).device  # Get backbone device
-
         x = x.to(device)  # Move input to same device as backbone
-        sigma = sigma.to(device)  # Move sigma to same device as backbone
-
+        sigma = self._process_sigma(sigma)
+        if property_conditioning_vector is not None:
+            property_conditioning_vector = property_conditioning_vector.to(
+                device, dtype=self.dtype)
         logits = self.backbone(
-            x, sigma
-        )  # Now both inputs & backbone are on same device
+            x, sigma, property_conditioning_vector, force_unconditional_pass=False
+        )
 
         return self._subs_parameterization(logits=logits, xt=x)
 
@@ -314,7 +318,7 @@ class Diffusion(L.LightningModule):
             attention_mask = batch["attention_mask"]
         else:
             attention_mask = None
-        losses = self._loss(batch["input_ids"], attention_mask)
+        losses = self._loss(batch["input_ids"], attention_mask, batch["cond_props"])
         loss = losses.loss
 
         if prefix == "train":
@@ -403,8 +407,9 @@ class Diffusion(L.LightningModule):
         move_probs = torch.rand(*x.shape, device=x.device)
         eligible_mask = torch.ones_like(x, dtype=torch.bool)
 
-        # prevent BOS masking
-        eligible_mask[:, 0] = False
+        # prevent BOS masking, as well as masking for the conditioning tokens, if there are any
+        n_props = len(getattr(self.config.conditioning, "properties", []))
+        eligible_mask[:, 0:n_props + 1] = False
 
         # prevent EOS masking using attention_mask
         if attention_mask is not None:
@@ -428,22 +433,47 @@ class Diffusion(L.LightningModule):
         move_chance_expanded = move_chance.expand_as(x)
         move_indices = (move_probs < move_chance_expanded) & eligible_mask
         xt = torch.where(move_indices, self.mask_index, x)
+        # do some printing to check whether the mask is working
+        if self.config.debug:
+            logger.debug(
+                f"xt shape: {xt.shape}, move_indices shape: {move_indices.shape}, move_chance shape: {move_chance_expanded.shape}"
+            )
+            logger.debug(
+                f"xt: {xt}, move_indices: {move_indices}, move_chance: {move_chance_expanded}"
+            )
         return xt
 
     def _sample_prior(self, *batch_dims):
         return self.mask_index * torch.ones(*batch_dims, dtype=torch.int64)
 
-    def _ddpm_caching_update(self, x, t, dt, p_x0=None):
+    def _ddpm_caching_update(self, x, t, dt, p_x0=None, target_properties=None, current_guidance_scale=0.0):
         assert self.config.noise.type == "loglinear"
         sigma_t, _ = self.noise(t)
         if t.ndim > 1:
             t = t.squeeze(-1)
         assert t.ndim == 1
+
+
         move_chance_t = t[:, None, None]
         move_chance_s = (t - dt)[:, None, None]
         assert move_chance_t.ndim == 3, move_chance_t.shape
         if p_x0 is None:
-            p_x0 = self.forward(x, sigma_t).exp()
+            logits_cond = self.forward(
+                x, sigma_t, target_properties, force_unconditional_pass=False
+            )
+
+            if current_guidance_scale == 0.0 or not self.config.conditioning.cfg:
+                guided_logits = logits_cond
+            else:
+                # ---- unconditional branch for CFG
+                logits_uncond = self.forward(
+                    x, sigma_t, target_properties, force_unconditional_pass=True
+                )
+                guided_logits = ((1.0 + current_guidance_scale) * logits_cond
+                                - current_guidance_scale * logits_uncond)
+
+            log_p_x0 = self._subs_parameterization(logits=guided_logits, xt=x)
+            p_x0 = log_p_x0.exp()
 
         assert move_chance_t.ndim == p_x0.ndim
         q_xs = p_x0 * (move_chance_t - move_chance_s)
@@ -453,7 +483,7 @@ class Diffusion(L.LightningModule):
         copy_flag = (x != self.mask_index).to(x.dtype)
         return p_x0, copy_flag * x + (1 - copy_flag) * _x
 
-    def _ddpm_update(self, x, t, dt):
+    def _ddpm_update(self, x, t, dt, target_properties, current_guidance_scale):
         sigma_t, _ = self.noise(t)
         sigma_s, _ = self.noise(t - dt)
         if sigma_t.ndim > 1:
@@ -466,25 +496,48 @@ class Diffusion(L.LightningModule):
         move_chance_s = 1 - torch.exp(-sigma_s)
         move_chance_t = move_chance_t[:, None, None]
         move_chance_s = move_chance_s[:, None, None]
-        unet_conditioning = sigma_t
-        log_p_x0 = self.forward(x, unet_conditioning)
-        assert move_chance_t.ndim == log_p_x0.ndim
-        # Technically, this isn't q_xs since there's a division
-        # term that is missing. This division term doesn't affect
-        # the samples.
-        q_xs = log_p_x0.exp() * (move_chance_t - move_chance_s)
-        q_xs[:, :, self.mask_index] = move_chance_s[:, :, 0]
-        _x = _sample_categorical(q_xs)
+        
+        raw_logits_cond = self.forward(x, sigma_t, target_properties, force_unconditional_pass=False)
+        if current_guidance_scale == 0.0 or not self.config.conditioning.cfg:
+            guided_raw_logits = raw_logits_cond
+        else:
+            raw_logits_uncond = self.forward(x, sigma_t, target_properties, force_unconditional_pass=True)
+            guided_raw_logits = (1.0 + current_guidance_scale) * raw_logits_cond - current_guidance_scale * raw_logits_uncond
+        log_p_x0_parameterized = self._subs_parameterization(logits=guided_raw_logits, xt=x)
+        # Clamp to avoid log(0) or small number issues if any probability is exactly 0
+        p_x0_probs = torch.exp(log_p_x0_parameterized).clamp(min=1e-20)
+
+
+        q_xs_non_mask_term = p_x0_probs * (move_chance_t - move_chance_s)
+        q_xs_non_mask_term = torch.clamp(q_xs_non_mask_term, min=0) # Ensure non-negative probabilities
+
+        final_probs_for_sampling = q_xs_non_mask_term.clone()
+        
+        final_probs_for_sampling[:, :, self.mask_index] = final_probs_for_sampling[:, :, self.mask_index] + move_chance_s.squeeze(-1) 
+        
+        _x_sampled_token = _sample_categorical(final_probs_for_sampling)
 
         copy_flag = (x != self.mask_index).to(x.dtype)
-        return copy_flag * x + (1 - copy_flag) * _x
+        x_s = copy_flag * x + (1 - copy_flag) * _x_sampled_token
+        return x_s
 
     @torch.no_grad()
-    def _sample(self, num_steps=None, eps=1e-5):
+    def _sample(self, num_steps=None, eps=1e-5, target_properties=None, current_guidance_scale=None):
         """Generate samples from the model with progress tracking."""
         batch_size_per_gpu = self.config.loader.eval_batch_size
         if num_steps is None:
             num_steps = self.config.sampling.steps
+
+        batch_size = target_properties.shape[0] if target_properties is not None \
+                     else self.config.loader.eval_batch_size
+
+        if target_properties is None and \
+           self.config.conditioning.properties and self.config.conditioning.embeddings:
+            num_props = len(self.config.conditioning.properties)
+            if num_props > 0:
+                target_properties = torch.zeros(batch_size, num_props, device=self.device, dtype=torch.float)
+        elif target_properties is not None:
+             target_properties = target_properties.to(self.device, dtype=torch.float)
 
         x = self._sample_prior(batch_size_per_gpu, self.config.model.length).to(
             self.device
@@ -493,14 +546,14 @@ class Diffusion(L.LightningModule):
         dt = (1 - eps) / num_steps
         p_x0_cache = None
 
-        # Add tqdm progress bar for diffusion steps
         for i in tqdm(range(num_steps), desc="Diffusion steps", unit="step"):
             t = timesteps[i] * torch.ones(x.shape[0], 1, device=self.device)
             if self.sampler == "ddpm":
-                x = self._ddpm_update(x, t, dt)
+                x = self._ddpm_update(x, t, dt, target_properties, current_guidance_scale)
             elif self.sampler == "ddpm_cache":
                 p_x0_cache, x_next = self._ddpm_caching_update(
-                    x, t, dt, p_x0=p_x0_cache
+                    x, t, dt, p_x0=p_x0_cache, target_properties=target_properties,
+                    current_guidance_scale=current_guidance_scale
                 )
                 if not torch.allclose(x_next, x) or self.time_conditioning:
                     p_x0_cache = None
@@ -517,7 +570,7 @@ class Diffusion(L.LightningModule):
                 x = self.forward(x, unet_conditioning).argmax(dim=-1)
         return x
 
-    def restore_model_and_sample(self, num_steps, eps=1e-5):
+    def restore_model_and_sample(self, num_steps, eps=1e-5, target_properties=None, guidance_scale=None):
         """Generate samples from the model."""
         # Lightning auto-casting is not working in this method for some reason
         if self.ema:
@@ -529,7 +582,10 @@ class Diffusion(L.LightningModule):
             )
         self.backbone.eval()
         self.noise.eval()
-        samples = self._sample(num_steps=num_steps, eps=eps)
+        if guidance_scale is None:
+            guidance_scale = self.guidance_scale
+    
+        samples = self._sample(num_steps=num_steps, eps=eps, target_properties=target_properties, current_guidance_scale=guidance_scale)
         if self.ema:
             self.ema.restore(
                 itertools.chain(self.backbone.parameters(), self.noise.parameters())
@@ -626,29 +682,6 @@ class Diffusion(L.LightningModule):
             return self.noise.importance_sampling_transformation(t)
         return t
 
-    # CHECK THIS OUT AND USE CASE
-    def _maybe_sub_sample(self, x0, attention_mask):
-        seqlen = x0.shape[1]
-        if seqlen > self.config.model.length:
-            assert seqlen == 2 * self.config.model.length
-            # cropping is needed for text8-crop dataset
-            # try the same starting point for now
-            start = np.random.choice(self.config.model.length)
-            end = start + self.config.model.length
-            input_tokens = x0[:, start:end]
-            output_tokens = x0[:, start + 1 : end + 1]
-            new_attention_mask = attention_mask[:, start:end]
-
-            # Helps with validation PPL, since the val
-            # examples will all start and end with BOS/EOS
-            input_tokens[:, 0] = self.tokenizer.bos_token_id
-            output_tokens[:, -1] = self.tokenizer.eos_token_id
-        else:
-            input_tokens = x0
-            output_tokens = None
-            new_attention_mask = attention_mask
-        return input_tokens, output_tokens, new_attention_mask
-
     def _reconstruction_loss(self, x0):
         t0 = torch.zeros(x0.shape[0], dtype=self.dtype, device=self.device)
         assert self.config.noise.type == "loglinear"
@@ -659,7 +692,7 @@ class Diffusion(L.LightningModule):
             input=model_output_t0, dim=-1, index=x0[:, :, None]
         ).squeeze(-1)
 
-    def _forward_pass_diffusion(self, x0, attention_mask):
+    def _forward_pass_diffusion(self, x0, attention_mask, property_conditioning_vector):
         t = self._sample_t(x0.shape[0], x0.device)
         if self.T > 0:
             t = (t * self.T).to(torch.int)
@@ -678,10 +711,9 @@ class Diffusion(L.LightningModule):
             unet_conditioning = sigma[:, None]
             move_chance = 1 - torch.exp(-sigma[:, None])
 
-        # Call the modified q_xt
-        xt = self.q_xt(x0, move_chance, attention_mask=attention_mask)
+        xt = self.q_xt(x0, move_chance, attention_mask)
 
-        model_output = self.forward(xt, unet_conditioning)
+        model_output = self.forward(xt, unet_conditioning, property_conditioning_vector)
         if torch.isnan(model_output).any():
             logger.info("model output", model_output)
 
@@ -703,18 +735,15 @@ class Diffusion(L.LightningModule):
 
         return -log_p_theta * (dsigma / torch.expm1(sigma))[:, None]
 
-    def _loss(self, x0, attention_mask):
-        (input_tokens, output_tokens, attention_mask) = self._maybe_sub_sample(
-            x0, attention_mask
-        )
-
-        loss = self._forward_pass_diffusion(input_tokens, attention_mask=attention_mask)
+    def _loss(self, x0, attention_mask, cond_props=None):
+        loss = self._forward_pass_diffusion(x0, attention_mask, cond_props)
 
         nlls = loss * attention_mask
         count = attention_mask.sum()
 
         if count == 0:
-            logger.warning("check this out, count is 0")
+            logger.warning("Attention mask sum is 0 in _loss, returning zero loss.")
+            return Loss(loss=torch.tensor(0.0, device=x0.device, dtype=self.dtype), nlls=nlls, token_mask=attention_mask)
 
         batch_nll = nlls.sum()
         token_nll = batch_nll / count
@@ -736,7 +765,7 @@ class Diffusion(L.LightningModule):
                 x[:, :-stride_length] = target
             for i in range(num_steps + 1):
                 p_x0_cache, x_next = self._ddpm_caching_update(
-                    x=x, t=(1 - i * dt) * ones, dt=dt, p_x0=p_x0_cache
+                    x=x, t=(1 - i * dt) * ones, dt=dt, p_x0=p_x0_cache, 
                 )
                 if not torch.allclose(x_next, x) or self.time_conditioning:
                     p_x0_cache = None

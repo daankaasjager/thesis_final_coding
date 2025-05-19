@@ -54,9 +54,8 @@ def train(config):
     wandb_logger, callbacks = setup_training_logging(config)
 
     ckpt_path = config.checkpointing.resume_ckpt_path if config.checkpointing.resume_from_ckpt else None
-
+    logger.info(f"Checkpoint path: {ckpt_path}")
     selfies_vocab, data = prepare_data_for_training(config)
-    ckpt_path = None
     # Passes the selfies data to the tokenizer, so that it can train from scratch if it doesn't already exist
     # and the retrain_tokenizer flag is set to True
     tokenizer = get_tokenizer(config, data)

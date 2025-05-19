@@ -7,7 +7,7 @@ from omegaconf import DictConfig
 
 logger = logging.getLogger(__name__)
 
-def apply_augmentation(df: pd.DataFrame, config: DictConfig) -> pd.DataFrame:
+def apply_augmentation( config: DictConfig, df: pd.DataFrame) -> pd.DataFrame:
     """
     Augments DataFrame with rearranged SMILES/SELFIES based on config settings.
     Operates in memory.

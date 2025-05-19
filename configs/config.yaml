@@ -13,18 +13,17 @@ train_test_split:
 
 local_paths:
   tokenizer: data/kraken/tokenizer
-  train_data_encoding: data/kraken/training_data/train_data_encoding.pt
+  train_data_encoding: data/kraken/training_data/train_data_encoding
   original_data: data/kraken/training_data/descriptors_v3.csv
   augmented_data: data/kraken/training_data/augmented_descriptors_v3.csv
-  pre_processed_data: data/kraken/training_data/preprocessed_data.pt
+  pre_processed_data: data/kraken/training_data/preprocessed_data.parquet
   sampled_data: data/kraken/sampled_data/generated_samples.json
   temp_path: data/kraken/sampled_data/temp.tmp
   metrics_dir: data/kraken/metric_plots
   synthesize_dir: data/kraken/synthesized_molecules
-  selfies_nospace_txt: data/kraken/training_data/selfies_nospace.txt
-  selfies_whitespace_txt: data/kraken/training_data/selfies_whitespace.txt
   selfies_alphabet: data/kraken/training_data/selfies_alphabet.txt
   selfies_ape_vocab: data/kraken/tokenizer/selfies_ape_vocab.json
+  mean_std: data/kraken/training_data/mean_std.json
 
 
 mode: train
@@ -35,8 +34,10 @@ parameterization: subs  # subs / d3pm / sedd
 time_conditioning: False
 T: 0  # 0 (continuous time) / 1000 
 row_limit: null
+debug: True
 
 preprocessing:
+  normalize: True
   augment: True
   augmentations_per_molecule: 10
   augmentations_max_attempts: 50
@@ -45,18 +46,17 @@ preprocessing:
   permitted_selfies_length: 175 # CHANGE THIS TO THE ACTUAL PERCENTILE LATER
 
 tokenizer:
-  tokenizer_type: APE # wordlevel, etc.
-  vocab_size: 54
+  tokenizer_type: wordlevel # wordlevel
   max_vocab_size: 200 # EXPERIMENT WITH THIS!!!! pairs for APE
   min_freq_for_merge: 500 #min frequency of pairs for APE
 
 checkpointing:
   save_dir: ${cwd:}
-  resume_from_ckpt: false
-  resume_ckpt_path: ${cwd:}/checkpoints/best-v6.ckpt
-  fresh_data: false
-  retrain_tokenizer: True
-  retrain_ape_vocab: True
+  resume_from_ckpt: False
+  resume_ckpt_path: ${cwd:}/checkpoints/best.ckpt
+  fresh_data: False
+  retrain_tokenizer: False
+  retrain_ape_vocab: False
 
 wandb:
   project: SELFIES-diffusion
@@ -88,8 +88,14 @@ loader:
 #'sterimol_burL', 'nbo_bd_occ_avg', 'sterimol_burB5', 'vbur_ovbur_min', 'vbur_qvbur_min', 
 #'nbo_bds_occ_max', 'vbur_ratio_vbur_vtot', 'mol_wt', 'sa_score']
 conditioning: 
-  properties: ['sa_score', 'vmin_r', 'vbur_vbur']
-
+  properties: ['sa_score','vmin_r','vbur_vbur'] # This is the list of properties to condition on
+  prepend: False # This turns on the prepending of the conditioning properties e.g., '[vbur_vbur_bin_3|3][F][C][Branch1][C][F][Branch1]''
+  embeddings: False # This turns on the embeddings for the conditioning properties
+  cfg: True # This turns on the classifier-free guidance. ! If this is true, then embeddings must also be true !
+  cfg_prob: 0.2 # This is the probability of using the conditioning properties (0.1-0.2 is a good range usually)
+  guidance_scale: 1.0 # This is the scale of the classifier-free guidance used during sampling. 
+  force_unconditioned: False # This forces the model to ignore the conditioning properties.
+  
 
 training:
   ema: 0.9999
@@ -116,11 +122,12 @@ trainer:
   gradient_clip_val: 1.0 # Clip gradients to this value. Prevents exploding gradients
   precision: '32' # BF16 float precision is better. CHANGE FOR LINUX
   num_sanity_val_steps: 1 # Runs 1 validation steps before training
-  max_steps: 1_000_000 # Maximum number of training steps
+  max_steps: 10_000_000 # Maximum number of training steps
   log_every_n_steps: 45 # log metrics every 10 steps
   limit_train_batches: 1.0   # train on full dataset, can be used to toggle quick run
-  limit_val_batches: 0.5     # validate on full dataset, can be used to toggle quick run
-  check_val_every_n_epoch: 1 # validate every epoch
+  limit_val_batches: 1.0    # validate on full dataset, can be used to toggle quick run
+  val_check_interval: 0.25 # validate every epoch
+  #check_val_every_n_epoch: 1 # validate every epoch
 
 eval:
   checkpoint_path: ${cwd:}/checkpoints/12_hour_run_24_april.ckpt # Used to evaluate a checkpoint after training.

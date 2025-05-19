@@ -5,6 +5,6 @@ checkpoint_monitor:
   save_top_k: 1 # save k best models (determined by above metric)
   save_last: False # True = additionally always save model from last epoch
   dirpath: ${cwd:}/checkpoints
-  filename: best
+  filename: ${wandb.name}
   auto_insert_metric_name: False
   verbose: True
