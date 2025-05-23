@@ -2,8 +2,8 @@
 #SBATCH --time=0:30:00
 #SBATCH --partition=gpu
 #SBATCH --nodes=1
-#SBATCH --gpus-per-node=a100:2
-#SBATCH --cpus-per-task=4
+#SBATCH --gpus-per-node=a100:1
+#SBATCH --cpus-per-task=8
 #SBATCH --mem-per-cpu=10GB
 
 module purge
@@ -13,10 +13,13 @@ module load CUDA/12.1.1
 
 source /scratch/s3905845/venvs/thesis/bin/activate
 
+# ROOT DIRECTORY OF THE PROGRAM, this makes sure output is saved in the right place
+cd /scratch/s3905845/thesis_final_coding
+
 # (B) Print out which python just to check
 echo "venv, python is: $(which python)"
 
-srun python main.py \
+srun python /scratch/s3905845/thesis_final_coding/main.py \
     mode=train \
     model=small \
     row_limit=null \
@@ -31,7 +34,6 @@ srun python main.py \
     conditioning.embeddings=false \
     conditioning.cfg=false \
     conditioning.cfg_prob=0.2 \
-    conditioning.force_unconditioned=false \
     trainer.devices=4 \
     trainer.strategy=auto \
     trainer.accelerator=cuda \

@@ -14,7 +14,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 def _load_tokenizer(config):
-    logger.info("Tokenizer folder found. Loading...")
+    logger.info(f"Tokenizer folder found at {config.local_paths.tokenizer}. Loading...")
     try:
         return SelfiesTokenizer.from_pretrained(config.local_paths.tokenizer)
     except Exception as e:
@@ -52,7 +52,7 @@ def _sample_batch(model, config):
             return intermediate_samples[-1]
         else:
             samples = model.restore_model_and_sample(num_steps=config.sampling.steps)
-            return model.tokenizer.batch_decode(samples)
+            return model.tokenizer.batch_decode(samples, skip_special_tokens=False)
 
 
 def _write_temp_sample(temp_file, sample, sample_count):

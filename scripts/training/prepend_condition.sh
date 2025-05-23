@@ -1,10 +1,10 @@
 #!/bin/bash
-#SBATCH --time=12:00:00
+#SBATCH --time=3:00:00
 #SBATCH --partition=gpu
 #SBATCH --nodes=1
-#SBATCH --gpus-per-node=a100:2
-#SBATCH --cpus-per-task=4
-#SBATCH --mem-per-cpu=10GB
+#SBATCH --gpus-per-node=a100:1
+#SBATCH --cpus-per-task=8
+#SBATCH --mem-per-cpu=5GB
 
 module purge
 
@@ -13,10 +13,17 @@ module load CUDA/12.1.1
 
 source /scratch/s3905845/venvs/thesis/bin/activate
 
+# ROOT DIRECTORY OF THE PROGRAM, this makes sure output is saved in the right place
+cd /scratch/s3905845/thesis_final_coding
+
+export TMPDIR=/scratch/s3905845/tmp
+export WANDB_TEMP=$TMPDIR
+mkdir -p $TMPDIR
+
 # (B) Print out which python just to check
 echo "venv, python is: $(which python)"
 
-srun python main.py \
+srun python /scratch/s3905845/thesis_final_coding/main.py \
     mode=train \
     model=small \
     row_limit=null \
@@ -30,14 +37,15 @@ srun python main.py \
     conditioning.prepend=true \
     conditioning.embeddings=false \
     conditioning.cfg=false \
-    trainer.devices=4 \
+    conditioning.cfg_prob=0.2 \
+    trainer.devices=1 \
     trainer.strategy=auto \
     trainer.accelerator=cuda \
     trainer.precision='bf16-mixed' \
     trainer.log_every_n_steps=300 \
-    loader.global_batch_size=64 \
-    loader.num_workers=4 \
+    loader.global_batch_size=128 \
+    loader.num_workers=8 \
     wandb.job_type=training \
-    wandb.name=prepend
+    wandb.name=prepend_conditioning
     
 

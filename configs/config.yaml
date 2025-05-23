@@ -11,30 +11,35 @@ train_test_split:
   train: 0.8
   valid: 0.2
 
+hydra:
+  run:
+    dir: ${cwd:}/outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}
+
+# This could be changed to a different dataset later
+dataset_path: /scratch/s3905845/thesis_final_coding/data/kraken 
+
 local_paths:
-  tokenizer: data/kraken/tokenizer
-  train_data_encoding: data/kraken/training_data/train_data_encoding
-  original_data: data/kraken/training_data/descriptors_v3.csv
-  augmented_data: data/kraken/training_data/augmented_descriptors_v3.csv
-  pre_processed_data: data/kraken/training_data/preprocessed_data.parquet
-  sampled_data: data/kraken/sampled_data/generated_samples.json
-  temp_path: data/kraken/sampled_data/temp.tmp
-  metrics_dir: data/kraken/metric_plots
-  synthesize_dir: data/kraken/synthesized_molecules
-  selfies_alphabet: data/kraken/training_data/selfies_alphabet.txt
-  selfies_ape_vocab: data/kraken/tokenizer/selfies_ape_vocab.json
-  mean_std: data/kraken/training_data/mean_std.json
+  tokenizer: ${dataset_path}/tokenizer
+  train_data_encoding: ${dataset_path}/training_data/train_data_encoding
+  original_data: ${dataset_path}/training_data/descriptors_v3.csv
+  augmented_data: ${dataset_path}/training_data/augmented_descriptors_v3.csv
+  pre_processed_data: ${dataset_path}/training_data/preprocessed_data.parquet
+  sampled_data: ${dataset_path}/sampled_data/generated_samples.json
+  temp_path: ${dataset_path}/sampled_data/temp.tmp
+  metrics_dir: ${dataset_path}/metric_plots
+  synthesize_dir: ${dataset_path}/synthesized_molecules
+  selfies_alphabet: ${dataset_path}/training_data/selfies_alphabet.txt
+  selfies_ape_vocab: ${dataset_path}/tokenizer/selfies_ape_vocab.json
+  mean_std: ${dataset_path}/training_data/mean_std.json
 
 
 mode: train
-seed: 1
+seed: 3
 diffusion: absorbing_state
 backbone: dit  # dit / dimamba / ar
 parameterization: subs  # subs / d3pm / sedd
-time_conditioning: False
-T: 0  # 0 (continuous time) / 1000 
 row_limit: null
-debug: True
+debug: False
 
 preprocessing:
   normalize: True
@@ -46,7 +51,7 @@ preprocessing:
   permitted_selfies_length: 175 # CHANGE THIS TO THE ACTUAL PERCENTILE LATER
 
 tokenizer:
-  tokenizer_type: wordlevel # wordlevel
+  tokenizer_type: wordlevel # wordlevel / APE
   max_vocab_size: 200 # EXPERIMENT WITH THIS!!!! pairs for APE
   min_freq_for_merge: 500 #min frequency of pairs for APE
 
@@ -78,7 +83,7 @@ loader:
   # Note: batch_size and eval_batch_size are **per machine**
   batch_size: ${div_up:${.global_batch_size}, ${eval:${trainer.devices} * ${trainer.num_nodes}}}
   eval_batch_size: ${div_up:${.eval_global_batch_size}, ${eval:${trainer.devices} * ${trainer.num_nodes}}}
-  num_workers: 4
+  num_workers: 8 # this should be set to the number of CPU cores available
   pin_memory: True
 
 #conditioning possibilities: ['nbo_P', 'nmr_P', 'pyr_P', 'fmo_mu', 'vmin_r', 'volume', 'fmo_eta', 
@@ -94,9 +99,7 @@ conditioning:
   cfg: True # This turns on the classifier-free guidance. ! If this is true, then embeddings must also be true !
   cfg_prob: 0.2 # This is the probability of using the conditioning properties (0.1-0.2 is a good range usually)
   guidance_scale: 1.0 # This is the scale of the classifier-free guidance used during sampling. 
-  force_unconditioned: False # This forces the model to ignore the conditioning properties.
   
-
 training:
   ema: 0.9999
   antithetic_sampling: True
@@ -125,7 +128,7 @@ trainer:
   max_steps: 10_000_000 # Maximum number of training steps
   log_every_n_steps: 45 # log metrics every 10 steps
   limit_train_batches: 1.0   # train on full dataset, can be used to toggle quick run
-  limit_val_batches: 1.0    # validate on full dataset, can be used to toggle quick run
+  limit_val_batches: 0.25    # validate on full dataset, can be used to toggle quick run
   val_check_interval: 0.25 # validate every epoch
   #check_val_every_n_epoch: 1 # validate every epoch
 
@@ -145,4 +148,6 @@ sampling:
   semi_ar: False
   num_strides: 0
   stride_length: 0
+  time_conditioning: False # experiment with this during sampling
+  T: 0  # 0 (continuous time) / 1000 
 

@@ -375,37 +375,36 @@ class DIT(nn.Module, huggingface_hub.PyTorchModelHubMixin):
         x = self.vocab_embed(indices)
 
         time_cond_embedding = F.silu(self.sigma_map(sigma))
-
         final_cond_embedding = time_cond_embedding
 
-        if self.property_map is not None: 
-            # Training-time CFG
+        if self.property_map is not None:
             if self.training and self.config.conditioning.cfg and property_conditioning_vector is not None:
-                if torch.rand(1).item() < self.config.conditioning.cfg_prob:
-                    current_props_for_map = torch.zeros_like(property_conditioning_vector, device=x.device, dtype=torch.float)
-                else:
-                    current_props_for_map = property_conditioning_vector.to(x.device, dtype=torch.float)
-                
-                prop_cond_embedding = self.property_map(current_props_for_map)
-                final_cond_embedding = final_cond_embedding + prop_cond_embedding
+                batch_size = property_conditioning_vector.size(0)
+                kept_mask = torch.rand(batch_size, device=property_conditioning_vector.device) > self.config.conditioning.cfg_prob
 
-            # Sampling-time CFG
+                prop_cond_embedding = torch.zeros(batch_size, self.config.model.cond_dim, device=x.device)
+
+                if kept_mask.any():
+                    kept_props = property_conditioning_vector[kept_mask].to(device=x.device, dtype=torch.float)
+                    prop_cond_kept = self.property_map(kept_props)
+                    prop_cond_embedding[kept_mask] = prop_cond_kept
+
+                final_cond_embedding += prop_cond_embedding.unsqueeze(1)
+
             elif not self.training and property_conditioning_vector is not None:
                 if force_unconditional_pass:
-                    uncond_props_input = torch.zeros_like(property_conditioning_vector, device=x.device, dtype=torch.float)
-                    prop_cond_embedding = self.property_map(uncond_props_input)
-                    final_cond_embedding = final_cond_embedding + prop_cond_embedding
+                    prop_cond_embedding = torch.zeros_like(property_conditioning_vector, device=x.device, dtype=torch.float)
+                    prop_cond_embedding = self.property_map(prop_cond_embedding)
                 else:
                     prop_cond_embedding = self.property_map(property_conditioning_vector.to(x.device, dtype=torch.float))
-                    final_cond_embedding = final_cond_embedding + prop_cond_embedding
+                final_cond_embedding += prop_cond_embedding.unsqueeze(1)
 
         rotary_cos_sin = self.rotary_emb(x)
         with torch.amp.autocast(
             device_type=x.device.type,
             dtype=get_torch_dtype(self.config.trainer.precision),
         ):
-            for i in range(len(self.blocks)):
-                # c passed to blocks will now have the correct shape (B, cond_dim)
-                x = self.blocks[i](x, rotary_cos_sin, final_cond_embedding, seqlens=None)
+            for block in self.blocks:
+                x = block(x, rotary_cos_sin, final_cond_embedding, seqlens=None)
             x = self.output_layer(x, final_cond_embedding)
         return x
