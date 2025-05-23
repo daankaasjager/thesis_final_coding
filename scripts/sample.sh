@@ -32,6 +32,6 @@ srun python /scratch/s3905845/thesis_final_coding/main.py \
     trainer.precision='bf16-mixed' \
     loader.global_batch_size=16 \
     loader.num_workers=4 \
-    eval.checkpoint_path="/scratch/s3905845/thesis_final_coding/checkpoints/prepend_condition.ckpt" \
+    eval.checkpoint_path="/scratch/s3905845/thesis_final_coding/checkpoints/prepend_conditioning.ckpt" \
     wandb.job_type=sampling \
-    wandb.name=no_condition 
+    wandb.name=prepend_condition_sample

@@ -395,9 +395,9 @@ class Diffusion(L.LightningModule):
         move_probs = torch.rand(*x.shape, device=x.device)
         eligible_mask = torch.ones_like(x, dtype=torch.bool)
 
-        # prevent conditioning token masking if there are any (do + 1 to include BOS)
+        # the first token is always the <BOS> token, so we don't want to mask it hence, 1:n_props+1
         n_props = len(getattr(self.config.conditioning, "properties", []))
-        eligible_mask[:, 0:n_props] = False
+        eligible_mask[:, 1:n_props +1] = False
 
         """-- EOS masking code (don't want this because then it doesn't predict the EOS anymore for variable lengths---
         
