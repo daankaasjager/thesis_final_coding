@@ -1,0 +1,27 @@
+.venv/
+
+outputs/
+
+data/kraken/
+
+utils/__pycache__
+
+__pycache__
+
+app.log
+
+wandb/
+data/vocab_list/train_data_encoding.pt
+data/vocab_list/train_data_encoding.pt
+data/vocab_list/tokenizer/tokenizer.json
+
+checkpoints/
+
+slurm-*
+
+
+# Python cache files
+**/__pycache__/  # Matches ALL __pycache__ folders (any depth)
+*.py[cod]        # Covers .pyc, .pyo, .pyd
+
+.vscode/
