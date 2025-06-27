@@ -1,0 +1,5 @@
+name: cfg
+prepend: False # This turns on the prepending of the conditioning properties e.g., '[vbur_vbur_bin_3|3][F][C][Branch1][C][F][Branch1]''
+embeddings: False # This turns on the embeddings for the conditioning properties
+cfg: True # This turns on the classifier-free guidance. ! If this is true, then embeddings must also be true !
+cfg_prob: 0.2 # This is the probability of using the conditioning properties (0.1-0.2 is a good range usually)

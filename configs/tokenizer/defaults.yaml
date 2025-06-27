@@ -1,0 +1,2 @@
+tokenizer_min_freq: 500
+checkpointing.retrain_ape_vocab: true

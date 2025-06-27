@@ -1,0 +1,15 @@
+
+defaults:
+  - /model: tiny # This should be the path to your main config  
+
+name: tiny
+
+# --- Parameters specific to this experiment ---
+tokenizer:
+  tokenizer_type: wordlevel
+
+conditioning: "no"
+
+training:
+  max_steps: 100000
+

@@ -1,0 +1,6 @@
+tokenizer:
+  name: ape_80
+  tokenizer_type: ape
+  max_vocab_size: 80
+  min_freq_for_merge: ${tokenizer_min_freq}       # refers to global key
+

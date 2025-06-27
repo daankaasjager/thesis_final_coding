@@ -1,0 +1,25 @@
+
+# --- Base Paths (Only edit these if your environment changes) ---
+base_dir: /scratch/s3905845/thesis_final_coding
+data_root: ${paths.base_dir}/data/kraken
+outputs_dir: ${paths.base_dir}/outputs/${hydra:job.name}
+
+# --- Data & Preprocessing Paths ---
+original_data: ${paths.data_root}/training_data/descriptors_v3.csv
+mean_std: ${paths.data_root}/mapping/mean_std.json
+bin_edges: ${paths.data_root}/mapping/bin_edges.json
+selfies_alphabet: ${dataset_path}/training_data/selfies_alphabet.txt # Base learned SELFIES tokens (also present in APE)
+
+# --- Dynamically Generated Paths based on experiment config ---
+# The tokenizer path changes based on the selected tokenizer config.
+tokenizer: ${paths.data_root}/tokenizers/${tokenizer.tokenizer_type}
+# The preprocessed data path can be overridden by the conditioning type (e.g., for prepend).
+pre_processed_data: ${paths.data_root}/training_data/preprocessed_data.parquet
+train_data_encoding: ${paths.data_root}/training_data/train_encoding
+selfies_ape_vocab: ${dataset_path}/tokenizer/ # This is the APE vocabulary for SELFIES, changes for each APE experiment. Should this be hydra dir?
+
+# --- Output Paths ---
+metrics_dir: ${hydra:run.dir}/metrics
+temp_path: ${dataset_path}/sampled_data/temp.tmp
+sampled_data: ${hydra:run.dir}/sampled_data/
+synthesize_dir: ${hydra:run.dir}/synthesized_molecules

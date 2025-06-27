@@ -1,10 +1,23 @@
 defaults:
   - _self_
   - /callbacks: [checkpoint_every_n_steps, checkpoint_monitor, learning_rate_monitor]
-  - /data: kraken
   - /noise: loglinear # Model appeared invariant to noise schedule types in MDLM paper
-  - /model: small
   - /lr_scheduler: constant_warmup # cosine decay not implemented yet
+  - /data: kraken
+  - /model: small
+  - /tokenizer: wordlevel 
+  - /conditioning: "no"
+  - /paths: cluster
+  - /experiment: small
+  - override hydra/launcher: submitit_slurm
+
+mode: train
+seed: 8
+diffusion: absorbing_state
+backbone: dit  # dit only available now
+parameterization: subs  # subs / d3pm / sedd
+row_limit: null
+debug: False
 
 
 train_test_split:
@@ -13,33 +26,13 @@ train_test_split:
 
 hydra:
   run:
-    dir: ${cwd:}/outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}
+    dir: ${paths.outputs_dir}/${experiment.name}/${now:%Y-%m-%d}/${now:%H-%M-%S}
+  sweep:
+    dir: ${paths.outputs_dir}/${experiment.name}/multirun/${now:%Y-%m-%d_%H-%M-%S}
+    subdir: ${hydra.job.num}_${hydra.job.override_dirname}
 
 # This could be changed to a different dataset later
 dataset_path: /scratch/s3905845/thesis_final_coding/data/kraken 
-
-local_paths:
-  tokenizer: ${dataset_path}/tokenizer
-  train_data_encoding: ${dataset_path}/training_data/train_data_encoding
-  original_data: ${dataset_path}/training_data/descriptors_v3.csv
-  augmented_data: ${dataset_path}/training_data/augmented_descriptors_v3.csv
-  pre_processed_data: ${dataset_path}/training_data/preprocessed_data.parquet
-  sampled_data: ${dataset_path}/sampled_data/generated_samples.json
-  temp_path: ${dataset_path}/sampled_data/temp.tmp
-  metrics_dir: ${dataset_path}/metric_plots
-  synthesize_dir: ${dataset_path}/synthesized_molecules
-  selfies_alphabet: ${dataset_path}/training_data/selfies_alphabet.txt
-  selfies_ape_vocab: ${dataset_path}/tokenizer/selfies_ape_vocab.json
-  mean_std: ${dataset_path}/training_data/mean_std.json
-
-
-mode: train
-seed: 3
-diffusion: absorbing_state
-backbone: dit  # dit / dimamba / ar
-parameterization: subs  # subs / d3pm / sedd
-row_limit: null
-debug: False
 
 preprocessing:
   normalize: True
@@ -56,29 +49,25 @@ tokenizer:
   min_freq_for_merge: 500 #min frequency of pairs for APE
 
 checkpointing:
-  save_dir: ${cwd:}
+  save_dir: ${hydra:run.dir}/checkpoints
   resume_from_ckpt: False
-  resume_ckpt_path: ${cwd:}/checkpoints/best.ckpt
-  fresh_data: False
+  resume_ckpt_path: null # Should be set explicitly when resuming
+  fresh_data: False # If True, will load cached data from the preprocessed data file
   retrain_tokenizer: False
   retrain_ape_vocab: False
 
 wandb:
   project: SELFIES-diffusion
   notes: testing a selfies model
-  group: null # Groups related runs
-  job_type: training # Type of job (e.g., training, evaluation)
-  name: tokenizer_update # Name of the run
-  id: ${.name}_${seed} #Sets unique name and seed
-  tags:
-    - ${noise.type} # Sets metadata tags for filtering runs
-    - ${data.train}
-    - ${data.valid}
+  group: model_size_selection # Group runs by experiment name
+  name: ${model.name}-${tokenizer.tokenizer_type}-${conditioning.name} # A descriptive name
+  job_type: ${mode} # The type of job, e.g., train, test, etc.
+  id: ${.name}_${seed}_${now:%Y%m%d_%H%M%S} #Sets unique name and seed
 
 # This is important when working with multi-GPU training, to ensure that 
 # the batch size is divided evenly among all GPUs.
 loader:
-  global_batch_size: 16
+  global_batch_size: 128
   eval_global_batch_size: ${.global_batch_size}
   # Note: batch_size and eval_batch_size are **per machine**
   batch_size: ${div_up:${.global_batch_size}, ${eval:${trainer.devices} * ${trainer.num_nodes}}}
@@ -96,9 +85,9 @@ conditioning:
   properties: ['sa_score','vmin_r','vbur_vbur'] # This is the list of properties to condition on
   prepend: False # This turns on the prepending of the conditioning properties e.g., '[vbur_vbur_bin_3|3][F][C][Branch1][C][F][Branch1]''
   embeddings: False # This turns on the embeddings for the conditioning properties
-  cfg: True # This turns on the classifier-free guidance. ! If this is true, then embeddings must also be true !
+  cfg: False # This turns on the classifier-free guidance. ! If this is true, then embeddings must also be true !
   cfg_prob: 0.2 # This is the probability of using the conditioning properties (0.1-0.2 is a good range usually)
-  guidance_scale: 1.0 # This is the scale of the classifier-free guidance used during sampling. 
+
   
 training:
   ema: 0.9999
@@ -123,13 +112,13 @@ trainer:
   devices: ${device_count:}
   accumulate_grad_batches: ${div_up:${loader.global_batch_size}, ${eval:${trainer.devices} * ${loader.batch_size} * ${trainer.num_nodes}}}
   gradient_clip_val: 1.0 # Clip gradients to this value. Prevents exploding gradients
-  precision: '32' # BF16 float precision is better. CHANGE FOR LINUX
+  precision: 'bf16-mixed' # BF16 float precision is better. CHANGE FOR LINUX
   num_sanity_val_steps: 1 # Runs 1 validation steps before training
-  max_steps: 10_000_000 # Maximum number of training steps
-  log_every_n_steps: 45 # log metrics every 10 steps
+  max_steps: 100_000 # Maximum number of training steps
+  log_every_n_steps: 300 # log metrics every 10 steps
   limit_train_batches: 1.0   # train on full dataset, can be used to toggle quick run
   limit_val_batches: 0.25    # validate on full dataset, can be used to toggle quick run
-  val_check_interval: 0.25 # validate every epoch
+  val_check_interval: 0.25 # validate every % epoch
   #check_val_every_n_epoch: 1 # validate every epoch
 
 eval:
@@ -138,6 +127,7 @@ eval:
   generate_samples: True
   overwrite_original: False
   plot_dist: False
+  overlay: True # Overlay the generated samples on the original data distribution
 
 sampling:
   predictor: ddpm_cache  # analytic, ddpm, ddpm_cache
@@ -148,6 +138,8 @@ sampling:
   semi_ar: False
   num_strides: 0
   stride_length: 0
-  time_conditioning: False # experiment with this during sampling
+  time_conditioning: False # experiment with this during sampling. In the paper this had negligible results
   T: 0  # 0 (continuous time) / 1000 
+  target_properties: null
+  guidance_scale: 1.0 # This is the scale of the classifier-free guidance used during sampling. 
 

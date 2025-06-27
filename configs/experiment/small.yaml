@@ -1,0 +1,17 @@
+
+defaults:
+  - /model: small # This should be the path to your main config  
+
+name: small
+
+# --- Parameters specific to this experiment ---
+tokenizer:
+  tokenizer_type: wordlevel
+
+conditioning: "no"
+
+training:
+  max_steps: 100000
+
+  # The wandb.name is dynamically set in your main config.yaml and will resolve to
+  # something like "small-wordlevel-no" automatically.

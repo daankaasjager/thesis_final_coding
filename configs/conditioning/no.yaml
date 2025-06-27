@@ -1,0 +1,5 @@
+name: no
+prepend: False # This turns on the prepending of the conditioning properties e.g., '[vbur_vbur_bin_3|3][F][C][Branch1][C][F][Branch1]''
+embeddings: False # This turns on the embeddings for the conditioning properties
+cfg: False # This turns on the classifier-free guidance. ! If this is true, then embeddings must also be true !
+# add embed stuff

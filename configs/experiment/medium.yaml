@@ -1,0 +1,15 @@
+
+defaults:
+  - override /model: medium # This should be the path to your main config  
+
+name: medium
+
+# --- Parameters specific to this experiment ---
+tokenizer:
+  tokenizer_type: wordlevel
+
+conditioning: "no"
+
+training:
+  max_steps: 100000
+
