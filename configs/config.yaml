@@ -8,8 +8,10 @@ defaults:
   - /tokenizer: wordlevel 
   - /conditioning: "no"
   - /paths: cluster
-  - /experiment: small
   - override hydra/launcher: submitit_slurm
+
+experiment:
+  name: "model_size_small"
 
 mode: train
 seed: 8
@@ -53,14 +55,14 @@ checkpointing:
   resume_from_ckpt: False
   resume_ckpt_path: null # Should be set explicitly when resuming
   fresh_data: False # If True, will load cached data from the preprocessed data file
-  retrain_tokenizer: False
+  retrain_tokenizer: False # This will retokenize the dataset with the current tokenizer settings
   retrain_ape_vocab: False
 
 wandb:
   project: SELFIES-diffusion
   notes: testing a selfies model
   group: model_size_selection # Group runs by experiment name
-  name: ${model.name}-${tokenizer.tokenizer_type}-${conditioning.name} # A descriptive name
+  name: ${experiment.name} # A descriptive name
   job_type: ${mode} # The type of job, e.g., train, test, etc.
   id: ${.name}_${seed}_${now:%Y%m%d_%H%M%S} #Sets unique name and seed
 
@@ -81,12 +83,6 @@ loader:
 #'efgtens_yy_P', 'nbo_bd_e_max', 'nbo_lp_P_occ', 'qpoletens_yy', 'E_solv_elstat', 'nbo_bds_e_avg', 
 #'sterimol_burL', 'nbo_bd_occ_avg', 'sterimol_burB5', 'vbur_ovbur_min', 'vbur_qvbur_min', 
 #'nbo_bds_occ_max', 'vbur_ratio_vbur_vtot', 'mol_wt', 'sa_score']
-conditioning: 
-  properties: ['sa_score','vmin_r','vbur_vbur'] # This is the list of properties to condition on
-  prepend: False # This turns on the prepending of the conditioning properties e.g., '[vbur_vbur_bin_3|3][F][C][Branch1][C][F][Branch1]''
-  embeddings: False # This turns on the embeddings for the conditioning properties
-  cfg: False # This turns on the classifier-free guidance. ! If this is true, then embeddings must also be true !
-  cfg_prob: 0.2 # This is the probability of using the conditioning properties (0.1-0.2 is a good range usually)
 
   
 training:

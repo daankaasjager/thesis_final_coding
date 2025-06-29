@@ -1,3 +1,0 @@
-# default is no conditioning
-conditioning.properties: ['sa_score','vmin_r','vbur_vbur'] # This is the list of properties to condition on
-  

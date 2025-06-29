@@ -1,7 +1,7 @@
 
 defaults:
-  - /model: small # This should be the path to your main config  
-
+  -override /model: small # This should be the path to your main config  
+  -override conditioning:
 name: small
 
 # --- Parameters specific to this experiment ---

@@ -4,7 +4,7 @@
 #SBATCH --nodes=1
 #SBATCH --gpus-per-node=a100:2
 #SBATCH --cpus-per-task=8
-#SBATCH --mem-per-cpu=20GB
+#SBATCH --mem-per-cpu=7GB
 
 
 # --- Load Environment ---
