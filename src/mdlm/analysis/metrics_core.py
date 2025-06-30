@@ -20,7 +20,14 @@ def compute_token_stats(samples: List[str]) -> Tuple[Counter, List[int]]:
         tokens = TOKEN_PATTERN.findall(s)
         token_counts.update(tokens)
         lengths.append(len(tokens))
-    return token_counts, lengths
+
+    total_tokens = sum(token_counts.values())
+    if total_tokens == 0:
+        token_freqs = {tok: 0.0 for tok in token_counts}
+    else:
+        token_freqs = {tok: count / total_tokens * 100 for tok, count in token_counts.items()}
+
+    return token_freqs, lengths
 
 def clean_generated_data(sample: str, alphabet: List[str]) -> str:
     return "".join(

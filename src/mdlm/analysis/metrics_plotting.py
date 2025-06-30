@@ -16,11 +16,11 @@ plt.style.use(['science', 'no-latex'])
 class MetricPlotter:
     def __init__(self, config):
         self.config = config
-        self.metrics_dir = Path(config.paths.metrics_dir)
+        self.plot_and_metrics_dir = Path(config.paths.metrics_dir)
         self.global_metric_bins = {}
 
     def _save(self, filename: str):
-        path = self.metrics_dir / filename
+        path = self.plot_and_metrics_dir / filename
         os.makedirs(path.parent, exist_ok=True)
         plt.savefig(path, bbox_inches='tight')
         print(f"Saved plot to {path}")
@@ -36,44 +36,128 @@ class MetricPlotter:
             else:
                 self.global_metric_bins[metric] = np.linspace(0, 1, 50)
 
-    def plot_token_frequency(self, counts: Dict[str, Counter], top_n: int = 20):
-        plt.figure(figsize=(12, 6))
+    def plot_token_frequency(self, counts: Dict[str, Counter], reference_name: str, run_type: str, top_n: int = 20):
+        """
+        Plots token frequency as grouped bar plots for reference vs each generated dataset.
+        """
+        ref_counts = counts.get(reference_name)
+        if not ref_counts:
+            logger.warning(f"No reference token counts found for {reference_name}.")
+            return
+
+        # Global top N tokens across all datasets
         all_tokens_combined = Counter()
         for counter in counts.values():
             all_tokens_combined.update(counter)
         global_top_tokens = [item[0] for item in all_tokens_combined.most_common(top_n)]
-        
-        for name, counter in counts.items():
-            freqs = [counter.get(token, 0) for token in global_top_tokens]
-            ranks = range(1, len(freqs) + 1)
-            plt.plot(ranks, freqs, label=name, alpha=0.7, marker='o')
-            
-        plt.xlabel(f'Token Rank (among Global Top {top_n})')
-        plt.ylabel('Frequency')
-        plt.title(f"Token Frequency Comparison (Global Top {top_n} Tokens)")
-        plt.legend()
-        plt.grid(True)
-        self._save("token_frequency_overlay.png")
 
-    def plot_length_distribution(self, lengths: Dict[str, List[int]]):
-        plt.figure(figsize=(10, 5))
-        all_lengths = [l for lst in lengths.values() for l in lst]
-        if not all_lengths:
-            logger.warning("No length data to plot.")
+        model_keys = [k for k in counts.keys() if k != reference_name]
+        if not model_keys:
+            logger.warning("No generated datasets found for token frequency plotting.")
             return
-        
-        min_len, max_len = min(all_lengths), max(all_lengths)
-        bins = range(min_len, max_len + 2)
-        
+
+        for model_key in model_keys:
+            model_counts = counts[model_key]
+
+            ref_freqs = [ref_counts.get(tok, 0) for tok in global_top_tokens]
+            model_freqs = [model_counts.get(tok, 0) for tok in global_top_tokens]
+
+            x = np.arange(len(global_top_tokens))
+            width = 0.35
+
+            plt.figure(figsize=(12, 6))
+            plt.bar(x - width/2, ref_freqs, width, label=reference_name)
+            plt.bar(x + width/2, model_freqs, width, label=model_key)
+
+            plt.xticks(ticks=x, labels=global_top_tokens, rotation=90)
+            plt.ylabel('Frequency')
+            plt.title("Token Frequency (%)", fontsize=14)
+            plt.legend(title="Dataset")
+
+            plt.tight_layout()
+
+            filename_safe_model = model_key.replace(" ", "_").lower()
+            filename_safe_ref = reference_name.replace(" ", "_").lower()
+            self._save(f"token_frequency_{run_type}_{filename_safe_ref}_vs_{filename_safe_model}.png")
+
+
+    def plot_length_violin(self, lengths: Dict[str, List[int]], reference_name: str, run_type: str):
+        """
+        Plots sequence length distributions as side-by-side violin plots.
+        """
+        plt.figure(figsize=(12, 6))
+
+        data = []
+        labels = []
         for name, vals in lengths.items():
             if vals:
-                plt.hist(vals, bins=bins, alpha=0.5, label=name, density=True, align='left')
+                data.append(vals)
+                labels.append(name)
+
+        if not data:
+            logger.warning("No length data to plot.")
+            return
+
+        parts = plt.violinplot(data, showmeans=False, showextrema=True, showmedians=True)
         
-        plt.title("Length Distribution Comparison")
-        plt.xlabel('Length')
-        plt.ylabel('Density')
-        plt.legend()
-        self._save("length_distribution_overlay.png")
+        # Set colors
+        colors = plt.cm.get_cmap('tab10').colors
+        for i, pc in enumerate(parts['bodies']):
+            pc.set_facecolor(colors[i % len(colors)])
+            pc.set_alpha(0.7)
+            pc.set_edgecolor('black')
+            pc.set_linewidth(1)
+
+        plt.xticks(range(1, len(labels) + 1), labels, rotation=45, ha='right')
+        plt.ylabel("Sequence Length")
+        plt.title("Sequence Length Distribution", fontsize=14)
+
+        plt.tight_layout()
+        colors = plt.cm.get_cmap('tab10').colors
+        handles = [plt.Rectangle((0,0),1,1,color=colors[i % len(colors)],alpha=0.7) for i in range(len(labels))]
+        self._save(f"length_violin_{run_type}.png")
+
+    def plot_property_violin(self, metric: str, data: Dict[str, List[float]], reference_name: str, run_type: str):
+        """
+        Plots chemical property distributions as side-by-side violin plots.
+        """
+        reference_data = data.get(reference_name, [])
+        if not reference_data:
+            logger.warning(f"Skipping {metric}: missing reference data ({reference_name}).")
+            return
+
+        model_keys = [k for k in data.keys() if k != reference_name]
+        if not model_keys:
+            logger.warning(f"No generated models found for {metric}.")
+            return
+
+        for model_key in model_keys:
+            comparison_data = data[model_key]
+            if not comparison_data:
+                continue
+
+            fig, ax = plt.subplots(figsize=(6,6))
+
+            ax.set_title(metric.replace('_', ' ').title(), fontsize=14)
+
+            parts = ax.violinplot([reference_data, comparison_data],
+                                showmeans=False, showmedians=True, showextrema=True)
+
+            colors = plt.cm.get_cmap('tab10').colors
+            handles = [plt.Rectangle((0,0),1,1,color=colors[i % len(colors)],alpha=0.7) for i in range(2)]
+            ax.legend(handles, [reference_name, model_key], title="Dataset", loc="best")
+
+            ax.set_xticks([])
+            ax.set_ylabel(metric.replace('_', ' ').title())
+            ax.grid(True, axis='y', linestyle=':', alpha=0.6)
+
+            fig.tight_layout()
+
+
+
+            filename_safe_model = model_key.replace(" ", "_").lower()
+            filename_safe_ref = reference_name.replace(" ", "_").lower()
+            self._save(f"{metric}_{run_type}_{filename_safe_ref}_vs_{filename_safe_model}.png")
 
     def _draw_split_violin(self, ax, data1, data2, label1, label2, color1, color2, position):
         """Helper function to draw a split violin plot."""
@@ -98,87 +182,60 @@ class MetricPlotter:
         draw_half(data1, position, color1, is_left=True)
         draw_half(data2, position, color2, is_left=False)
 
-    def plot_baseline_violin(self, metric: str, data: Dict[str, List[float]]):
+    def plot_split_violin(self, metric: str, data: Dict[str, List[float]], reference_name: str, comparison_prefix: str, output_suffix: str):
         """
-        Generates split violin plots to compare Original Data vs. Unconditioned models.
-        This addresses RQ1: Can the model replicate the original data distribution? 
+        Generates split violin plots comparing reference data vs each comparison model.
+        
+        Args:
+            metric: The metric name (e.g. 'logp').
+            data: Dict mapping dataset/model names to lists of metric values.
+            reference_name: The name of the reference dataset (e.g. 'Original data' or 'Baseline model').
+            comparison_prefix: Only models with this prefix will be plotted (e.g. 'Tiny', 'Prepend conditioning').
+            output_suffix: Suffix to append in output filenames (e.g. 'prelim' or 'conditioning').
         """
-        original_data = data.get("Original data", [])
-        no_cond_wordlevel = data.get("No conditioning (WordLevel)", [])
-        no_cond_ape = data.get("No conditioning (APE)", [])
-
-        if not original_data or (not no_cond_wordlevel and not no_cond_ape):
-            logger.warning(f"Skipping baseline plot for {metric}: missing data.")
+        reference_data = data.get(reference_name, [])
+        if not reference_data:
+            logger.warning(f"Skipping split violin for {metric}: missing reference data ({reference_name}).")
             return
 
-        fig, ax = plt.subplots(1, 2, figsize=(10, 5), sharey=True)
-        fig.suptitle(f"{metric.replace('_', ' ').title()}: Baseline Generation Fidelity", fontsize=14)
+        model_keys = [k for k in data.keys() if k != reference_name and k.startswith(comparison_prefix)]
+        if not model_keys:
+            logger.warning(f"No comparison models found for {metric} with prefix {comparison_prefix}.")
+            return
 
-        colors = plt.cm.get_cmap('tab10').colors
-        
-        # Plot 1: Original vs WordLevel
-        ax[0].set_title("Original vs. WordLevel")
-        self._draw_split_violin(ax[0], original_data, no_cond_wordlevel, "Original", "WordLevel", colors[0], colors[1], position=1)
-        ax[0].set_xticks([1])
-        ax[0].set_xticklabels(["Original | WordLevel"])
-        ax[0].set_ylabel(metric.replace('_', ' ').title())
-
-        # Plot 2: Original vs APE
-        ax[1].set_title("Original vs. APE")
-        self._draw_split_violin(ax[1], original_data, no_cond_ape, "Original", "APE", colors[0], colors[2], position=1)
-        ax[1].set_xticks([1])
-        ax[1].set_xticklabels(["Original | APE"])
-        
-        for axis in ax:
-            axis.grid(True, axis='y', linestyle=':', alpha=0.6)
-
-        plt.tight_layout(rect=[0, 0, 1, 0.96])
-        self._save(f"{metric}_baseline_comparison.png")
-
-    def plot_conditioning_violin(self, metric: str, data: Dict[str, List[float]]):
-        """
-        Generates split violin plots to compare unconditioned vs. conditioned models.
-        This addresses RQ2: How effective is conditioning at steering generation? 
-        """
-        model_name_mapping = {
-            "Prepend conditioning": "Prepend",
-            "Embed conditioning": "Embed",
-            "CFG conditioning": "CFG"
-        }
-        no_cond_wordlevel = data.get("No conditioning (WordLevel)", [])
-        no_cond_ape = data.get("No conditioning (APE)", [])
-
-        for model_key, short_name in model_name_mapping.items():
-            cond_wordlevel_data = data.get(f"{model_key} (WordLevel)", [])
-            cond_ape_data = data.get(f"{model_key} (APE)", [])
-
-            if not cond_wordlevel_data and not cond_ape_data:
+        for model_key in model_keys:
+            comparison_data = data[model_key]
+            if not comparison_data:
+                logger.warning(f"No data for model {model_key}, skipping.")
                 continue
 
-            fig, ax = plt.subplots(1, 2, figsize=(10, 5), sharey=True)
-            fig.suptitle(f"{metric.replace('_', ' ').title()}: Effect of {short_name} Conditioning", fontsize=14)
+            fig, ax = plt.subplots(figsize=(6, 5))
             
+            # --- CHANGE 1: Use ax.set_title for better placement ---
+            ax.set_title(metric.replace('_', ' ').title(), fontsize=14, pad=15) # `pad` adds some space
+            ax.set_xticks([]) 
             colors = plt.cm.get_cmap('tab10').colors
 
-            # Plot 1: No Cond WordLevel vs Cond WordLevel
-            ax[0].set_title("WordLevel: No Cond vs. Conditioned")
-            self._draw_split_violin(ax[0], no_cond_wordlevel, cond_wordlevel_data, "No Cond", "Conditioned", colors[1], colors[3], position=1)
-            ax[0].set_xticks([1])
-            ax[0].set_xticklabels(["No Cond | Conditioned"])
-            ax[0].set_ylabel(metric.replace('_', ' ').title())
-            
-            # Plot 2: No Cond APE vs Cond APE
-            ax[1].set_title("APE: No Cond vs. Conditioned")
-            self._draw_split_violin(ax[1], no_cond_ape, cond_ape_data, "No Cond", "Conditioned", colors[2], colors[4], position=1)
-            ax[1].set_xticks([1])
-            ax[1].set_xticklabels(["No Cond | Conditioned"])
-            
-            for axis in ax:
-                axis.grid(True, axis='y', linestyle=':', alpha=0.6)
+            self._draw_split_violin(ax, reference_data, comparison_data,
+                                    reference_name, model_key,
+                                    colors[0], colors[1], position=1)
 
-            plt.tight_layout(rect=[0, 0, 1, 0.96])
-            self._save(f"{metric}_conditioning_effect_{short_name}.png")
+            # To avoid the x-tick label from becoming too crowded, let's use a more concise format.
+            ax.set_ylabel(metric.replace('_', ' ').title())
+            ax.grid(True, axis='y', linestyle=':', alpha=0.6)
+            
+            handles = [plt.Rectangle((0,0),1,1,color=colors[0],alpha=0.7),
+                       plt.Rectangle((0,0),1,1,color=colors[1],alpha=0.7)]
+            ax.legend(handles, [reference_name, model_key], title="Dataset")
 
+            # --- CHANGE 2: Simplify tight_layout call ---
+            plt.tight_layout() 
+            
+            filename_safe_model = model_key.replace(" ", "_").lower()
+            filename_safe_ref = reference_name.replace(" ", "_").lower()
+            self._save(f"{metric}_{output_suffix}_{filename_safe_ref}_vs_{filename_safe_model}.png")
+
+            
     def display_statistical_summary(self, aggregated_results: Dict[str, Dict[str, any]], fcd_scores: Dict[str, float]):
         """
         Generates and prints a summary table of key statistics for all metrics and models.
@@ -222,6 +279,6 @@ class MetricPlotter:
         formatters = {col: lambda x: f"{x:.3f}" if pd.notna(x) else "N/A" for col in ['Validity', 'Uniqueness', 'Novelty', 'FCD'] if col in summary_df.columns}
         print(summary_df.to_string(formatters=formatters))
 
-        summary_csv_path = self.metrics_dir / "statistical_summary.csv"
+        summary_csv_path = self.plot_and_metrics_dir / "statistical_summary.csv"
         summary_df.to_csv(summary_csv_path)
         print(f"\nStatistical summary saved to {summary_csv_path}")

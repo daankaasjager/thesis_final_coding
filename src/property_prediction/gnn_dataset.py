@@ -23,17 +23,17 @@ def _mol_to_graph(smiles: str, props: np.ndarray) -> Data | None:
     return data
 
 
+
 def prepare_graph_dataset(df: pd.DataFrame, prop_columns: list[str], normalize=True):
     """Converts a DataFrame with SMILES and property columns into PyG Data objects."""
     props = df[prop_columns].astype(np.float32)
 
     if normalize:
+        # Normalize properties
         mean = props.mean()
         std = props.std()
         normed_props = (props - mean) / std
-    else:
-        normed_props = props
-        mean, std = None, None
+        
 
     data_list = []
     for i, row in df.iterrows():

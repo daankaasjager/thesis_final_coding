@@ -1,6 +1,6 @@
 # Prepend Conditioning Experiments
 
-This README documents the setup and execution of prepend conditioning experiments for the Molecular Diffusion Language Model (MDLM) project.
+This README documents the setup and execution of prepend conditioning experiments for the Msc thesis of Daan Kaasjager, using various conditioning strategies for a Masked Diffusion Language Model (MDLM) to generate novel, valid, and unique molecules.
 
 ## 📚 Overview
 
@@ -105,11 +105,11 @@ paths.train_data_encoding="/scratch/s3905845/thesis_final_coding/data/kraken/tra
 
 8 tokens prepended
 ```bash
-scripts/run.sh model=small \ 
+scripts/run.sh model=small \
 tokenizer.tokenizer_type=wordlevel \
 experiment.name="prepend_8" \
 conditioning="prepend" \
-conditioning.properties=['sa_score', 'mol_wt', 'volume', 'vbur_vbur', 'vmin_r', 'sterimol_L', 'sterimol_B1', 'dipolemoment'] \
+conditioning.properties="['sa_score', 'mol_wt', 'volume', 'vbur_vbur', 'vmin_r', 'sterimol_L', 'sterimol_B1', 'dipolemoment']" \
 checkpointing.resume_from_ckpt=False \
 checkpointing.resume_ckpt_path="./checkpoints/small-wordlevel-False.ckpt" \
 paths.train_data_encoding="/scratch/s3905845/thesis_final_coding/data/kraken/training_data/prepend_8"
@@ -117,12 +117,101 @@ paths.train_data_encoding="/scratch/s3905845/thesis_final_coding/data/kraken/tra
 
 all properties prepended
 ```bash
-scripts/run.sh model=small \ 
+scripts/run.sh model=small \
 tokenizer.tokenizer_type=wordlevel \
-experiment.name="prepend_8" \
+experiment.name="prepend_all" \
 conditioning="prepend" \
-conditioning.properties=['nbo_P', 'nmr_P', 'pyr_P', 'fmo_mu', 'vmin_r', 'volume', 'fmo_eta',  'fukui_m', 'fukui_p', 'nuesp_P', 'somo_rc', 'nbo_P_rc', 'pyr_alpha', 'qpole_amp', 'vbur_vbur', 'Pint_P_min', 'sterimol_L', 'sterimol_B1', 'sterimol_B5', 'dipolemoment', 'efgtens_xx_P',  'efgtens_yy_P', 'nbo_bd_e_max', 'nbo_lp_P_occ', 'qpoletens_yy', 'E_solv_elstat', 'nbo_bds_e_avg', 'sterimol_burL', 'nbo_bd_occ_avg', 'sterimol_burB5', 'vbur_ovbur_min', 'vbur_qvbur_min', 'nbo_bds_occ_max', 'vbur_ratio_vbur_vtot', 'mol_wt', 'sa_score'] \
+conditioning.properties="['nbo_P', 'nmr_P', 'pyr_P', 'fmo_mu', 'vmin_r', 'volume', 'fmo_eta',  'fukui_m', 'fukui_p', 'nuesp_P', 'somo_rc', 'nbo_P_rc', 'pyr_alpha', 'qpole_amp', 'vbur_vbur', 'Pint_P_min', 'sterimol_L', 'sterimol_B1', 'sterimol_B5', 'dipolemoment', 'efgtens_xx_P',  'efgtens_yy_P', 'nbo_bd_e_max', 'nbo_lp_P_occ', 'qpoletens_yy', 'E_solv_elstat', 'nbo_bds_e_avg', 'sterimol_burL', 'nbo_bd_occ_avg', 'sterimol_burB5', 'vbur_ovbur_min', 'vbur_qvbur_min', 'nbo_bds_occ_max', 'vbur_ratio_vbur_vtot', 'mol_wt', 'sa_score']" \
 checkpointing.resume_from_ckpt=False \
-checkpointing.resume_ckpt_path="./checkpoints/small-wordlevel-False.ckpt"
+checkpointing.resume_ckpt_path="./checkpoints/small-wordlevel-False.ckpt" \
 paths.train_data_encoding="/scratch/s3905845/thesis_final_coding/data/kraken/training_data/prepend_all"
+```
+
+### RQ2: Embedding conditioning
+1 token embedding
+```bash
+scripts/run.sh model=small \
+tokenizer.tokenizer_type=wordlevel \
+experiment.name="embedding_1" \
+conditioning="embed" \
+conditioning.properties="['sa_score']" \
+checkpointing.resume_from_ckpt=False \
+checkpointing.retrain_tokenizer=False \
+checkpointing.resume_ckpt_path="./checkpoints/small-wordlevel-False.ckpt"
+```
+
+3 token embedding
+```bash
+scripts/run.sh model=small \
+tokenizer.tokenizer_type=wordlevel \
+experiment.name="embedding_3" \
+conditioning="embed" \
+conditioning.properties="['sa_score','mol_wt','volume']" \
+checkpointing.resume_from_ckpt=False \
+checkpointing.retrain_tokenizer=False \
+checkpointing.resume_ckpt_path="./checkpoints/small-wordlevel-False.ckpt"
+```
+
+8 token embedding
+```bash
+scripts/run.sh model=small \
+tokenizer.tokenizer_type=wordlevel \
+experiment.name="embedding_8" \
+conditioning="embed" \
+conditioning.properties="['sa_score', 'mol_wt', 'volume', 'vbur_vbur', 'vmin_r', 'sterimol_L', 'sterimol_B1', 'dipolemoment']" \
+checkpointing.resume_from_ckpt=False \
+checkpointing.retrain_tokenizer=False \
+checkpointing.resume_ckpt_path="./checkpoints/small-wordlevel-False.ckpt"
+```
+
+all token embedding
+```bash
+scripts/run.sh model=small \
+tokenizer.tokenizer_type=wordlevel \
+experiment.name="embedding_all" \
+conditioning="embed" \
+conditioning.properties="['nbo_P', 'nmr_P', 'pyr_P', 'fmo_mu', 'vmin_r', 'volume', 'fmo_eta',  'fukui_m', 'fukui_p', 'nuesp_P', 'somo_rc', 'nbo_P_rc', 'pyr_alpha', 'qpole_amp', 'vbur_vbur', 'Pint_P_min', 'sterimol_L', 'sterimol_B1', 'sterimol_B5', 'dipolemoment', 'efgtens_xx_P',  'efgtens_yy_P', 'nbo_bd_e_max', 'nbo_lp_P_occ', 'qpoletens_yy', 'E_solv_elstat', 'nbo_bds_e_avg', 'sterimol_burL', 'nbo_bd_occ_avg', 'sterimol_burB5', 'vbur_ovbur_min', 'vbur_qvbur_min', 'nbo_bds_occ_max', 'vbur_ratio_vbur_vtot', 'mol_wt', 'sa_score']" \
+checkpointing.resume_from_ckpt=False \
+checkpointing.retrain_tokenizer=False \
+checkpointing.resume_ckpt_path="./checkpoints/small-wordlevel-False.ckpt"
+```
+
+### RQ2: CFG conditioning
+0.1 masking probability of embedding vector
+```bash
+scripts/run.sh model=small \
+tokenizer.tokenizer_type=wordlevel \
+experiment.name="cfg_01" \
+conditioning="cfg" \
+conditioning.properties="['sa_score','mol_wt','volume']" \
+conditioning.cfg_prob=0.1 \
+checkpointing.resume_from_ckpt=False \
+checkpointing.retrain_tokenizer=False \
+checkpointing.resume_ckpt_path="./checkpoints/small-wordlevel-False.ckpt"
+```
+
+0.2 masking probability of embedding vector
+```bash
+scripts/run.sh model=small \
+tokenizer.tokenizer_type=wordlevel \
+experiment.name="cfg_02" \
+conditioning="cfg" \
+conditioning.properties="['sa_score','mol_wt','volume']" \
+conditioning.cfg_prob=0.2 \
+checkpointing.resume_from_ckpt=False \
+checkpointing.retrain_tokenizer=False \
+checkpointing.resume_ckpt_path="./checkpoints/small-wordlevel-False.ckpt"
+```
+
+0.3 masking probability of embedding vector
+```bash
+scripts/run.sh model=small \
+tokenizer.tokenizer_type=wordlevel \
+experiment.name="cfg_03" \
+conditioning="cfg" \
+conditioning.properties="['sa_score','mol_wt','volume']" \
+conditioning.cfg_prob=0.3 \
+checkpointing.resume_from_ckpt=False \
+checkpointing.retrain_tokenizer=False \
+checkpointing.resume_ckpt_path="./checkpoints/small-wordlevel-False.ckpt"
 ```

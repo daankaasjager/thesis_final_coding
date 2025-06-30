@@ -104,18 +104,15 @@ class MetricRunner:
         # Set global bins for chemical metrics before plotting
         self.plotter.set_global_bins(all_metric_values_for_global_bins)
 
-        # Second pass: Plotting using aggregated data and global bins
         for metric, data_dict in aggregated.items():
             if metric == 'token_frequency':
-                self.plotter.plot_token_frequency(data_dict)
+                self.plotter.plot_token_frequency(data_dict, reference_name="Original data", run_type="prelim")
             elif metric == 'length_distribution':
-                self.plotter.plot_length_distribution(data_dict)
+                self.plotter.plot_length_violin(data_dict, reference_name="Original data", run_type="prelim")
             elif metric in ['validity', 'uniqueness', 'novelty']:
-                # These are single values, can be displayed in a table
                 pass
-            else: 
-                self.plotter.plot_conditioning_violin(metric, data_dict)
-                self.plotter.plot_baseline_violin(metric, data_dict)
+            else:
+                self.plotter.plot_property_violin(metric, data_dict, reference_name="Original data", run_type="prelim")
         
         # Calculate FCD scores
         fcd_model = load_ref_model()

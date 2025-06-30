@@ -11,6 +11,7 @@ import lightning as L
 import torch
 from omegaconf import DictConfig, OmegaConf
 
+
 from src.mdlm.utils import configure_logging, resolve_paths
 
 configure_logging()
@@ -49,14 +50,15 @@ def run(config: DictConfig):
         from src.mdlm import generate_samples
         generate_samples(config)
     elif config.mode == "evaluate":
-        from src.mdlm import evaluate_samples
-        evaluate_samples(config)
+        from src.mdlm import evaluate_preliminaries, evaluate_conditioning
+        evaluate_preliminaries(config)
+        # evaluate_conditioning(config)
     elif config.mode == "train_property_prediction":
         from src.property_prediction import train_property_prediction
         train_property_prediction(config)
-    elif config.mode == "evaluate_properties":
-        from src.property_prediction import evaluate_properties
-        evaluate_properties(config)
+    elif config.mode == "predict_properties":
+        pass
+        
 
 if __name__ == "__main__":
     print("Program initiated")
