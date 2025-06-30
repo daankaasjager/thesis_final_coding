@@ -1,0 +1,25 @@
+node_dim: 9
+edge_dim: 3
+out_dim: 36
+atom_dim: 128
+num_embeds: 3
+emb_steps: 3
+conv:
+  dim: 64
+  aggr: mean
+mlp:
+  layers:
+  - 256
+  - 128
+  batch_norm: true
+  dropout: 0.25
+optimizer:
+  class_path: torch.optim.Adam
+  init_args:
+    lr: 0.0001
+lr_scheduler:
+  class_path: torch.optim.lr_scheduler.ReduceLROnPlateau
+  init_args:
+    mode: min
+    factor: 0.5
+    patience: 10

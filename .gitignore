@@ -25,3 +25,5 @@ slurm-*
 *.py[cod]        # Covers .pyc, .pyo, .pyd
 
 .vscode/
+
+lightning_logs/

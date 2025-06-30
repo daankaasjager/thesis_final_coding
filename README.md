@@ -197,21 +197,40 @@ checkpointing.retrain_tokenizer=False \
 
 
 ## Sampling
+You might notice that during sampling the script has changed. This is script is nearly identical except that it
+specifies different SLURM configurations, therefore it is completely optional, the program works fine with 
+the run.sh script
+
+tiny model
 ```bash
-scripts/run.sh model=small \
+scripts/sample.sh model=tiny \
 tokenizer.tokenizer_type=wordlevel \
-mode=evaluate \
-experiment.name="experiment_name" \
-conditioning="cfg" \
-conditioning.properties="['list','of','target','properties']" \
-conditioning.cfg_prob=0.3 \
-checkpointing.resume_from_ckpt=False \
-checkpointing.retrain_tokenizer=False \
+mode=generate \
+experiment.name="model_size_tiny" \
+paths.tokenizer="/scratch/s3905845/thesis_final_coding/data/kraken/tokenizers/prepend_3" #my own fuckup, delete later. This should be experiment.name
 ```
 
+small model
 ```bash
-scripts/run.sh model=small \
+scripts/sample.sh model=small \
 tokenizer.tokenizer_type=wordlevel \
 mode=generate \
 experiment.name="model_size_small" \
 paths.tokenizer="/scratch/s3905845/thesis_final_coding/data/kraken/tokenizers/prepend_3" #my own fuckup, delete later
+```
+
+ape 70/80/110. Only change the name variable
+```bash
+scripts/sample.sh model=small \
+tokenizer.tokenizer_type=wordlevel \
+mode=generate \
+experiment.name="ape_70"
+```
+
+prepend sampling
+```bash
+scripts/sample.sh model=small \
+tokenizer.tokenizer_type=wordlevel \
+mode=generate \
+experiment.name="prepend_1"
+```

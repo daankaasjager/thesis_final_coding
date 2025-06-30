@@ -54,10 +54,17 @@ def run(config: DictConfig):
         evaluate_preliminaries(config)
         # evaluate_conditioning(config)
     elif config.mode == "train_property_prediction":
-        from src.property_prediction import train_property_prediction
-        train_property_prediction(config)
+        from src.property_prediction.training import train_property_predictor
+        train_property_predictor(config.property_prediction)
     elif config.mode == "predict_properties":
-        pass
+        from src.property_prediction.inference import predict_properties
+        inference_config = config.property_prediction.inference
+        results_df = predict_properties(
+            smiles_list=inference_config.smiles_to_predict,
+            model_dir=inference_config.model_dir
+        )
+        print("\n--> Inference Results:")
+        print(results_df)
         
 
 if __name__ == "__main__":

@@ -1,0 +1,114 @@
+# train.py
+
+import pandas as pd
+import torch
+import lightning as L
+from lightning.pytorch.callbacks import ModelCheckpoint, EarlyStopping
+from omegaconf import DictConfig, OmegaConf
+import json
+from pathlib import Path
+import logging
+import os
+from lightning.pytorch.loggers import WandbLogger
+
+
+logger = logging.getLogger(__name__)
+
+from .gcnn import MolPropModule
+from .gnn_dataset import prepare_graph_dataset, split_and_load
+
+def _setup_cuda():
+    os.environ["TOKENIZERS_PARALLELISM"] = "false"
+    if (
+        torch.cuda.is_available() and torch.cuda.get_device_capability()[0] >= 7
+    ):  # Ampere GPUs (like A100) are capability 8.0+
+        try:
+            # Use 'high' for TF32 on Ampere/Hopper, 'medium' might be faster but uses BFloat16 too
+            torch.set_float32_matmul_precision("high")
+            logger.info(
+                "Success torch.set_float32_matmul_precision('high') for Tensor Core utilization."
+            )
+        except Exception as e:
+            logger.warning(f"Could not set float32 matmul precision: {e}")
+
+def setup_training_logging(config) -> tuple:
+    """Sets up wandb logging for training. Also checks for any checkpoints to resume from and implements callbacks"""
+    wandb_logger = None
+    if config.get("wandb", None) is not None:
+        wandb_logger = WandbLogger(config=OmegaConf.to_object(config), **config.wandb)
+
+    """ Defines Lighntning callbacks in YAML config file. 
+    Can be stuff like early_stopping, lr_monitor, model saving"""
+    callbacks = []
+    if "callbacks" in config:
+        for _, callback in config.callbacks.items():
+            callbacks.append(hydra.utils.instantiate(callback))
+    return wandb_logger, callbacks
+
+
+def train_property_predictor(prop_pred_config: DictConfig):
+    """
+    Trains the Lightning model for property prediction.
+
+    Args:
+        config: A DictConfig object containing all configuration parameters.
+    """
+    _setup_cuda()  # Ensure CUDA settings are configured
+    wandb_logger, callbacks = setup_training_logging(prop_pred_config.training)
+    # 1. Ensure the output directory exists
+    output_dir = Path(prop_pred_config.training.output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    
+    # 2. Load and prepare the dataset
+    logger.info("--> Loading and preparing dataset...")
+    df = pd.read_csv(prop_pred_config.data.path)
+    
+    # Assuming your CSV has a 'smiles' column and property columns.
+    # The `prepare_graph_dataset` function will normalize the properties.
+    logger.info(f"Dataset contains {len(df)} molecules. Normalizing properties...")
+    data_list, props_mean, props_std = prepare_graph_dataset(
+        df, 
+        prop_columns=prop_pred_config.data.prop_columns, 
+        normalize=True
+    )
+
+    # 4. Update the configuration with dataset-specific dimensions
+    # The model needs to know the input dimensions from the data itself.
+    if data_list:
+        prop_pred_config.model.node_dim = data_list[0].num_node_features
+        prop_pred_config.model.edge_dim = data_list[0].num_edge_features
+        prop_pred_config.model.out_dim = len(prop_pred_config.data.prop_columns)
+    else:
+        raise ValueError("Dataset is empty after processing. Check your SMILES data.")
+
+    # 5. Create DataLoaders
+    logger.info("--> Creating data loaders...")
+    train_loader, val_loader = split_and_load(
+        data_list,
+        batch_size=prop_pred_config.training.batch_size,
+        val_ratio=prop_pred_config.training.val_ratio,
+        num_workers=prop_pred_config.training.num_workers
+    )
+
+    # 6. Initialize the Lightning Module
+    logger.info("--> Initializing model...")
+    # The model config is passed directly to the LightningModule
+    model = MolPropModule(prop_pred_config.model)
+    model.configure_model() # Manually call to set up the model and log parameters
+
+
+    # 8. Initialize the Trainer and start training
+    trainer = L.Trainer(
+        max_epochs=prop_pred_config.training.max_epochs,
+        accelerator=prop_pred_config.training.accelerator,
+        devices=prop_pred_config.training.devices,
+        callbacks=callbacks,
+        logger=wandb_logger
+    )
+
+    print("--> Starting training...")
+    trainer.fit(model, train_loader, val_loader)
+    print("--> Training finished.")
+
+    # The `on_save_checkpoint` hook in your MolPropModule will handle saving 
+    # the model weights and config in a 'pytorch' subdirectory for easy loading.

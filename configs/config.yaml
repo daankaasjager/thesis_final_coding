@@ -8,6 +8,7 @@ defaults:
   - /tokenizer: wordlevel 
   - /conditioning: "no"
   - /paths: cluster
+  - /property_prediction: default
   - override hydra/launcher: submitit_slurm
 
 experiment:
@@ -126,7 +127,7 @@ sampling:
   predictor: ddpm_cache  # analytic, ddpm, ddpm_cache
   steps: 128
   noise_removal: True
-  num_sample_batches: 12  # Total samples: `loader.eval_batch_size` * num_sample_batches
+  num_sample_batches: 80  # Total samples: `loader.eval_batch_size` * num_sample_batches
   num_sample_log: 2
   semi_ar: False
   num_strides: 0
