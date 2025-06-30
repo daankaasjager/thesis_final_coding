@@ -88,29 +88,24 @@ def generate_samples(config):
     """
     Main function to generate samples, using robust I/O and Hydra path management.
     """
-    # --- 1. Determine Dynamic Paths using Hydra ---
-    output_dir = config.hydra.run.dir
-    samples_dir = os.path.join(output_dir, "synthesized_molecules")
+    # The experiment name should already be set in the config for sampled_data
+    samples_dir = config.paths.sampled_data
     os.makedirs(samples_dir, exist_ok=True)
     
     # The temporary file and final file now live inside the unique run directory
     temp_path = os.path.join(samples_dir, "generated_samples.json.tmp")
     final_output_path = os.path.join(samples_dir, "generated_samples.json")
     
-    logger.info(f"Run output directory: {output_dir}")
+    logger.info(f"Run output directory: {samples_dir}")
     logger.info(f"Temporary samples will be written to: {temp_path}")
     logger.info(f"Final samples will be saved as: {final_output_path}")
 
-    # --- 2. Load Model and Tokenizer ---
-    if config.mode == 'eval':
-        checkpoint_path = config.eval.checkpoint_path
-    else:
-        checkpoint_path = config.checkpointing.resume_ckpt_path
-
     tokenizer = _load_tokenizer(config)
-    model = _load_from_checkpoint(checkpoint_path, tokenizer, config)
+    model = _load_from_checkpoint(config.checkpointing.resume_ckpt_path, tokenizer, config)
     
-    # ... (Your EMA logic)
+    if config.eval.disable_ema:
+        logger.info("Disabling EMA.")
+        model.ema = None
 
     # --- 3. Generate Samples using Your Robust I/O Method ---
     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")

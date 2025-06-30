@@ -14663,3 +14663,272 @@ Traceback (most recent call last):
 KeyboardInterrupt
 2025-06-30 13:11:11,552 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
 2025-06-30 13:11:11,552 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-06-30 15:17:08,216 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-06-30 15:17:08,219 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-06-30 15:40:01,888 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-06-30 15:40:01,889 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+Traceback (most recent call last):
+  File "/scratch/s3905845/thesis_final_coding/main.py", line 68, in <module>
+    run()
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/main.py", line 94, in decorated_main
+    _run_hydra(
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/utils.py", line 394, in _run_hydra
+    _run_app(
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/utils.py", line 457, in _run_app
+    run_and_report(
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/utils.py", line 220, in run_and_report
+    return func()
+           ^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/utils.py", line 458, in <lambda>
+    lambda: hydra.run(
+            ^^^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/hydra.py", line 119, in run
+    ret = run_job(
+          ^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/core/utils.py", line 186, in run_job
+    ret.return_value = task_function(task_cfg)
+                       ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/thesis_final_coding/main.py", line 54, in run
+    evaluate_preliminaries(config)
+  File "/scratch/s3905845/thesis_final_coding/src/mdlm/evaluating.py", line 81, in evaluate_preliminaries
+    evaluate_by_comparison(config, sample_sources, reference_name="Original data", run_type="prelim")
+  File "/scratch/s3905845/thesis_final_coding/src/mdlm/evaluating.py", line 55, in evaluate_by_comparison
+    aggregated_results, fcd_scores = runner.run_multi(processed_samples, metrics)
+                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/thesis_final_coding/src/mdlm/analysis/metrics_runner.py", line 94, in run_multi
+    dataset_results, canonical_smiles_list = self._process_dataset(samples, name, metrics)
+                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/thesis_final_coding/src/mdlm/analysis/metrics_runner.py", line 36, in _process_dataset
+    mols = get_valid_molecules(samples, self.config)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/thesis_final_coding/src/mdlm/analysis/metrics_core.py", line 51, in get_valid_molecules
+    mol = Chem.MolFromSmiles(smiles)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyboardInterrupt
+2025-06-30 15:40:26,952 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-06-30 15:40:26,952 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-06-30 15:46:35,309 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-06-30 15:46:35,309 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-06-30 15:47:13,992 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-06-30 15:47:13,993 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-06-30 15:51:59,666 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-06-30 15:51:59,666 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-06-30 15:54:42,795 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-06-30 15:54:42,796 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-06-30 16:09:35,242 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-06-30 16:09:35,243 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-06-30 16:10:27,140 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-06-30 16:10:27,141 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-06-30 16:10:53,391 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-06-30 16:10:53,392 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-06-30 16:37:56,515 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-06-30 16:37:56,516 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-06-30 16:40:46,161 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-06-30 16:40:46,161 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+Traceback (most recent call last):
+  File "/scratch/s3905845/thesis_final_coding/main.py", line 68, in <module>
+    run()
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/main.py", line 94, in decorated_main
+    _run_hydra(
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/utils.py", line 394, in _run_hydra
+    _run_app(
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/utils.py", line 457, in _run_app
+    run_and_report(
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/utils.py", line 220, in run_and_report
+    return func()
+           ^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/utils.py", line 458, in <lambda>
+    lambda: hydra.run(
+            ^^^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/hydra.py", line 119, in run
+    ret = run_job(
+          ^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/core/utils.py", line 186, in run_job
+    ret.return_value = task_function(task_cfg)
+                       ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/thesis_final_coding/main.py", line 48, in run
+    train(config)
+  File "/scratch/s3905845/thesis_final_coding/src/mdlm/training.py", line 62, in train
+    tokenized_data = tokenize_selfies_vocab(config, tokenizer, data)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/thesis_final_coding/src/mdlm/tokenizing/tokenizer_runner.py", line 160, in tokenize_selfies_vocab
+    tokenized_chunk = tokenizer(
+                      ^^^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/transformers/tokenization_utils_base.py", line 2877, in __call__
+    encodings = self._call_one(text=text, text_pair=text_pair, **all_kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/transformers/tokenization_utils_base.py", line 2965, in _call_one
+    return self.batch_encode_plus(
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/transformers/tokenization_utils_base.py", line 3167, in batch_encode_plus
+    return self._batch_encode_plus(
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/transformers/tokenization_utils_fast.py", line 539, in _batch_encode_plus
+    encodings = self._tokenizer.encode_batch(
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyboardInterrupt
+2025-06-30 16:43:04,424 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-06-30 16:43:04,424 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+Traceback (most recent call last):
+  File "/scratch/s3905845/thesis_final_coding/main.py", line 68, in <module>
+    run()
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/main.py", line 94, in decorated_main
+    _run_hydra(
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/utils.py", line 394, in _run_hydra
+    _run_app(
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/utils.py", line 457, in _run_app
+    run_and_report(
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/utils.py", line 220, in run_and_report
+    return func()
+           ^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/utils.py", line 458, in <lambda>
+    lambda: hydra.run(
+            ^^^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/hydra.py", line 119, in run
+    ret = run_job(
+          ^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/core/utils.py", line 186, in run_job
+    ret.return_value = task_function(task_cfg)
+                       ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/thesis_final_coding/main.py", line 48, in run
+    train(config)
+  File "/scratch/s3905845/thesis_final_coding/src/mdlm/training.py", line 62, in train
+    tokenized_data = tokenize_selfies_vocab(config, tokenizer, data)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/thesis_final_coding/src/mdlm/tokenizing/tokenizer_runner.py", line 160, in tokenize_selfies_vocab
+    tokenized_chunk = tokenizer(
+                      ^^^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/transformers/tokenization_utils_base.py", line 2877, in __call__
+    encodings = self._call_one(text=text, text_pair=text_pair, **all_kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/transformers/tokenization_utils_base.py", line 2965, in _call_one
+    return self.batch_encode_plus(
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/transformers/tokenization_utils_base.py", line 3167, in batch_encode_plus
+    return self._batch_encode_plus(
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/transformers/tokenization_utils_fast.py", line 551, in _batch_encode_plus
+    tokens_and_encodings = [
+                           ^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/transformers/tokenization_utils_fast.py", line 552, in <listcomp>
+    self._convert_encoding(
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/transformers/tokenization_utils_fast.py", line 295, in _convert_encoding
+    def _convert_encoding(
+    
+KeyboardInterrupt
+2025-06-30 16:44:04,607 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-06-30 16:44:04,607 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-06-30 17:02:23,698 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-06-30 17:02:23,699 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-06-30 17:02:23,700 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-06-30 17:02:23,722 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-06-30 19:02:13,817 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-06-30 19:02:13,820 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+Traceback (most recent call last):
+  File "/scratch/s3905845/thesis_final_coding/main.py", line 68, in <module>
+    run()
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/main.py", line 94, in decorated_main
+    _run_hydra(
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/utils.py", line 394, in _run_hydra
+    _run_app(
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/utils.py", line 457, in _run_app
+    run_and_report(
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/utils.py", line 220, in run_and_report
+    return func()
+           ^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/utils.py", line 458, in <lambda>
+    lambda: hydra.run(
+            ^^^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/hydra.py", line 119, in run
+    ret = run_job(
+          ^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/core/utils.py", line 186, in run_job
+    ret.return_value = task_function(task_cfg)
+                       ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/thesis_final_coding/main.py", line 48, in run
+    train(config)
+  File "/scratch/s3905845/thesis_final_coding/src/mdlm/training.py", line 62, in train
+    tokenized_data = tokenize_selfies_vocab(config, tokenizer, data)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/thesis_final_coding/src/mdlm/tokenizing/tokenizer_runner.py", line 160, in tokenize_selfies_vocab
+    tokenized_chunk = tokenizer(
+                      ^^^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/transformers/tokenization_utils_base.py", line 2877, in __call__
+    encodings = self._call_one(text=text, text_pair=text_pair, **all_kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/transformers/tokenization_utils_base.py", line 2965, in _call_one
+    return self.batch_encode_plus(
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/transformers/tokenization_utils_base.py", line 3167, in batch_encode_plus
+    return self._batch_encode_plus(
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/transformers/tokenization_utils_fast.py", line 551, in _batch_encode_plus
+    tokens_and_encodings = [
+                           ^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/transformers/tokenization_utils_fast.py", line 552, in <listcomp>
+    self._convert_encoding(
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/transformers/tokenization_utils_fast.py", line 325, in _convert_encoding
+    encoding_dict = defaultdict(list)
+                    ^^^^^^^^^^^^^^^^^
+KeyboardInterrupt
+2025-06-30 19:12:11,793 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-06-30 19:12:11,793 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-06-30 19:14:08,081 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-06-30 19:14:08,081 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-06-30 19:17:54,455 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-06-30 19:17:54,455 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-06-30 19:18:44,172 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-06-30 19:18:44,172 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-06-30 19:19:18,875 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-06-30 19:19:18,876 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-06-30 19:24:01,884 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-06-30 19:24:01,885 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-06-30 19:26:57,264 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-06-30 19:26:57,264 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+Traceback (most recent call last):
+  File "/scratch/s3905845/thesis_final_coding/main.py", line 68, in <module>
+    run()
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/main.py", line 94, in decorated_main
+    _run_hydra(
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/utils.py", line 394, in _run_hydra
+    _run_app(
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/utils.py", line 457, in _run_app
+    run_and_report(
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/utils.py", line 220, in run_and_report
+    return func()
+           ^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/utils.py", line 458, in <lambda>
+    lambda: hydra.run(
+            ^^^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/hydra.py", line 119, in run
+    ret = run_job(
+          ^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/core/utils.py", line 186, in run_job
+    ret.return_value = task_function(task_cfg)
+                       ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/thesis_final_coding/main.py", line 51, in run
+    generate_samples(config)
+  File "/scratch/s3905845/thesis_final_coding/src/mdlm/generating.py", line 124, in generate_samples
+    batch_samples = _sample_batch(model, config)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/thesis_final_coding/src/mdlm/generating.py", line 51, in _sample_batch
+    samples = model.restore_model_and_sample(num_steps=config.sampling.steps)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/thesis_final_coding/src/mdlm/diffusion.py", line 708, in restore_model_and_sample
+    if self.ema:
+              ^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 116, in decorate_context
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/thesis_final_coding/src/mdlm/diffusion.py", line 677, in _sample
+    x, t, dt, p_x0=p_x0_cache, target_properties=target_properties_tensor,
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/thesis_final_coding/src/mdlm/diffusion.py", line 454, in _ddpm_caching_update
+    if current_guidance_scale == 0.0 or not self.config.conditioning.cfg:
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/omegaconf/dictconfig.py", line 341, in __getattr__
+    def __getattr__(self, key: str) -> Any:
+    
+KeyboardInterrupt
+2025-06-30 19:28:11,604 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-06-30 19:28:11,604 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main

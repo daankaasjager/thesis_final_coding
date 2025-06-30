@@ -8,20 +8,21 @@ outputs_dir: ${paths.base_dir}/outputs/${hydra:job.name}
 original_data: ${paths.data_root}/training_data/descriptors_v3.csv
 mean_std: ${paths.data_root}/mapping/mean_std.json
 bin_edges: ${paths.data_root}/mapping/bin_edges.json
-selfies_alphabet: ${dataset_path}/training_data/selfies_alphabet.txt # Base learned SELFIES tokens (also present in APE)
+selfies_alphabet: ${paths.data_root}/training_data/selfies_alphabet.txt # Base learned SELFIES tokens (also present in APE)
 
 # --- Dynamically Generated Paths based on experiment config ---
 # The tokenizer path changes based on the selected tokenizer config.
-tokenizer: ${paths.data_root}/tokenizers/${tokenizer.tokenizer_type}
+tokenizer: ${paths.data_root}/tokenizers/${experiment.name}
+
 # The preprocessed data path can be overridden by the conditioning type (e.g., for prepend).
 pre_processed_data: ${paths.data_root}/training_data/preprocessed_data.parquet
-train_data_encoding: ${paths.data_root}/training_data/train_encoding
-selfies_ape_vocab: ${dataset_path}/tokenizer/ # This is the APE vocabulary for SELFIES, changes for each APE experiment. Should this be hydra dir?
+train_data_encoding: ${paths.data_root}/training_data/${experiment.name}
+selfies_ape_vocab: ${paths.data_root}/tokenizer/ # This is the APE vocabulary for SELFIES, changes for each APE experiment. Should this be hydra dir?
 
-# --- Output Paths ---
+# --- Output Paths For plots and molecules---
 metrics_dir: ${paths.data_root}/metric_plots/
 temp_path: ${paths.data_root}/sampled_data/temp.tmp
-sampled_data: ${paths.data_root}/sampled_data/
+sampled_data: ${paths.data_root}/sampled_data/${experiment.name}/
 synthesize_dir: ${paths.data_root}/synthesized_molecules
 
 

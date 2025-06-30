@@ -661,7 +661,7 @@ class Diffusion(L.LightningModule):
         elif target_properties is not None \
             and (self.config.conditioning.embeddings or self.config.conditioning.cfg): # conditioning on properties with cfg or embeddings
             target_properties_tensor = torch.tensor(list(target_properties.values())).unsqueeze(0).expand(batch_size, -1).to(self.device, dtype=self.dtype) #-1 means keep the same number of columns as target_properties
-        x = self._sample_prior(batch_size_per_gpu, self.sample_output_length, target_properties).to(
+        x = self._sample_prior(batch_size_per_gpu, self.sample_output_length, target_properties=target_properties).to(
             self.device
         )
         timesteps = torch.linspace(1, eps, num_steps + 1, device=self.device)
@@ -723,7 +723,7 @@ class Diffusion(L.LightningModule):
         target = None
         for _ in range(num_strides + 1):
             p_x0_cache = None
-            x = self._sample_prior(n_samples, self.sample_output_length, target_properties).to(self.device)
+            x = self._sample_prior(n_samples, self.sample_output_length, target_properties=target_properties).to(self.device)
             if target is not None:
                 x[:, :-stride_length] = target
             for i in range(num_steps + 1):

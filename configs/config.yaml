@@ -33,9 +33,6 @@ hydra:
     dir: ${paths.outputs_dir}/${experiment.name}/multirun/${now:%Y-%m-%d_%H-%M-%S}
     subdir: ${hydra.job.num}_${hydra.job.override_dirname}
 
-# This could be changed to a different dataset later
-dataset_path: /scratch/s3905845/thesis_final_coding/data/kraken 
-
 preprocessing:
   normalize: True
   augment: True
@@ -51,9 +48,9 @@ tokenizer:
   min_freq_for_merge: 500 #min frequency of pairs for APE
 
 checkpointing:
-  save_dir: ${hydra:run.dir}/checkpoints
+  save_dir: ${paths.base_dir}/checkpoints
   resume_from_ckpt: False
-  resume_ckpt_path: null # Should be set explicitly when resuming
+  resume_ckpt_path: ${paths.base_dir}/checkpoints/${experiment.name}.ckpt # Assumes the experiment name is the checkpoint name
   fresh_data: False # If True, will load cached data from the preprocessed data file
   retrain_tokenizer: False # This will retokenize the dataset with the current tokenizer settings
   retrain_ape_vocab: False
