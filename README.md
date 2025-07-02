@@ -238,6 +238,10 @@ experiment.name="prepend_3" \
 sampling.target_properties="{"sa_score": 5, "mol_wt":300, "volume" : 2}"
 ```
 
+## Evaluation
+```bash
+./scripts/run.sh mode=evaluate
+```
 
 # Property prediction
 ## training

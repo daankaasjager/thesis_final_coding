@@ -55,6 +55,26 @@ def load_generated_samples(path: str) -> list[str]:
         logger.error(f"Failed to load generated samples from {path}: {e}")
         return []
 
+def load_generated_json(path: str) -> dict:
+    """Loads the full generated JSON (metadata + samples)."""
+    with open(path, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+def save_samples_with_metadata(original_json: dict, new_samples: list[str], save_path: str):
+    """
+    Saves samples together with the original metadata under a new path.
+    """
+    # Update the samples field with the new samples
+    original_json["samples"] = new_samples
+
+    # Optionally, update timestamp or add processing information
+    import datetime
+    original_json["processed_timestamp"] = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+
+    with open(save_path, "w", encoding="utf-8") as f:
+        json.dump(original_json, f, indent=4)
+
+
 
 def load_normalization_stats(path: str) -> tuple[list[str], pd.Series, pd.Series] | tuple[None, None, None]:
     """Loads normalization statistics from a JSON file."""
@@ -134,7 +154,9 @@ def predict_properties(config):
 
     # 2. Load and Trim SELFIES
     selfies_path = config.inference.sampled_selfies_file
-    selfies_samples = load_generated_samples(selfies_path)
+    original_json = load_generated_json(selfies_path)
+    selfies_samples = original_json.get("samples", [])
+
     if not selfies_samples:
         logger.warning("No SELFIES samples found to process.")
         return
@@ -187,6 +209,5 @@ def predict_properties(config):
     output_path = Path(config.inference.output_path)
     output_path = output_path / f"{config.experiment.name}_predictions.json"
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    with open(output_path, 'w') as f:
-        json.dump(results, f, indent=4)
+    save_samples_with_metadata(original_json, cleaned_selfies_list, save_path=output_path)
     logger.info(f"--> Predictions for {len(results)} molecules saved to {output_path}")

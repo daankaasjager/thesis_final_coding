@@ -4,6 +4,8 @@ import logging
 from .analysis import bos_eos_analysis, MetricRunner
 from .preprocessing import read_csv
 from .analysis import MetricRunner
+from src.property_prediction.inference import predict_properties
+
 
 
 logger = logging.getLogger(__name__)
@@ -41,6 +43,9 @@ def evaluate_by_comparison(config, sample_sources: dict, reference_name: str, ru
     # Remove empty datasets
     sample_sources = {k: v for k, v in sample_sources.items() if v}
     
+    # something here to predict the properties of the samples?
+    predict_properties(config.property_prediction)
+
     # MIGHT CHANGE THIS LATER BECAUSE IT IS ALREADY DONE IN THE PROPERTY PREDICTION
     processed_samples = {}
     for name, samples in sample_sources.items():
@@ -71,12 +76,12 @@ def evaluate_preliminaries(config):
     Evaluates preliminary experiments: Original vs all models.
     """
     sample_sources = {
-        "Original data": load_original_samples(config.paths.original_data, 100),
-        "Tiny WordLevel": load_generated_samples(config.paths.test_sample),
-        "Small WordLevel": load_generated_samples(config.paths.test_sample),
-        "Small APE 70": load_generated_samples(config.paths.test_sample),
-        "Small APE 80": load_generated_samples(config.paths.test_sample),
-        "Small APE 110": load_generated_samples(config.paths.test_sample)
+        "Original data": load_original_samples(config.paths.original_data, 10000),
+        "Tiny WordLevel": load_generated_samples(config.paths.tiny_wordlevel),
+        "Small WordLevel": load_generated_samples(config.paths.small_wordlevel),
+        "Small APE 70": load_generated_samples(config.paths.ape_70),
+        "Small APE 80": load_generated_samples(config.paths.ape_80),
+        "Small APE 110": load_generated_samples(config.paths.ape_110)
     }
 
     evaluate_by_comparison(config, sample_sources, reference_name="Original data", run_type="prelim")
