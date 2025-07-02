@@ -42,23 +42,22 @@ def evaluate_by_comparison(config, sample_sources: dict, reference_name: str, ru
 
     # Remove empty datasets
     sample_sources = {k: v for k, v in sample_sources.items() if v}
-    
-    # something here to predict the properties of the samples?
-    predict_properties(config.property_prediction)
-
-    # MIGHT CHANGE THIS LATER BECAUSE IT IS ALREADY DONE IN THE PROPERTY PREDICTION
-    processed_samples = {}
-    for name, samples in sample_sources.items():
-        if name == reference_name:
-            processed_samples[name] = samples
-        else:
-            processed_samples[name] = bos_eos_analysis(samples, name=name, output_path=config.paths.metrics_dir)
 
     metrics = ["validity", "uniqueness", "novelty", "token_frequency", "length_distribution",
                "sascore", "num_rings", "tetrahedral_carbons", "logp", "molweight", "tpsa"]
 
+    properties = ['nbo_P', 'nmr_P', 'pyr_P', 'fmo_mu', 'vmin_r', 'volume', 
+                'fmo_eta',  'fukui_m', 'fukui_p', 'nuesp_P', 'somo_rc', 'nbo_P_rc',
+                'pyr_alpha', 'qpole_amp', 'vbur_vbur', 'Pint_P_min', 'sterimol_L',
+                'sterimol_B1', 'sterimol_B5', 'dipolemoment', 'efgtens_xx_P',  
+                'efgtens_yy_P', 'nbo_bd_e_max', 'nbo_lp_P_occ', 'qpoletens_yy', 
+                'E_solv_elstat', 'nbo_bds_e_avg', 'sterimol_burL', 'nbo_bd_occ_avg', 
+                'sterimol_burB5', 'vbur_ovbur_min', 'vbur_qvbur_min', 'nbo_bds_occ_max',
+                 'vbur_ratio_vbur_vtot', 'mol_wt', 'sa_score']
+
     runner = MetricRunner(config)
-    aggregated_results, fcd_scores = runner.run_multi(processed_samples, metrics)
+    # this has been changed, the runner now needs to handle the loading of samples and properties differently
+    aggregated_results, fcd_scores = runner.run_multi(sample_sources, metrics, properties)
 
     # Generate split violin plots per metric
     for metric, data_dict in aggregated_results.items():

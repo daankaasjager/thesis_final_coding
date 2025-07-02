@@ -44,17 +44,6 @@ def load_selfies_alphabet(path: str) -> Set[str]:
         logger.error(f"Failed to load or parse alphabet from {path}: {e}")
         raise
 
-
-def load_generated_samples(path: str) -> list[str]:
-    """Loads generated SELFIES samples from a JSON file."""
-    try:
-        with open(path, "r", encoding="utf-8") as f:
-            data = json.load(f)
-            return data.get("samples", [])
-    except Exception as e:
-        logger.error(f"Failed to load generated samples from {path}: {e}")
-        return []
-
 def load_generated_json(path: str) -> dict:
     """Loads the full generated JSON (metadata + samples)."""
     with open(path, "r", encoding="utf-8") as f:
