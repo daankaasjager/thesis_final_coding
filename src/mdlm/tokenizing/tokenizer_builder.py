@@ -127,6 +127,8 @@ def get_tokenizer(config, data=None):
             and os.listdir(config.paths.tokenizer)
             and not config.checkpointing.retrain_tokenizer
         )
+
+        logger.info(f"Should load tokenizer: {should_load}")
         if should_load:
             return _load_tokenizer(config)
         else:

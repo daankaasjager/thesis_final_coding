@@ -58,13 +58,7 @@ def run(config: DictConfig):
         train_property_predictor(config.property_prediction)
     elif config.mode == "predict_properties":
         from src.property_prediction.inference import predict_properties
-        inference_config = config.property_prediction.inference
-        results_df = predict_properties(
-            smiles_list=inference_config.smiles_to_predict,
-            model_dir=inference_config.model_dir
-        )
-        print("\n--> Inference Results:")
-        print(results_df)
+        predict_properties(config.property_prediction)
         
 
 if __name__ == "__main__":

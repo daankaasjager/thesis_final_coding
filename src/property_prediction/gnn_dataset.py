@@ -26,7 +26,6 @@ def prepare_graph_dataset(df: pd.DataFrame, prop_columns: list[str], normalize=T
     props = df[prop_columns].astype(np.float32)
 
     if normalize:
-        # Normalize properties
         mean = props.mean()
         std = props.std()
         normed_props = (props - mean) / std

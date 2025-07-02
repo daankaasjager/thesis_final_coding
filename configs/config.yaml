@@ -119,8 +119,6 @@ eval:
   checkpoint_path: ${cwd:}/checkpoints/12_hour_run_24_april.ckpt # Used to evaluate a checkpoint after training.
   disable_ema: False
   generate_samples: True
-  overwrite_original: False
-  plot_dist: False
   overlay: True # Overlay the generated samples on the original data distribution
 
 sampling:

@@ -8,6 +8,7 @@ from .preprocessing import get_dataloaders, prepare_data_for_training
 from .tokenizing import get_tokenizer, tokenize_selfies_vocab
 from .utils import setup_training_logging, print_batch
 
+from omegaconf import DictConfig, OmegaConf
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +26,11 @@ def _run_model(
 
     model = diffusion.Diffusion(config, tokenizer=tokenizer)
     #print_batch(train_dataloader, val_dataloader, tokenizer) # takes a a long time so only run if necessary.
+    # Print the resolved Hydra config (optional, for full context)
+
+    # Inspect the callbacks being passed to the function
+    logging.info("Callbacks received in _run_model:")
+
     trainer = hydra.utils.instantiate(
         config.trainer,
         default_root_dir=os.getcwd(),
@@ -50,6 +56,9 @@ def _setup_cuda():
 
 
 def train(config):
+    import wandb
+    wandb.login()
+
     _setup_cuda()
     wandb_logger, callbacks = setup_training_logging(config)
 
@@ -63,7 +72,6 @@ def train(config):
     train_dataloader, val_dataloader = get_dataloaders(
         config, tokenized_data, tokenizer
     )
-
     _run_model(
         config,
         tokenizer,

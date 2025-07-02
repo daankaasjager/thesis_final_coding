@@ -1,3 +1,3 @@
-tokenizer:
-  name: wordlevel
-  tokenizer_type: wordlevel
+
+name: wordlevel
+tokenizer_type: wordlevel

@@ -8,7 +8,6 @@ from omegaconf import OmegaConf
 from tqdm import tqdm
 
 from .tokenizing import SelfiesTokenizer
-from .preprocessing import normalize_scalar_target_properties
 
 logger = logging.getLogger(__name__)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -45,10 +44,11 @@ def _sample_batch(model, config):
                 stride_length=config.sampling.stride_length,
                 num_strides=config.sampling.num_strides,
                 dt=1 / config.sampling.steps,
+                target_properties=config.sampling.target_properties,
             )
             return intermediate_samples[-1]
         else:
-            samples = model.restore_model_and_sample(num_steps=config.sampling.steps)
+            samples = model.restore_model_and_sample(num_steps=config.sampling.steps, target_properties=config.sampling.target_properties)
             return model.tokenizer.batch_decode(samples, skip_special_tokens=False)
 
 

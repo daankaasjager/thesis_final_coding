@@ -2,6 +2,9 @@ import logging
 import pandas as pd
 from omegaconf import DictConfig
 from tqdm import tqdm
+import json
+import bisect
+
 
 from ..utils import select_numeric_columns
 
@@ -64,7 +67,7 @@ def apply_discretization(config: DictConfig, df: pd.DataFrame):
             bin_edges_dict[col] = bin_edges.tolist()  # convert to JSON-serializable
 
     logger.info("Data discretization step complete.")
-    import json
+
 
     # Save bin edges for mapping during sampling
     with open(config.paths.bin_edges, "w") as f:
@@ -74,10 +77,11 @@ def apply_discretization(config: DictConfig, df: pd.DataFrame):
 
 
 
-def map_target_properties_to_bins(self, target_properties: dict) -> list[int]:
+def map_target_properties_to_bins(config, target_properties: dict, tokenizer) -> list[int]:
         """
         This function is used during sampling, 
-        it maps numeric target property values to bin tokens using bin edges and tokenizer.
+        it maps numeric unnormalized target property values to 
+        bin tokens using bin edges and tokenizer.
         
         Args:
             target_properties: dict like {"logP": 1.23, "QED": 0.61}
@@ -85,7 +89,7 @@ def map_target_properties_to_bins(self, target_properties: dict) -> list[int]:
         Returns:
             List of token IDs corresponding to bin labels like "[logP_bin_2|5]"
         """
-        with open(self.config.paths.bin_edges, "r") as f:
+        with open(config.paths.bin_edges, "r") as f:
             bin_edges_dict = json.load(f)
         bin_token_ids = []
         for prop_name, prop_value in target_properties.items():
@@ -93,16 +97,14 @@ def map_target_properties_to_bins(self, target_properties: dict) -> list[int]:
             if bin_edges is None:
                 raise ValueError(f"No bin edges found for property '{prop_name}'.")
 
-
             # If its lower or higher than the max bin edge then assign the first or last bin
             bin_index = bisect.bisect_right(bin_edges, prop_value) - 1
             num_bins = len(bin_edges) - 1
             bin_index = max(0, min(bin_index, num_bins - 1))
 
-
             bin_token = f"[{prop_name}_bin_{bin_index+1}|{num_bins}]"
-            bin_token_id = self.tokenizer.convert_tokens_to_ids(bin_token)
-            if bin_token_id is None or bin_token_id == self.tokenizer.unk_token_id:
+            bin_token_id = tokenizer.convert_tokens_to_ids(bin_token)
+            if bin_token_id is None or bin_token_id == tokenizer.unk_token_id:
                 raise ValueError(f"Token '{bin_token}' not in tokenizer vocabulary.")
             bin_token_ids.append(bin_token_id)
 

@@ -24,7 +24,8 @@ def _load_cached_tokenized_data(config, tokenizer):
     try:
         if os.path.exists(path):
             tokenized_data = datasets.load_from_disk(path, keep_in_memory=True)
-            logger.info(f"SELFIES data loaded successfully. Vocab size: {tokenizer.vocab_size}")
+            logger.info(f"SELFIES data loaded successfully. Vocab size: {tokenizer.vocab_size}") 
+            print(f"Print first 5 tokenized sequences: {[tokenized_data[i]['input_ids'] for i in range(5)]}")
             return tokenized_data
         else:
             logger.info(f"No cached data found at {path}")

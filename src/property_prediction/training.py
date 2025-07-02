@@ -10,7 +10,7 @@ from pathlib import Path
 import logging
 import os
 from lightning.pytorch.loggers import WandbLogger
-
+import hydra
 
 logger = logging.getLogger(__name__)
 
@@ -53,18 +53,16 @@ def train_property_predictor(prop_pred_config: DictConfig):
     Args:
         config: A DictConfig object containing all configuration parameters.
     """
-    _setup_cuda()  # Ensure CUDA settings are configured
-    wandb_logger, callbacks = setup_training_logging(prop_pred_config.training)
-    # 1. Ensure the output directory exists
+    import wandb
+    wandb.login()  
+    _setup_cuda()  
+    wandb_logger, callbacks = setup_training_logging(prop_pred_config)
     output_dir = Path(prop_pred_config.training.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     
-    # 2. Load and prepare the dataset
-    logger.info("--> Loading and preparing dataset...")
+    logger.info("Loading and preparing dataset...")
     df = pd.read_csv(prop_pred_config.data.path)
     
-    # Assuming your CSV has a 'smiles' column and property columns.
-    # The `prepare_graph_dataset` function will normalize the properties.
     logger.info(f"Dataset contains {len(df)} molecules. Normalizing properties...")
     data_list, props_mean, props_std = prepare_graph_dataset(
         df, 
@@ -72,8 +70,6 @@ def train_property_predictor(prop_pred_config: DictConfig):
         normalize=True
     )
 
-    # 4. Update the configuration with dataset-specific dimensions
-    # The model needs to know the input dimensions from the data itself.
     if data_list:
         prop_pred_config.model.node_dim = data_list[0].num_node_features
         prop_pred_config.model.edge_dim = data_list[0].num_edge_features
@@ -81,8 +77,7 @@ def train_property_predictor(prop_pred_config: DictConfig):
     else:
         raise ValueError("Dataset is empty after processing. Check your SMILES data.")
 
-    # 5. Create DataLoaders
-    logger.info("--> Creating data loaders...")
+    logger.info("Creating data loaders...")
     train_loader, val_loader = split_and_load(
         data_list,
         batch_size=prop_pred_config.training.batch_size,
@@ -90,14 +85,10 @@ def train_property_predictor(prop_pred_config: DictConfig):
         num_workers=prop_pred_config.training.num_workers
     )
 
-    # 6. Initialize the Lightning Module
-    logger.info("--> Initializing model...")
-    # The model config is passed directly to the LightningModule
+    logger.info("Initializing model...")
     model = MolPropModule(prop_pred_config.model)
-    model.configure_model() # Manually call to set up the model and log parameters
+    model.configure_model() 
 
-
-    # 8. Initialize the Trainer and start training
     trainer = L.Trainer(
         max_epochs=prop_pred_config.training.max_epochs,
         accelerator=prop_pred_config.training.accelerator,
@@ -106,9 +97,7 @@ def train_property_predictor(prop_pred_config: DictConfig):
         logger=wandb_logger
     )
 
-    print("--> Starting training...")
+    print("Starting training...")
     trainer.fit(model, train_loader, val_loader)
-    print("--> Training finished.")
+    print("Training finished.")
 
-    # The `on_save_checkpoint` hook in your MolPropModule will handle saving 
-    # the model weights and config in a 'pytorch' subdirectory for easy loading.

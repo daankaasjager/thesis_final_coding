@@ -1,7 +1,7 @@
 import json
 import logging
 
-from .analysis import (bos_eos_analysis, MetricRunner)
+from .analysis import bos_eos_analysis, MetricRunner
 from .preprocessing import read_csv
 from .analysis import MetricRunner
 
@@ -40,13 +40,14 @@ def evaluate_by_comparison(config, sample_sources: dict, reference_name: str, ru
 
     # Remove empty datasets
     sample_sources = {k: v for k, v in sample_sources.items() if v}
-
+    
+    # MIGHT CHANGE THIS LATER BECAUSE IT IS ALREADY DONE IN THE PROPERTY PREDICTION
     processed_samples = {}
     for name, samples in sample_sources.items():
         if name == reference_name:
             processed_samples[name] = samples
         else:
-            processed_samples[name] = bos_eos_analysis(samples, config, name=name)
+            processed_samples[name] = bos_eos_analysis(samples, name=name, output_path=config.paths.metrics_dir)
 
     metrics = ["validity", "uniqueness", "novelty", "token_frequency", "length_distribution",
                "sascore", "num_rings", "tetrahedral_carbons", "logp", "molweight", "tpsa"]

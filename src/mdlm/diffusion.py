@@ -12,9 +12,8 @@ import torchmetrics
 import transformers
 from torch import Tensor
 from tqdm import tqdm
-import json
-import bisect
-from .preprocessing import map_target_properties_to_bins
+
+from .preprocessing import map_target_properties_to_bins, normalize_scalar_target_properties
 
 from .modeling import (ExponentialMovingAverage,
                       FaultTolerantDistributedSampler,
@@ -429,7 +428,7 @@ class Diffusion(L.LightningModule):
         # Create conditioning prefix
         if self.config.conditioning.prepend and target_properties is not None:
             logger.debug("Sampling with conditioning prefix.")
-            bin_token_ids = self.map_target_properties_to_bins(target_properties)
+            bin_token_ids = map_target_properties_to_bins(self.config, target_properties, self.tokenizer)
             prefix = torch.tensor(bin_token_ids, device=self.device).unsqueeze(0).expand(batch_dims[0], -1)
             suffix = torch.full((batch_dims[0], batch_dims[1] - prefix.shape[1]),
                                 self.mask_index, dtype=torch.long, device=self.device)
@@ -655,11 +654,13 @@ class Diffusion(L.LightningModule):
             num_steps = self.config.sampling.steps
 
         batch_size = self.config.loader.eval_batch_size
-
-        if target_properties is None:
+        print(f"target_properties: {target_properties}")
+        if target_properties is None or self.config.conditioning.prepend:
             target_properties_tensor = None
         elif target_properties is not None \
             and (self.config.conditioning.embeddings or self.config.conditioning.cfg): # conditioning on properties with cfg or embeddings
+            normalized_properties = normalize_scalar_target_properties(target_properties, config.paths.mean_std)
+            print(f"normalized_properties: {normalized_properties}")
             target_properties_tensor = torch.tensor(list(target_properties.values())).unsqueeze(0).expand(batch_size, -1).to(self.device, dtype=self.dtype) #-1 means keep the same number of columns as target_properties
         x = self._sample_prior(batch_size_per_gpu, self.sample_output_length, target_properties=target_properties).to(
             self.device

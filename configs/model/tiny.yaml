@@ -2,7 +2,7 @@ name: tiny
 type: ddit
 hidden_size: 512
 cond_dim: 128
-length: 256
+length: 175
 n_blocks: 8
 n_heads: 8
 dropout: 0.1
