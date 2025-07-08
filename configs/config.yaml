@@ -6,7 +6,7 @@ defaults:
   - /data: kraken
   - /model: small
   - /tokenizer: wordlevel 
-  - /conditioning: "no"
+  - /conditioning: "no" # no / embed / prepend / cfg
   - /paths: cluster
   - /property_prediction: default
   - override hydra/launcher: submitit_slurm

@@ -45,10 +45,13 @@ def _sample_batch(model, config):
                 num_strides=config.sampling.num_strides,
                 dt=1 / config.sampling.steps,
                 target_properties=config.sampling.target_properties,
+                
             )
             return intermediate_samples[-1]
         else:
-            samples = model.restore_model_and_sample(num_steps=config.sampling.steps, target_properties=config.sampling.target_properties)
+            samples = model.restore_model_and_sample(num_steps=config.sampling.steps,
+                                 target_properties=config.sampling.target_properties,
+                                 guidance_scale=config.conditioning.guidance_scale)
             return model.tokenizer.batch_decode(samples, skip_special_tokens=False)
 
 
@@ -81,8 +84,6 @@ def _save_final_output(temp_path, final_path):
     os.rename(temp_path, final_path)
     logger.info(f"Finalized samples saved to {final_path}")
 
-
-# --- Main generate_samples Function (Adapted for Hydra Paths) ---
 
 def generate_samples(config):
     """

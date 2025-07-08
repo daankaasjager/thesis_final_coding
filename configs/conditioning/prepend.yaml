@@ -4,6 +4,7 @@ embeddings: False # This turns on the embeddings for the conditioning properties
 cfg: False # This turns on the classifier-free guidance. ! If this is true, then embeddings must also be true !
 local_paths.pre_processed_data: ${paths.data_root}/training_data/${experiment.name}/prepend_preprocessed_data.parquet
 local_paths.train_data_encoding: ${paths.data_root}/training_data/${experiment.name}/prepend_train_encoding
+guidance_scale: null
 properties: [] # This is the list of properties to condition on
 
 #conditioning possibilities: ['nbo_P', 'nmr_P', 'pyr_P', 'fmo_mu', 'vmin_r', 'volume', 'fmo_eta', 

@@ -23,7 +23,7 @@ class MetricPlotter:
         path = self.plot_and_metrics_dir / filename
         os.makedirs(path.parent, exist_ok=True)
         plt.savefig(path, bbox_inches='tight')
-        print(f"Saved plot to {path}")
+        logger.info(f"Saved plot to {path}")
         plt.close()
 
     def set_global_bins(self, all_metric_values: Dict[str, List[float]]):
@@ -275,10 +275,10 @@ class MetricPlotter:
         existing_cols = [col for col in desired_order if col in summary_df.columns]
         summary_df = summary_df[existing_cols]
 
-        print("\n--- Statistical Summary of Molecular Metrics ---")
+        logger.info("\n--- Statistical Summary of Molecular Metrics ---")
         formatters = {col: lambda x: f"{x:.3f}" if pd.notna(x) else "N/A" for col in ['Validity', 'Uniqueness', 'Novelty', 'FCD'] if col in summary_df.columns}
-        print(summary_df.to_string(formatters=formatters))
+        logger.info(summary_df.to_string(formatters=formatters))
 
         summary_csv_path = self.plot_and_metrics_dir / "statistical_summary.csv"
         summary_df.to_csv(summary_csv_path)
-        print(f"\nStatistical summary saved to {summary_csv_path}")
+        logger.info(f"\nStatistical summary saved to {summary_csv_path}")

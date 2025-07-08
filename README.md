@@ -227,16 +227,130 @@ mode=generate \
 experiment.name="ape_70"
 ```
 
-### Conditioned sampling 
-prepend sampling
+### Conditioned sampling: prepend
+```bash
+scripts/sample.sh model=small \
+tokenizer.tokenizer_type=wordlevel \
+mode=generate \
+conditioning="prepend" \
+experiment.name="prepend_1" \
+conditioning.properties="['sa_score']" \
+sampling.target_properties="{"sa_score": 2.80}"
+```
+
 ```bash
 scripts/sample.sh model=small \
 tokenizer.tokenizer_type=wordlevel \
 mode=generate \
 conditioning="prepend" \
 experiment.name="prepend_3" \
-sampling.target_properties="{"sa_score": 5, "mol_wt":300, "volume" : 2}"
+conditioning.properties="['sa_score','mol_wt','volume']" \
+sampling.target_properties="{"sa_score": 2.80, "mol_wt": 326.1, "volume": 395.4}"
 ```
+
+```bash
+scripts/sample.sh model=small \
+tokenizer.tokenizer_type=wordlevel \
+mode=generate \
+conditioning="prepend" \
+experiment.name="prepend_8" \
+conditioning.properties="['sa_score', 'mol_wt', 'volume', 'vbur_vbur', 'vmin_r', 'sterimol_L', 'sterimol_B1', 'dipolemoment']" \
+sampling.target_properties="{"sa_score": 2.80, "mol_wt": 326.1, "volume": 395.4, "vbur_vbur": 58.1 , "vmin_r" : 1.82, "sterimol_L": 7.88, "sterimol_B1": 4.0 , "dipolemoment": 1.65 }"
+```
+
+This needs more memory in general due to the large amount of properties
+```bash
+scripts/sample.sh model=small \
+tokenizer.tokenizer_type=wordlevel \
+mode=generate \
+conditioning="prepend" \
+experiment.name="prepend_all" \
+conditioning.properties="['nbo_P', 'nmr_P', 'pyr_P', 'fmo_mu', 'vmin_r', 'volume', 'fmo_eta', 'fukui_m', 'fukui_p', 'nuesp_P', 'somo_rc', 'nbo_P_rc', 'pyr_alpha', 'qpole_amp', 'vbur_vbur', 'Pint_P_min', 'sterimol_L', 'sterimol_B1', 'sterimol_B5', 'dipolemoment', 'efgtens_xx_P', 'efgtens_yy_P', 'nbo_bd_e_max', 'nbo_lp_P_occ', 'qpoletens_yy', 'E_solv_elstat', 'nbo_bds_e_avg', 'sterimol_burL', 'nbo_bd_occ_avg', 'sterimol_burB5', 'vbur_ovbur_min', 'vbur_qvbur_min', 'nbo_bds_occ_max', 'vbur_ratio_vbur_vtot', 'mol_wt', 'sa_score']" \
+sampling.target_properties="{"nbo_P": 0.7329, "nmr_P": 202.55, "pyr_P": 0.9096, "fmo_mu": -0.1440, "vmin_r": 1.8207, "volume": 395.42, "fmo_eta": 0.1725, "fukui_m": 0.1694, "fukui_p": 0.02, "nuesp_P": -54.1895, "somo_rc": -0.3983, "nbo_P_rc": 0.9983, "pyr_alpha": 15.88, "qpole_amp": 7.53, "vbur_vbur": 58.08, "Pint_P_min": 11.45, "sterimol_L": 7.88, "sterimol_B1": 4.00, "sterimol_B5": 7.18, "dipolemoment": 1.65, "efgtens_xx_P": -1.0755, "efgtens_yy_P": -0.6631, "nbo_bd_e_max": -0.4319, "nbo_lp_P_occ": 1.8941, "qpoletens_yy": -0.2313, "E_solv_elstat": -11.7243, "nbo_bds_e_avg": 0.1920, "sterimol_burL": 6.996, "nbo_bd_occ_avg": 1.9450, "sterimol_burB5": 6.399, "vbur_ovbur_min": 0.0142, "vbur_qvbur_min": 11.05, "nbo_bds_occ_max": 0.0712, "vbur_ratio_vbur_vtot": 0.1348, "mol_wt": 326.05, "sa_score": 2.80}"
+```
+
+### Conditioned sampling: embeddings
+```bash
+scripts/sample.sh model=small \
+tokenizer.tokenizer_type=wordlevel \
+mode=generate \
+conditioning="embed" \
+experiment.name="embedding_1" \
+conditioning.properties="['sa_score']" \
+sampling.target_properties="{"sa_score": 2.80}"
+```
+
+```bash
+scripts/sample.sh model=small \
+tokenizer.tokenizer_type=wordlevel \
+mode=generate \
+conditioning="embed" \
+experiment.name="embedding_3" \
+conditioning.properties="['sa_score','mol_wt','volume']" \
+sampling.target_properties="{"sa_score": 2.80, "mol_wt": 326.1, "volume": 395.4}"
+```
+
+```bash
+scripts/sample.sh model=small \
+tokenizer.tokenizer_type=wordlevel \
+mode=generate \
+conditioning="embed" \
+experiment.name="embedding_8" \
+conditioning.properties="['sa_score', 'mol_wt', 'volume', 'vbur_vbur', 'vmin_r', 'sterimol_L', 'sterimol_B1', 'dipolemoment']" \
+sampling.target_properties="{"sa_score": 2.80, "mol_wt": 326.1, "volume": 395.4, "vbur_vbur": 58.1 , "vmin_r" : 1.82, "sterimol_L": 7.88, "sterimol_B1": 4.0 , "dipolemoment": 1.65 }"
+```
+
+this needs more memory in general (maybe not for sampling though)
+```bash
+scripts/sample.sh model=small \
+tokenizer.tokenizer_type=wordlevel \
+mode=generate \
+conditioning="embed" \
+experiment.name="embedding_all" \
+conditioning.properties="['nbo_P', 'nmr_P', 'pyr_P', 'fmo_mu', 'vmin_r', 'volume', 'fmo_eta', 'fukui_m', 'fukui_p', 'nuesp_P', 'somo_rc', 'nbo_P_rc', 'pyr_alpha', 'qpole_amp', 'vbur_vbur', 'Pint_P_min', 'sterimol_L', 'sterimol_B1', 'sterimol_B5', 'dipolemoment', 'efgtens_xx_P', 'efgtens_yy_P', 'nbo_bd_e_max', 'nbo_lp_P_occ', 'qpoletens_yy', 'E_solv_elstat', 'nbo_bds_e_avg', 'sterimol_burL', 'nbo_bd_occ_avg', 'sterimol_burB5', 'vbur_ovbur_min', 'vbur_qvbur_min', 'nbo_bds_occ_max', 'vbur_ratio_vbur_vtot', 'mol_wt', 'sa_score']" \
+sampling.target_properties="{"nbo_P": 0.7329, "nmr_P": 202.55, "pyr_P": 0.9096, "fmo_mu": -0.1440, "vmin_r": 1.8207, "volume": 395.42, "fmo_eta": 0.1725, "fukui_m": 0.1694, "fukui_p": 0.02, "nuesp_P": -54.1895, "somo_rc": -0.3983, "nbo_P_rc": 0.9983, "pyr_alpha": 15.88, "qpole_amp": 7.53, "vbur_vbur": 58.08, "Pint_P_min": 11.45, "sterimol_L": 7.88, "sterimol_B1": 4.00, "sterimol_B5": 7.18, "dipolemoment": 1.65, "efgtens_xx_P": -1.0755, "efgtens_yy_P": -0.6631, "nbo_bd_e_max": -0.4319, "nbo_lp_P_occ": 1.8941, "qpoletens_yy": -0.2313, "E_solv_elstat": -11.7243, "nbo_bds_e_avg": 0.1920, "sterimol_burL": 6.996, "nbo_bd_occ_avg": 1.9450, "sterimol_burB5": 6.399, "vbur_ovbur_min": 0.0142, "vbur_qvbur_min": 11.05, "nbo_bds_occ_max": 0.0712, "vbur_ratio_vbur_vtot": 0.1348, "mol_wt": 326.05, "sa_score": 2.80}"
+```
+
+
+### Conditioned sampling: CFG
+This needs ~2x the time due to the double forward pass of cfg during sampling. Change the script accordingly
+p_cfg=0.1
+```bash
+scripts/sample.sh model=small \
+tokenizer.tokenizer_type=wordlevel \
+mode=generate \
+experiment.name="cfg_01" \
+conditioning="cfg" \
+conditioning.properties="['sa_score','mol_wt','volume']" \
+conditioning.guidance_scale=0.3 \
+sampling.target_properties="{"sa_score": 2.80, "mol_wt": 326.1, "volume": 395.4}"
+```
+
+p_cfg=0.2
+```bash
+scripts/sample.sh model=small \
+tokenizer.tokenizer_type=wordlevel \
+mode=generate \
+experiment.name="cfg_02" \
+conditioning="cfg" \
+conditioning.properties="['sa_score','mol_wt','volume']" \
+conditioning.guidance_scale=0.3 \
+sampling.target_properties="{"sa_score": 2.80, "mol_wt": 326.1, "volume": 395.4}"
+```
+
+p_cfg = 0.3
+```bash
+scripts/sample.sh model=small \
+tokenizer.tokenizer_type=wordlevel \
+mode=generate \
+experiment.name="cfg_03" \
+conditioning="cfg" \
+conditioning.properties="['sa_score','mol_wt','volume']" \
+conditioning.guidance_scale=0.3 \
+sampling.target_properties="{"sa_score": 2.80, "mol_wt": 326.1, "volume": 395.4}"
+```
+
+
 
 ## Evaluation
 ```bash

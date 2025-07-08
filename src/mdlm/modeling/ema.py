@@ -57,7 +57,13 @@ class ExponentialMovingAverage:
         parameters = [p for p in parameters if p.requires_grad]
         for s_param, param in zip(self.shadow_params, parameters):
             if param.requires_grad:
-                param.data.copy_(s_param.data)
+                if s_param.shape != param.shape:
+                    raise ValueError(
+                        f"Shadow parameter shape {s_param.shape} does not match "
+                        f"parameter shape {param.shape}."
+                    )
+                else:
+                    param.data.copy_(s_param.data)
 
     def store(self, parameters):
         """

@@ -654,14 +654,12 @@ class Diffusion(L.LightningModule):
             num_steps = self.config.sampling.steps
 
         batch_size = self.config.loader.eval_batch_size
-        print(f"target_properties: {target_properties}")
         if target_properties is None or self.config.conditioning.prepend:
             target_properties_tensor = None
         elif target_properties is not None \
             and (self.config.conditioning.embeddings or self.config.conditioning.cfg): # conditioning on properties with cfg or embeddings
-            normalized_properties = normalize_scalar_target_properties(target_properties, config.paths.mean_std)
-            print(f"normalized_properties: {normalized_properties}")
-            target_properties_tensor = torch.tensor(list(target_properties.values())).unsqueeze(0).expand(batch_size, -1).to(self.device, dtype=self.dtype) #-1 means keep the same number of columns as target_properties
+            normalized_properties = normalize_scalar_target_properties(target_properties, self.config.paths.mean_std)
+            target_properties_tensor = torch.tensor(list(normalized_properties.values())).unsqueeze(0).expand(batch_size, -1).to(self.device, dtype=self.dtype)
         x = self._sample_prior(batch_size_per_gpu, self.sample_output_length, target_properties=target_properties).to(
             self.device
         )
