@@ -361,16 +361,16 @@ sampling.target_properties="{"sa_score": 2.80, "mol_wt": 326.1, "volume": 395.4}
 ## training
 ```bash
 scripts/sample.sh \
-experiment.name="property_prediction" \
+experiment.name=null \
 mode="train_property_prediction"
 sampling.target_properties
 ```
 
 ## inference
+Change the experiment name to the relevant experiment to predict the properties of that experiment.
 ```bash
 scripts/sample.sh \
-experiment.name="property_prediction" \
-mode="predict_properties" \
-property_prediction.inference.sampled_selfies_file="/scratch/s3905845/thesis_final_coding/data/kraken/sampled_data/generated_cfg_ape_20250618_160103.json"
+experiment.name="model_size_tiny" \
+mode="predict_properties" 
 ```
 

@@ -1,12 +1,27 @@
 import json
 import logging
+import pandas as pd
 
 from .analysis import bos_eos_analysis, MetricRunner
 from .preprocessing import read_csv
 from .analysis import MetricRunner
 from src.property_prediction.inference import predict_properties
 
+PROPERTY_COLS = [  
+    'nbo_P', 'nmr_P', 'pyr_P', 'fmo_mu', 'vmin_r', 'volume',
+    'fmo_eta', 'fukui_m', 'fukui_p', 'nuesp_P', 'somo_rc', 'nbo_P_rc',
+    'pyr_alpha', 'qpole_amp', 'vbur_vbur', 'Pint_P_min', 'sterimol_L',
+    'sterimol_B1', 'sterimol_B5', 'dipolemoment', 'efgtens_xx_P',
+    'efgtens_yy_P', 'nbo_bd_e_max', 'nbo_lp_P_occ', 'qpoletens_yy',
+    'E_solv_elstat', 'nbo_bds_e_avg', 'sterimol_burL', 'nbo_bd_occ_avg',
+    'sterimol_burB5', 'vbur_ovbur_min', 'vbur_qvbur_min',
+    'nbo_bds_occ_max', 'vbur_ratio_vbur_vtot', 'mol_wt', 'sa_score'
+]
 
+METRICS = [
+    "validity", "uniqueness", "novelty", "token_frequency", "length_distribution",
+    "sascore", "num_rings", "tetrahedral_carbons", "logp", "molweight", "tpsa"
+]
 
 logger = logging.getLogger(__name__)
 
@@ -21,12 +36,31 @@ def load_generated_samples(path):
         return []
 
 
-def load_original_samples(path, row_limit):
+def load_original_samples(path: str, row_limit: int | None = None) -> list[dict]:
+    """
+    Returns a list of *sample objects* that look exactly like the generated ones:
+        {"selfies": <str>, "predicted_properties": {<prop>: <float>, …}}
+    """
     df = read_csv(path, row_limit=row_limit)
+
     if "selfies" not in df.columns:
         logger.error("Missing 'selfies' column in original data.")
         return []
-    return df["selfies"].tolist()
+
+    samples = []
+    for _, row in df.iterrows():
+        prop_dict = {
+            col: float(row[col])
+            for col in PROPERTY_COLS
+            if col in row and pd.notna(row[col])
+        }
+        samples.append(
+            {
+                "selfies": row["selfies"],
+                "predicted_properties": prop_dict,   # <- name stays the same
+            }
+        )
+    return samples
 
 def evaluate_by_comparison(config, sample_sources: dict, reference_name: str, run_type: str):
     """
@@ -43,30 +77,8 @@ def evaluate_by_comparison(config, sample_sources: dict, reference_name: str, ru
     # Remove empty datasets
     sample_sources = {k: v for k, v in sample_sources.items() if v}
 
-    metrics = ["validity", "uniqueness", "novelty", "token_frequency", "length_distribution",
-               "sascore", "num_rings", "tetrahedral_carbons", "logp", "molweight", "tpsa"]
-
-    properties = ['nbo_P', 'nmr_P', 'pyr_P', 'fmo_mu', 'vmin_r', 'volume', 
-                'fmo_eta',  'fukui_m', 'fukui_p', 'nuesp_P', 'somo_rc', 'nbo_P_rc',
-                'pyr_alpha', 'qpole_amp', 'vbur_vbur', 'Pint_P_min', 'sterimol_L',
-                'sterimol_B1', 'sterimol_B5', 'dipolemoment', 'efgtens_xx_P',  
-                'efgtens_yy_P', 'nbo_bd_e_max', 'nbo_lp_P_occ', 'qpoletens_yy', 
-                'E_solv_elstat', 'nbo_bds_e_avg', 'sterimol_burL', 'nbo_bd_occ_avg', 
-                'sterimol_burB5', 'vbur_ovbur_min', 'vbur_qvbur_min', 'nbo_bds_occ_max',
-                 'vbur_ratio_vbur_vtot', 'mol_wt', 'sa_score']
-
     runner = MetricRunner(config)
-    # this has been changed, the runner now needs to handle the loading of samples and properties differently
-    aggregated_results, fcd_scores = runner.run_multi(sample_sources, metrics, properties)
-
-    # Generate split violin plots per metric
-    for metric, data_dict in aggregated_results.items():
-        if metric not in ['validity', 'uniqueness', 'novelty', 'token_frequency', 'length_distribution']:
-            runner.plotter.plot_split_violin(metric, data_dict,
-                                             reference_name=reference_name,
-                                             comparison_prefix="",
-                                             output_suffix=run_type)
-
+    aggregated_results, fcd_scores = runner.run_multi(sample_sources, METRICS + PROPERTY_COLS, PROPERTY_COLS, reference_name, run_type)
     runner.plotter.display_statistical_summary(aggregated_results, fcd_scores)
 
 
@@ -75,14 +87,13 @@ def evaluate_preliminaries(config):
     Evaluates preliminary experiments: Original vs all models.
     """
     sample_sources = {
-        "Original data": load_original_samples(config.paths.original_data, 10000),
+        "Original data": load_original_samples(config.paths.filtered_original_data, 10000),
         "Tiny WordLevel": load_generated_samples(config.paths.tiny_wordlevel),
         "Small WordLevel": load_generated_samples(config.paths.small_wordlevel),
         "Small APE 70": load_generated_samples(config.paths.ape_70),
         "Small APE 80": load_generated_samples(config.paths.ape_80),
         "Small APE 110": load_generated_samples(config.paths.ape_110)
     }
-
     evaluate_by_comparison(config, sample_sources, reference_name="Original data", run_type="prelim")
 
 
@@ -91,18 +102,19 @@ def evaluate_conditioning(config, baseline_model_name):
     Evaluates conditioning experiments: Baseline vs conditioning strategies.
     """
     sample_sources = {
+        "Original data": load_original_samples(config.paths.filtered_original_data, 10000),
         baseline_model_name: load_generated_samples(config.paths.baseline_model_path),
-        "Prepend 1": load_generated_samples(config.paths.prepend_sampled_data),
-        "Prepend 3": load_generated_samples(config.paths.prepend_3_sampled_data),
-        "Prepend 8": load_generated_samples(config.paths.prepend_8_sampled_data),
-        "Prepend all": load_generated_samples(config.paths.prepend_all_sampled_data),
-        "Emedding 1": load_generated_samples(config.paths.embedding_1_sampled_data),
-        "Embedding 3": load_generated_samples(config.paths.embedding_3_sampled_data),
-        "Embedding 8": load_generated_samples(config.paths.embedding_8_sampled_data),
-        "Embedding all": load_generated_samples(config.paths.embedding_all_sampled_data),
-        "CFG 0.1": load_generated_samples(config.paths.cfg_01_sampled_data),
-        "CFG 0.2": load_generated_samples(config.paths.cfg_02_sampled_data),
-        "CFG 0.3": load_generated_samples(config.paths.cfg_03_sampled_data)
+        "Prepend 1": load_generated_samples(config.paths.prepend_1),
+        "Prepend 3": load_generated_samples(config.paths.prepend_3),
+        "Prepend 8": load_generated_samples(config.paths.prepend_8),
+        "Prepend all": load_generated_samples(config.paths.prepend_all),
+        "Emedding 1": load_generated_samples(config.paths.embedding_1),
+        "Embedding 3": load_generated_samples(config.paths.embedding_3),
+        "Embedding 8": load_generated_samples(config.paths.embedding_8),
+        "Embedding all": load_generated_samples(config.paths.embedding_all),
+        "CFG 0.1": load_generated_samples(config.paths.cfg_01),
+        "CFG 0.2": load_generated_samples(config.paths.cfg_02),
+        "CFG 0.3": load_generated_samples(config.paths.cfg_03)
     }
 
     evaluate_by_comparison(config, sample_sources, reference_name=baseline_model_name, run_type="conditioning")

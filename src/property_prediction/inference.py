@@ -196,7 +196,6 @@ def predict_properties(config):
         })
 
     output_path = Path(config.inference.output_path)
-    output_path = output_path / f"{config.experiment.name}_predictions.json"
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    save_samples_with_metadata(original_json, cleaned_selfies_list, save_path=output_path)
+    save_samples_with_metadata(original_json, results, save_path=output_path)
     logger.info(f"--> Predictions for {len(results)} molecules saved to {output_path}")

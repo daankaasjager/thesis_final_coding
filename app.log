@@ -17643,3 +17643,531 @@ Traceback (most recent call last):
     def _subs_parameterization(self, logits, xt):
     
 KeyboardInterrupt
+2025-07-08 16:42:31,620 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-08 16:42:31,622 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-08 16:42:54,866 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-08 16:42:54,868 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-08 16:48:33,869 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-08 16:48:33,872 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-08 16:49:30,136 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-08 16:49:30,136 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-08 16:50:37,899 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-08 16:50:37,900 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-08 16:54:31,637 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-08 16:54:31,639 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-08 17:00:54,020 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-08 17:00:54,020 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-08 17:43:34,092 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-08 17:43:34,106 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-08 17:52:44,839 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-08 17:52:44,841 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-09 10:49:12,888 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-09 10:49:12,915 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-09 10:51:16,475 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-09 10:51:16,475 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-09 10:52:16,385 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-09 10:52:16,385 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-09 10:54:47,104 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-09 10:54:47,104 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-09 10:56:49,201 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-09 10:56:49,201 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-09 10:58:53,729 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-09 10:58:53,729 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-09 10:59:24,857 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-09 10:59:24,857 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-09 11:14:02,987 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-09 11:14:02,987 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-09 11:14:28,034 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-09 11:14:28,034 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-09 11:14:39,196 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-09 11:14:39,196 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+Traceback (most recent call last):
+  File "/scratch/s3905845/thesis_final_coding/main.py", line 69, in <module>
+    run()
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/main.py", line 94, in decorated_main
+    _run_hydra(
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/utils.py", line 394, in _run_hydra
+    _run_app(
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/utils.py", line 457, in _run_app
+    run_and_report(
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/utils.py", line 220, in run_and_report
+    return func()
+           ^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/utils.py", line 458, in <lambda>
+    lambda: hydra.run(
+            ^^^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/hydra.py", line 119, in run
+    ret = run_job(
+          ^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/core/utils.py", line 186, in run_job
+    ret.return_value = task_function(task_cfg)
+                       ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/thesis_final_coding/main.py", line 54, in run
+    evaluate_preliminaries(config)
+  File "/scratch/s3905845/thesis_final_coding/src/mdlm/evaluating.py", line 86, in evaluate_preliminaries
+    evaluate_by_comparison(config, sample_sources, reference_name="Original data", run_type="prelim")
+  File "/scratch/s3905845/thesis_final_coding/src/mdlm/evaluating.py", line 60, in evaluate_by_comparison
+    aggregated_results, fcd_scores = runner.run_multi(sample_sources, metrics + properties, properties)
+                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/thesis_final_coding/src/mdlm/analysis/metrics_runner.py", line 132, in run_multi
+    dataset_results, canonical_smiles_list = self._process_dataset(samples, name, metrics, properties)
+                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/thesis_final_coding/src/mdlm/analysis/metrics_runner.py", line 74, in _process_dataset
+    mols = get_valid_molecules(selfies, self.config)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/thesis_final_coding/src/mdlm/analysis/metrics_core.py", line 50, in get_valid_molecules
+    smiles = selfies.decoder(cleaned_selfies)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/selfies/decoder.py", line 60, in decoder
+    n = _derive_mol_from_symbols(
+        ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/selfies/decoder.py", line 195, in _derive_mol_from_symbols
+    next(symbol_iter)
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/selfies/decoder.py", line 85, in _tokenize_selfies
+    for symbol in symbol_iter:
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/selfies/utils/selfies_utils.py", line 35, in split_selfies
+    while 0 <= left_idx < len(selfies):
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyboardInterrupt
+2025-07-09 11:16:26,986 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-09 11:16:26,986 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-09 11:16:59,397 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-09 11:16:59,398 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-09 11:17:24,200 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-09 11:17:24,200 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-09 11:18:44,964 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-09 11:18:44,964 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-09 11:22:11,534 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-09 11:22:11,534 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-09 11:22:20,428 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-09 11:22:20,428 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-09 11:24:24,441 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-09 11:24:24,441 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-09 11:32:32,583 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-09 11:32:32,583 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+Traceback (most recent call last):
+  File "/scratch/s3905845/thesis_final_coding/main.py", line 69, in <module>
+    run()
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/main.py", line 94, in decorated_main
+    _run_hydra(
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/utils.py", line 394, in _run_hydra
+    _run_app(
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/utils.py", line 457, in _run_app
+    run_and_report(
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/utils.py", line 220, in run_and_report
+    return func()
+           ^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/utils.py", line 458, in <lambda>
+    lambda: hydra.run(
+            ^^^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/hydra.py", line 119, in run
+    ret = run_job(
+          ^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/core/utils.py", line 186, in run_job
+    ret.return_value = task_function(task_cfg)
+                       ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/thesis_final_coding/main.py", line 54, in run
+    evaluate_preliminaries(config)
+  File "/scratch/s3905845/thesis_final_coding/src/mdlm/evaluating.py", line 86, in evaluate_preliminaries
+    evaluate_by_comparison(config, sample_sources, reference_name="Original data", run_type="prelim")
+  File "/scratch/s3905845/thesis_final_coding/src/mdlm/evaluating.py", line 60, in evaluate_by_comparison
+    aggregated_results, fcd_scores = runner.run_multi(sample_sources, metrics + properties, properties)
+                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/thesis_final_coding/src/mdlm/analysis/metrics_runner.py", line 133, in run_multi
+    dataset_results, canonical_smiles_list = self._process_dataset(samples, name, metrics, properties)
+                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/thesis_final_coding/src/mdlm/analysis/metrics_runner.py", line 75, in _process_dataset
+    mols = get_valid_molecules(selfies, self.config)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/thesis_final_coding/src/mdlm/analysis/metrics_core.py", line 48, in get_valid_molecules
+    cleaned_selfies = clean_generated_data(s, list(raw_tokens))
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/thesis_final_coding/src/mdlm/analysis/metrics_core.py", line 35, in clean_generated_data
+    for tok in TOKEN_PATTERN.findall(sample)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyboardInterrupt
+2025-07-09 12:11:11,383 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-09 12:11:11,383 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-09 12:11:11,383 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-09 12:11:11,384 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-09 12:11:57,436 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-09 12:11:57,436 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-09 12:13:03,701 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-09 12:13:03,701 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-09 12:14:35,056 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-09 12:14:35,056 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-09 12:15:21,821 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-09 12:15:21,821 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-09 12:19:53,212 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-09 12:19:53,212 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+Traceback (most recent call last):
+  File "/scratch/s3905845/thesis_final_coding/main.py", line 69, in <module>
+    run()
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/main.py", line 94, in decorated_main
+    _run_hydra(
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/utils.py", line 394, in _run_hydra
+    _run_app(
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/utils.py", line 457, in _run_app
+    run_and_report(
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/utils.py", line 220, in run_and_report
+    return func()
+           ^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/utils.py", line 458, in <lambda>
+    lambda: hydra.run(
+            ^^^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/hydra.py", line 119, in run
+    ret = run_job(
+          ^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/core/utils.py", line 186, in run_job
+    ret.return_value = task_function(task_cfg)
+                       ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/thesis_final_coding/main.py", line 54, in run
+    evaluate_preliminaries(config)
+  File "/scratch/s3905845/thesis_final_coding/src/mdlm/evaluating.py", line 108, in evaluate_preliminaries
+    evaluate_by_comparison(config, sample_sources, reference_name="Original data", run_type="prelim")
+  File "/scratch/s3905845/thesis_final_coding/src/mdlm/evaluating.py", line 82, in evaluate_by_comparison
+    aggregated_results, fcd_scores = runner.run_multi(sample_sources, METRICS + PROPERTY_COLS, PROPERTY_COLS)
+                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/thesis_final_coding/src/mdlm/analysis/metrics_runner.py", line 153, in run_multi
+    print(f"Data dict: {data_dict}")
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/colorama/ansitowin32.py", line 47, in write
+    self.__convertor.write(text)
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/colorama/ansitowin32.py", line 179, in write
+    self.wrapped.write(text)
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/colorama/ansitowin32.py", line 47, in write
+    self.__convertor.write(text)
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/colorama/ansitowin32.py", line 179, in write
+    self.wrapped.write(text)
+KeyboardInterrupt
+2025-07-09 12:26:09,742 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-09 12:26:09,742 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-09 12:26:30,061 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-09 12:26:30,061 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+Traceback (most recent call last):
+  File "/scratch/s3905845/thesis_final_coding/main.py", line 69, in <module>
+    run()
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/main.py", line 94, in decorated_main
+    _run_hydra(
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/utils.py", line 394, in _run_hydra
+    _run_app(
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/utils.py", line 457, in _run_app
+    run_and_report(
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/utils.py", line 220, in run_and_report
+    return func()
+           ^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/utils.py", line 458, in <lambda>
+    lambda: hydra.run(
+            ^^^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/hydra.py", line 119, in run
+    ret = run_job(
+          ^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/core/utils.py", line 186, in run_job
+    ret.return_value = task_function(task_cfg)
+                       ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/thesis_final_coding/main.py", line 54, in run
+    evaluate_preliminaries(config)
+  File "/scratch/s3905845/thesis_final_coding/src/mdlm/evaluating.py", line 108, in evaluate_preliminaries
+    evaluate_by_comparison(config, sample_sources, reference_name="Original data", run_type="prelim")
+  File "/scratch/s3905845/thesis_final_coding/src/mdlm/evaluating.py", line 82, in evaluate_by_comparison
+    aggregated_results, fcd_scores = runner.run_multi(sample_sources, METRICS + PROPERTY_COLS, PROPERTY_COLS)
+                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/thesis_final_coding/src/mdlm/analysis/metrics_runner.py", line 115, in run_multi
+    original_selfies, _ = _split_samples(original_objs)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/thesis_final_coding/src/mdlm/analysis/metrics_runner.py", line 31, in _split_samples
+    print("sample props:", props)
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/colorama/ansitowin32.py", line 47, in write
+    self.__convertor.write(text)
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/colorama/ansitowin32.py", line 179, in write
+    self.wrapped.write(text)
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/colorama/ansitowin32.py", line 47, in write
+    self.__convertor.write(text)
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/colorama/ansitowin32.py", line 179, in write
+    self.wrapped.write(text)
+KeyboardInterrupt
+2025-07-09 12:29:11,060 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-09 12:29:11,060 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+Traceback (most recent call last):
+  File "/scratch/s3905845/thesis_final_coding/main.py", line 69, in <module>
+    run()
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/main.py", line 94, in decorated_main
+    _run_hydra(
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/utils.py", line 394, in _run_hydra
+    _run_app(
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/utils.py", line 457, in _run_app
+    run_and_report(
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/utils.py", line 220, in run_and_report
+    return func()
+           ^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/utils.py", line 458, in <lambda>
+    lambda: hydra.run(
+            ^^^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/hydra.py", line 119, in run
+    ret = run_job(
+          ^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/core/utils.py", line 186, in run_job
+    ret.return_value = task_function(task_cfg)
+                       ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/thesis_final_coding/main.py", line 54, in run
+    evaluate_preliminaries(config)
+  File "/scratch/s3905845/thesis_final_coding/src/mdlm/evaluating.py", line 109, in evaluate_preliminaries
+    evaluate_by_comparison(config, sample_sources, reference_name="Original data", run_type="prelim")
+  File "/scratch/s3905845/thesis_final_coding/src/mdlm/evaluating.py", line 83, in evaluate_by_comparison
+    aggregated_results, fcd_scores = runner.run_multi(sample_sources, METRICS + PROPERTY_COLS, PROPERTY_COLS)
+                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/thesis_final_coding/src/mdlm/analysis/metrics_runner.py", line 152, in run_multi
+    self.plotter.plot_property_violin(metric, data_dict, reference_name="Original data", run_type="prelim")
+  File "/scratch/s3905845/thesis_final_coding/src/mdlm/analysis/metrics_plotting.py", line 154, in plot_property_violin
+    fig.tight_layout()
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/matplotlib/figure.py", line 3640, in tight_layout
+    engine.execute(self)
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/matplotlib/layout_engine.py", line 183, in execute
+    kwargs = get_tight_layout_figure(
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/matplotlib/_tight_layout.py", line 266, in get_tight_layout_figure
+    kwargs = _auto_adjust_subplotpars(fig, renderer,
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/matplotlib/_tight_layout.py", line 82, in _auto_adjust_subplotpars
+    bb += [martist._get_tightbbox_for_layout_only(ax, renderer)]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/matplotlib/artist.py", line 1402, in _get_tightbbox_for_layout_only
+    return obj.get_tightbbox(*args, **{**kwargs, "for_layout_only": True})
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/matplotlib/axes/_base.py", line 4548, in get_tightbbox
+    ba = martist._get_tightbbox_for_layout_only(axis, renderer)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/matplotlib/artist.py", line 1402, in _get_tightbbox_for_layout_only
+    return obj.get_tightbbox(*args, **{**kwargs, "for_layout_only": True})
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/matplotlib/axis.py", line 1356, in get_tightbbox
+    tlb1, tlb2 = self._get_ticklabel_bboxes(ticks_to_draw, renderer)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/matplotlib/axis.py", line 1332, in _get_ticklabel_bboxes
+    return ([tick.label1.get_window_extent(renderer)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/matplotlib/axis.py", line 1332, in <listcomp>
+    return ([tick.label1.get_window_extent(renderer)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/matplotlib/text.py", line 969, in get_window_extent
+    bbox, info, descent = self._get_layout(self._renderer)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/matplotlib/text.py", line 508, in _get_layout
+    return bbox, list(zip(lines, zip(ws, hs), *xys.T)), descent
+                                 ^^^^^^^^^^^
+KeyboardInterrupt
+2025-07-09 12:30:47,202 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-09 12:30:47,202 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-09 12:36:54,898 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-09 12:36:54,898 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+Traceback (most recent call last):
+  File "/scratch/s3905845/thesis_final_coding/main.py", line 69, in <module>
+    run()
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/main.py", line 94, in decorated_main
+    _run_hydra(
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/utils.py", line 394, in _run_hydra
+    _run_app(
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/utils.py", line 457, in _run_app
+    run_and_report(
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/utils.py", line 220, in run_and_report
+    return func()
+           ^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/utils.py", line 458, in <lambda>
+    lambda: hydra.run(
+            ^^^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/hydra.py", line 119, in run
+    ret = run_job(
+          ^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/core/utils.py", line 186, in run_job
+    ret.return_value = task_function(task_cfg)
+                       ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/thesis_final_coding/main.py", line 54, in run
+    evaluate_preliminaries(config)
+  File "/scratch/s3905845/thesis_final_coding/src/mdlm/evaluating.py", line 109, in evaluate_preliminaries
+  File "/scratch/s3905845/thesis_final_coding/src/mdlm/evaluating.py", line 83, in evaluate_by_comparison
+    # Generate split violin plots per metric
+                                     ^^^^^^^^
+  File "/scratch/s3905845/thesis_final_coding/src/mdlm/analysis/metrics_runner.py", line 131, in run_multi
+    dataset_results, canonical_smiles_list = self._process_dataset(samples, name, metrics, properties)
+                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/thesis_final_coding/src/mdlm/analysis/metrics_runner.py", line 94, in _process_dataset
+    chem_results = compute_chemical_metrics(mols, chemical_metrics_list)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/thesis_final_coding/src/mdlm/analysis/metrics_core.py", line 65, in compute_chemical_metrics
+    val = METRIC_REGISTRY[metric](mol)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/rdkit/Contrib/SA_Score/sascorer.py", line 73, in calculateScore
+    nChiralCenters = len(Chem.FindMolChiralCenters(m, includeUnassigned=True))
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/rdkit/Chem/__init__.py", line 244, in FindMolChiralCenters
+    if atom.HasProp('_CIPCode'):
+       ^^^^^^^^^^^^^^^^^^^^^^^^
+KeyboardInterrupt
+2025-07-09 12:38:00,968 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-09 12:38:00,969 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+Traceback (most recent call last):
+  File "/scratch/s3905845/thesis_final_coding/main.py", line 69, in <module>
+    run()
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/main.py", line 94, in decorated_main
+    _run_hydra(
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/utils.py", line 394, in _run_hydra
+    _run_app(
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/utils.py", line 457, in _run_app
+    run_and_report(
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/utils.py", line 220, in run_and_report
+    return func()
+           ^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/utils.py", line 458, in <lambda>
+    lambda: hydra.run(
+            ^^^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/hydra.py", line 119, in run
+    ret = run_job(
+          ^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/core/utils.py", line 186, in run_job
+    ret.return_value = task_function(task_cfg)
+                       ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/thesis_final_coding/main.py", line 54, in run
+    evaluate_preliminaries(config)
+  File "/scratch/s3905845/thesis_final_coding/src/mdlm/evaluating.py", line 107, in evaluate_preliminaries
+    evaluate_by_comparison(config, sample_sources, reference_name="Original data", run_type="prelim")
+  File "/scratch/s3905845/thesis_final_coding/src/mdlm/evaluating.py", line 81, in evaluate_by_comparison
+    aggregated_results, fcd_scores = runner.run_multi(sample_sources, METRICS + PROPERTY_COLS, PROPERTY_COLS)
+                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/thesis_final_coding/src/mdlm/analysis/metrics_runner.py", line 153, in run_multi
+    self.plotter.plot_property_violin(metric, data_dict, reference_name="Original data", run_type="prelim")
+  File "/scratch/s3905845/thesis_final_coding/src/mdlm/analysis/metrics_plotting.py", line 154, in plot_property_violin
+    fig.tight_layout()
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/matplotlib/figure.py", line 3640, in tight_layout
+    engine.execute(self)
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/matplotlib/layout_engine.py", line 183, in execute
+    kwargs = get_tight_layout_figure(
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/matplotlib/_tight_layout.py", line 266, in get_tight_layout_figure
+    kwargs = _auto_adjust_subplotpars(fig, renderer,
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/matplotlib/_tight_layout.py", line 82, in _auto_adjust_subplotpars
+    bb += [martist._get_tightbbox_for_layout_only(ax, renderer)]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/matplotlib/artist.py", line 1402, in _get_tightbbox_for_layout_only
+    return obj.get_tightbbox(*args, **{**kwargs, "for_layout_only": True})
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/matplotlib/axes/_base.py", line 4551, in get_tightbbox
+    self._update_title_position(renderer)
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/matplotlib/axes/_base.py", line 3118, in _update_title_position
+    ax.yaxis.get_tightbbox(renderer)  # update offsetText
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/matplotlib/axis.py", line 1353, in get_tightbbox
+    self._update_label_position(renderer)
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/matplotlib/axis.py", line 2675, in _update_label_position
+    bboxes, bboxes2 = self._get_tick_boxes_siblings(renderer=renderer)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/matplotlib/axis.py", line 2241, in _get_tick_boxes_siblings
+    tlb, tlb2 = axis._get_ticklabel_bboxes(ticks_to_draw, renderer)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/matplotlib/axis.py", line 1332, in _get_ticklabel_bboxes
+    return ([tick.label1.get_window_extent(renderer)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/matplotlib/axis.py", line 1332, in <listcomp>
+    return ([tick.label1.get_window_extent(renderer)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/matplotlib/text.py", line 969, in get_window_extent
+    bbox, info, descent = self._get_layout(self._renderer)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/matplotlib/text.py", line 506, in _get_layout
+    xys = M.transform(offset_layout) - (offsetx, offsety)
+          ~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~
+KeyboardInterrupt
+2025-07-09 12:40:14,730 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-09 12:40:14,730 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-09 12:42:14,123 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-09 12:42:14,123 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-09 12:47:28,761 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-09 12:47:28,761 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-09 12:54:06,722 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-09 12:54:06,722 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-09 12:56:02,485 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-09 12:56:02,485 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-09 16:07:14,305 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-09 16:07:14,322 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-09 16:26:53,984 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-09 16:26:53,985 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-09 16:28:04,969 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-09 16:28:04,969 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-09 18:29:58,656 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-09 18:29:58,678 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-09 19:02:50,601 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-09 19:02:50,601 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-09 19:03:37,433 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-09 19:03:37,433 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+Traceback (most recent call last):
+  File "/scratch/s3905845/thesis_final_coding/main.py", line 69, in <module>
+    run()
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/main.py", line 94, in decorated_main
+    _run_hydra(
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/utils.py", line 394, in _run_hydra
+    _run_app(
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/utils.py", line 457, in _run_app
+    run_and_report(
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/utils.py", line 220, in run_and_report
+    return func()
+           ^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/utils.py", line 458, in <lambda>
+    lambda: hydra.run(
+            ^^^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/hydra.py", line 119, in run
+    ret = run_job(
+          ^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/core/utils.py", line 186, in run_job
+    ret.return_value = task_function(task_cfg)
+                       ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/thesis_final_coding/main.py", line 48, in run
+    train(config)
+  File "/scratch/s3905845/thesis_final_coding/src/mdlm/training.py", line 67, in train
+    selfies_vocab, data = prepare_data_for_training(config)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/thesis_final_coding/src/mdlm/preprocessing/preprocessing_pipeline.py", line 226, in prepare_data_for_training
+    df = apply_discretization(config, df)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/thesis_final_coding/src/mdlm/preprocessing/discretization.py", line 64, in apply_discretization
+    binned_series, bin_edges = _bin_column(df_processed[col], col, num_bins)
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/thesis_final_coding/src/mdlm/preprocessing/discretization.py", line 38, in _bin_column
+    binned_series.loc[valid_idx] = binned_values.astype("string")
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/pandas/core/indexing.py", line 911, in __setitem__
+    iloc._setitem_with_indexer(indexer, value, self.name)
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/pandas/core/indexing.py", line 1944, in _setitem_with_indexer
+    self._setitem_single_block(indexer, value, name)
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/pandas/core/indexing.py", line 2218, in _setitem_single_block
+    self.obj._mgr = self.obj._mgr.setitem(indexer=indexer, value=value)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/pandas/core/internals/managers.py", line 415, in setitem
+    return self.apply("setitem", indexer=indexer, value=value)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/pandas/core/internals/managers.py", line 363, in apply
+    applied = getattr(b, f)(**kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/pandas/core/internals/blocks.py", line 2063, in setitem
+    values[indexer] = value
+    ~~~~~~^^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/pandas/core/arrays/string_.py", line 471, in __setitem__
+    mask = isna(value)
+           ^^^^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/pandas/core/dtypes/missing.py", line 178, in isna
+    return _isna(obj)
+           ^^^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/pandas/core/dtypes/missing.py", line 207, in _isna
+    return _isna_array(obj, inf_as_na=inf_as_na)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/pandas/core/dtypes/missing.py", line 292, in _isna_array
+    result = _isna_string_dtype(values, inf_as_na=inf_as_na)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/pandas/core/dtypes/missing.py", line 313, in _isna_string_dtype
+    result = libmissing.isnaobj(values, inf_as_na=inf_as_na)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyboardInterrupt
+2025-07-09 19:05:41,563 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-09 19:05:41,563 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-09 19:11:52,470 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-09 19:11:52,470 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-09 19:13:34,571 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-09 19:13:34,571 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main

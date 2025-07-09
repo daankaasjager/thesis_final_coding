@@ -51,7 +51,10 @@ class MetricPlotter:
             all_tokens_combined.update(counter)
         global_top_tokens = [item[0] for item in all_tokens_combined.most_common(top_n)]
 
-        model_keys = [k for k in counts.keys() if k != reference_name]
+        model_keys = [
+            k for k in counts.keys()
+            if k not in (reference_name, "Original data")
+        ]
         if not model_keys:
             logger.warning("No generated datasets found for token frequency plotting.")
             return
@@ -81,16 +84,21 @@ class MetricPlotter:
             self._save(f"token_frequency_{run_type}_{filename_safe_ref}_vs_{filename_safe_model}.png")
 
 
-    def plot_length_violin(self, lengths: Dict[str, List[int]], reference_name: str, run_type: str):
+    def plot_length_violin(
+            self,
+            lengths: Dict[str, List[int]],
+            reference_name: str,
+            run_type: str
+    ):
         """
-        Plots sequence length distributions as side-by-side violin plots.
+        Sequence-length distributions as side-by-side violins.
+        Reference colour = first entry; all other datasets share the comparison colour.
         """
         plt.figure(figsize=(12, 6))
 
-        data = []
+        data   = []
         labels = []
         for name, vals in lengths.items():
-            if vals:
                 data.append(vals)
                 labels.append(name)
 
@@ -98,12 +106,19 @@ class MetricPlotter:
             logger.warning("No length data to plot.")
             return
 
-        parts = plt.violinplot(data, showmeans=False, showextrema=True, showmedians=True)
-        
-        # Set colors
-        colors = plt.cm.get_cmap('tab10').colors
+        parts = plt.violinplot(
+            data,
+            positions=np.arange(1, len(data) + 1),
+            widths=0.9,
+            showmeans=False,
+            showmedians=True,
+            showextrema=True
+        )
+
+        ref_colour  = plt.cm.get_cmap('tab10')(0)
+        comp_colour = plt.cm.get_cmap('tab10')(1)
         for i, pc in enumerate(parts['bodies']):
-            pc.set_facecolor(colors[i % len(colors)])
+            pc.set_facecolor(ref_colour if i == 0 else comp_colour)
             pc.set_alpha(0.7)
             pc.set_edgecolor('black')
             pc.set_linewidth(1)
@@ -111,53 +126,66 @@ class MetricPlotter:
         plt.xticks(range(1, len(labels) + 1), labels, rotation=45, ha='right')
         plt.ylabel("Sequence Length")
         plt.title("Sequence Length Distribution", fontsize=14)
+        plt.grid(True, axis='y', linestyle=':', alpha=0.6)
 
         plt.tight_layout()
-        colors = plt.cm.get_cmap('tab10').colors
-        handles = [plt.Rectangle((0,0),1,1,color=colors[i % len(colors)],alpha=0.7) for i in range(len(labels))]
         self._save(f"length_violin_{run_type}.png")
 
-    def plot_property_violin(self, metric: str, data: Dict[str, List[float]], reference_name: str, run_type: str):
+
+    def plot_property_violin(
+            self,
+            metric: str,
+            data: Dict[str, List[float]],
+            reference_name: str,
+            run_type: str
+    ):
         """
-        Plots chemical property distributions as side-by-side violin plots.
+        Make one side-by-side violin figure per metric.
+
+        • x-axis = dataset / model  
+        • y-axis = metric values  
+        • first violin (reference) gets its own colour; all generated sets share one colour.
         """
-        reference_data = data.get(reference_name, [])
-        if not reference_data:
-            logger.warning(f"Skipping {metric}: missing reference data ({reference_name}).")
+        names = [reference_name] + [
+            n for n in data
+            if n != reference_name and n != "Original data" and data.get(n)
+        ]
+        if len(names) < 2:
+            logger.warning(f"Not enough data to plot {metric}")
             return
 
-        model_keys = [k for k in data.keys() if k != reference_name]
-        if not model_keys:
-            logger.warning(f"No generated models found for {metric}.")
-            return
+        values = [data[n] for n in names]
+        fig, ax = plt.subplots(figsize=(1.3 * len(values) + 3, 6))
 
-        for model_key in model_keys:
-            comparison_data = data[model_key]
-            if not comparison_data:
-                continue
+        parts = ax.violinplot(
+            values,
+            positions=np.arange(1, len(values) + 1),
+            widths=0.9,
+            showmeans=False,
+            showmedians=True,
+            showextrema=True
+        )
 
-            fig, ax = plt.subplots(figsize=(6,6))
+        ref_colour  = plt.cm.get_cmap('tab10')(0)   # reference colour
+        comp_colour = plt.cm.get_cmap('tab10')(1)   # colour shared by all comparisons
+        for i, body in enumerate(parts['bodies']):
+            body.set_facecolor(ref_colour if i == 0 else comp_colour)
+            body.set_alpha(0.7)
+            body.set_edgecolor('black')
+            body.set_linewidth(1)
 
-            ax.set_title(metric.replace('_', ' ').title(), fontsize=14)
+        ax.set_xticks(np.arange(1, len(values) + 1))
+        ax.set_xticklabels(names, rotation=45, ha='right')
+        ax.set_ylabel(metric.replace('_', ' ').title())
+        ax.set_title(metric.replace('_', ' ').title(), fontsize=14, pad=12)
+        ax.grid(True, axis='y', linestyle=':', alpha=0.6)
 
-            parts = ax.violinplot([reference_data, comparison_data],
-                                showmeans=False, showmedians=True, showextrema=True)
+        handles = [plt.Rectangle((0, 0), 1, 1, color=ref_colour,  alpha=0.7),
+                   plt.Rectangle((0, 0), 1, 1, color=comp_colour, alpha=0.7)]
+        ax.legend(handles, [reference_name, "Generated models"], loc="best")
 
-            colors = plt.cm.get_cmap('tab10').colors
-            handles = [plt.Rectangle((0,0),1,1,color=colors[i % len(colors)],alpha=0.7) for i in range(2)]
-            ax.legend(handles, [reference_name, model_key], title="Dataset", loc="best")
-
-            ax.set_xticks([])
-            ax.set_ylabel(metric.replace('_', ' ').title())
-            ax.grid(True, axis='y', linestyle=':', alpha=0.6)
-
-            fig.tight_layout()
-
-
-
-            filename_safe_model = model_key.replace(" ", "_").lower()
-            filename_safe_ref = reference_name.replace(" ", "_").lower()
-            self._save(f"{metric}_{run_type}_{filename_safe_ref}_vs_{filename_safe_model}.png")
+        fig.tight_layout()
+        self._save(f"{metric}_{run_type}_side_by_side.png")
 
     def _draw_split_violin(self, ax, data1, data2, label1, label2, color1, color2, position):
         """Helper function to draw a split violin plot."""

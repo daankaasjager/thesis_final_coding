@@ -171,6 +171,13 @@ def _tokenize_selfies_and_filter(
     else:
         logger.warning("No sequences remained after filtering. Check data and max_len setting.")
 
+    csv_path = config.paths.filtered_original_data
+    try:
+        logger.info(f"Saving filtered SELFIES data as CSV to: {csv_path}")
+        filtered_df.to_csv(csv_path, index=False)
+    except Exception as e:
+        logger.error(f"Failed to save filtered SELFIES CSV: {e}", exc_info=True)
+        raise
     return alphabet, filtered_df
 
 

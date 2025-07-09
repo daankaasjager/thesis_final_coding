@@ -15,6 +15,7 @@ selfies_alphabet: ${paths.data_root}/training_data/selfies_alphabet.txt # Base l
 tokenizer: ${paths.data_root}/tokenizers/${experiment.name}
 
 # The preprocessed data path can be overridden by the conditioning type (e.g., for prepend).
+filtered_original_data: ${paths.data_root}/training_data/filtered_selfies.csv
 pre_processed_data: ${paths.data_root}/training_data/preprocessed_data.parquet
 train_data_encoding: ${paths.data_root}/training_data/${experiment.name}
 selfies_ape_vocab: ${paths.data_root}/tokenizer/ # This is the APE vocabulary for SELFIES, changes for each APE experiment. Should this be hydra dir?
@@ -25,9 +26,22 @@ temp_path: ${paths.data_root}/sampled_data/temp.tmp
 sampled_data: ${paths.data_root}/sampled_data/${experiment.name}/
 synthesize_dir: ${paths.data_root}/synthesized_molecules
 
+# Baseline testing paths
+tiny_wordlevel: ${paths.data_root}/sampled_data/model_size_tiny/samples_with_properties.json
+small_wordlevel: ${paths.data_root}/sampled_data/model_size_small/samples_with_properties.json
+ape_70: ${paths.data_root}/sampled_data/ape_70/samples_with_properties.json
+ape_80: ${paths.data_root}/sampled_data/ape_80/samples_with_properties.json
+ape_110: ${paths.data_root}/sampled_data/ape_110/samples_with_properties.json
 
-tiny_wordlevel: ${paths.data_root}/sampled_data/model_size_tiny/generated_samples.json
-small_wordlevel: ${paths.data_root}/sampled_data/ape_110/generated_samples.json
-ape_70: ${paths.data_root}/sampled_data/ape_70/generated_samples.json
-ape_80: ${paths.data_root}/sampled_data/ape_80/generated_samples.json
-ape_110: ${paths.data_root}/sampled_data/ape_110/generated_samples.json
+# Conditioning paths
+prepend_1: ${paths.data_root}/sampled_data/prepend_1/samples_with_properties.json
+prepend_3: ${paths.data_root}/sampled_data/prepend_3/samples_with_properties.json
+prepend_8: ${paths.data_root}/sampled_data/prepend_8/samples_with_properties.json
+prepend_all: ${paths.data_root}/sampled_data/prepend_all/samples_with_properties.json
+embedding_1: ${paths.data_root}/sampled_data/embedding_1/samples_with_properties.json
+embedding_3: ${paths.data_root}/sampled_data/embedding_3/samples_with_properties.json
+embedding_8: ${paths.data_root}/sampled_data/embedding_8/samples_with_properties.json
+embedding_all: ${paths.data_root}/sampled_data/embedding_all/samples_with_properties.json
+cfg_01: ${paths.data_root}/sampled_data/cfg_01/samples_with_properties.json
+cfg_02: ${paths.data_root}/sampled_data/cfg_02/samples_with_properties.json
+cfg_03: ${paths.data_root}/sampled_data/cfg_03/samples_with_properties.json

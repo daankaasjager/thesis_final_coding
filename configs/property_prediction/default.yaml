@@ -7,7 +7,7 @@ data:
   prop_columns: ['nbo_P', 'nmr_P', 'pyr_P', 'fmo_mu', 'vmin_r', 'volume', 'fmo_eta',  'fukui_m', 'fukui_p', 'nuesp_P', 'somo_rc', 'nbo_P_rc', 'pyr_alpha', 'qpole_amp', 'vbur_vbur', 'Pint_P_min', 'sterimol_L', 'sterimol_B1', 'sterimol_B5', 'dipolemoment', 'efgtens_xx_P',  'efgtens_yy_P', 'nbo_bd_e_max', 'nbo_lp_P_occ', 'qpoletens_yy', 'E_solv_elstat', 'nbo_bds_e_avg', 'sterimol_burL', 'nbo_bd_occ_avg', 'sterimol_burB5', 'vbur_ovbur_min', 'vbur_qvbur_min', 'nbo_bds_occ_max', 'vbur_ratio_vbur_vtot', 'mol_wt', 'sa_score']
 
 experiment:
-  name: 'property_prediction_experiment' 
+  name: 'model_size_tiny' 
 
 model:
   node_dim: null      # Set automatically by the script
@@ -45,7 +45,7 @@ wandb:
   project: SELFIES-diffusion
   notes: "property prediction training"
   group: property_prediction_training # Group runs by experiment name
-  name: ${experiment.name} # A descriptive name
+  name: property_prediction # A descriptive name
   job_type: ${mode} # The type of job, e.g., train, test, etc.
   id: ${.name}_${seed}_${now:%Y%m%d_%H%M%S} #Sets unique name and seed
 
@@ -54,7 +54,7 @@ callbacks:
     _target_: lightning.pytorch.callbacks.ModelCheckpoint
     save_top_k: -1 # Do not save any "best" models; this callback is being used to save every n train steps
     save_last: True # save model as ${save_dir}/checkpoints/last.ckpt
-    dirpath: ${cwd:}/checkpoints/${experiment.name}
+    dirpath: ${cwd:}/checkpoints/property_prediction
     verbose: True
     auto_insert_metric_name: False
     every_n_train_steps: 4000
@@ -65,7 +65,7 @@ callbacks:
     save_top_k: 1 # save k best models (determined by above metric)
     save_last: False # True = additionally always save model from last epoch
     dirpath: ${cwd:}/checkpoints
-    filename: ${wandb.name}
+    filename: property_prediction
     auto_insert_metric_name: False
     verbose: True
   learning_rate_monitor:
@@ -75,9 +75,9 @@ callbacks:
 
 # Section for inference settings
 inference:
-  model_path: '${cwd:}/checkpoints/${wandb.name}.ckpt' # Note the '..' to go up one level
+  model_path: '${cwd:}/checkpoints/property_prediction.ckpt' # Note the '..' to go up one level
   plotting_path: /scratch/s3905845/thesis_final_coding/data/kraken/metric_plots
-  sampled_selfies_file: null
+  sampled_selfies_file: /scratch/s3905845/thesis_final_coding/data/kraken/sampled_data/${experiment.name}/generated_samples.json
   normalization_stats_file: "/scratch/s3905845/thesis_final_coding/data/kraken/mapping/mean_std.json"
-  output_path: /scratch/s3905845/thesis_final_coding/data/kraken/predicted_properties
+  output_path: /scratch/s3905845/thesis_final_coding/data/kraken/sampled_data/${experiment.name}/samples_with_properties.json
   selfies_alphabet: /scratch/s3905845/thesis_final_coding/data/kraken/training_data/selfies_alphabet.txt
