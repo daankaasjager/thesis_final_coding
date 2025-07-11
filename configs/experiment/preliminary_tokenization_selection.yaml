@@ -1,7 +1,0 @@
-defaults:
-  - override /tokenizer: wordlevel,ape_60,ape_80,ape_110
-
-# Fixed parameters for this experiment
-name: "Preliminary Tokenizer Selection"
-model: small # Change if another model was better
-conditioning: no

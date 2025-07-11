@@ -1,6 +1,6 @@
 """Graph Convolutional Neural Network (GCN) for Molecular Property Prediction
 This module defines a GCN model for predicting molecular properties using PyTorch Geometric.
-It is taken the GitLab repository of Andrei Voinea"""
+It is taken the GitLab repository of Andrei Voinea."""
 
 from pathlib import Path
 import lightning as L

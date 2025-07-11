@@ -19,6 +19,7 @@ filtered_original_data: ${paths.data_root}/training_data/filtered_selfies.csv
 pre_processed_data: ${paths.data_root}/training_data/preprocessed_data.parquet
 train_data_encoding: ${paths.data_root}/training_data/${experiment.name}
 selfies_ape_vocab: ${paths.data_root}/tokenizer/ # This is the APE vocabulary for SELFIES, changes for each APE experiment. Should this be hydra dir?
+length_histogram: ${paths.data_root}/training_data/length_histogram.json
 
 # --- Output Paths For plots and molecules---
 metrics_dir: ${paths.data_root}/metric_plots/
@@ -27,11 +28,11 @@ sampled_data: ${paths.data_root}/sampled_data/${experiment.name}/
 synthesize_dir: ${paths.data_root}/synthesized_molecules
 
 # Baseline testing paths
-tiny_wordlevel: ${paths.data_root}/sampled_data/model_size_tiny/samples_with_properties.json
-small_wordlevel: ${paths.data_root}/sampled_data/model_size_small/samples_with_properties.json
-ape_70: ${paths.data_root}/sampled_data/ape_70/samples_with_properties.json
-ape_80: ${paths.data_root}/sampled_data/ape_80/samples_with_properties.json
-ape_110: ${paths.data_root}/sampled_data/ape_110/samples_with_properties.json
+tiny_wordlevel: ${paths.data_root}/sampled_data/model_size_tiny/hist_samples_with_properties.json
+small_wordlevel: ${paths.data_root}/sampled_data/model_size_small/hist_samples_with_properties.json
+ape_70: ${paths.data_root}/sampled_data/ape_70/hist_samples_with_properties.json
+ape_80: ${paths.data_root}/sampled_data/ape_80/hist_samples_with_properties.json
+ape_110: ${paths.data_root}/sampled_data/ape_110/hist_samples_with_properties.json
 
 # Conditioning paths
 prepend_1: ${paths.data_root}/sampled_data/prepend_1/samples_with_properties.json

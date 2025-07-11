@@ -13,6 +13,7 @@ import transformers
 from torch import Tensor
 from tqdm import tqdm
 
+from .utils.length_sampler import LengthSampler
 from .preprocessing import map_target_properties_to_bins, normalize_scalar_target_properties
 
 from .modeling import (ExponentialMovingAverage,
@@ -113,6 +114,16 @@ class Diffusion(L.LightningModule):
         self.neg_infinity = -1000000.0
         self.fast_forward_epochs = None
         self.fast_forward_batches = None
+
+        if self.config.model.sample_length_mode == "histogram":
+            self.length_sampler = LengthSampler(
+                hist_file=self.config.paths.length_histogram,
+                max_len=self.config.model.length,
+                device=self.device,
+            )
+        else:
+            self.fixed_length = self.config.model.length
+
         self._validate_configuration()
 
 
@@ -425,15 +436,81 @@ class Diffusion(L.LightningModule):
     
 
     def _sample_prior(self, *batch_dims, target_properties=None):
-        # Create conditioning prefix
+        """
+        Creates a [MASK]-only sequence (plus optional conditioning prefix).
+
+        Parameters
+        ----------
+        *batch_dims : (int,) or (int, int)
+            batch_dims[0] = batch size  (required)
+            batch_dims[1] = requested sequence length (ignored when
+                        sample_length_mode == "histogram")
+        target_properties : dict | None
+            Used only when `conditioning.prepend` is enabled.
+
+        Returns
+        -------
+        torch.LongTensor  shape == (batch_size, L)
+        """
+
+        # ------------------------------------------------------------------ #
+        # 0. parse the incoming dimensions                                   #
+        # ------------------------------------------------------------------ #
+        if len(batch_dims) == 0:
+            raise ValueError("_sample_prior needs at least the batch size")
+
+        batch_size = int(batch_dims[0])
+
+        if self.config.model.sample_length_mode == "histogram":
+            # Draw ONE length and share it across the whole batch so that
+            # downstream code can continue to treat the tensor as rectangular.
+            L = int(self.length_sampler.sample(1))
+        else:  # "fixed"
+            if len(batch_dims) < 2:
+                raise ValueError("fixed-length mode expects (batch, seq_len)")
+            L = int(batch_dims[1])
+
+        max_L = self.config.model.length   # positional-encoding cap
+        if L > max_L:
+            raise ValueError(
+                f"Chosen length {L} exceeds model.length={max_L}. "
+                "Increase the cap or trim the histogram."
+            )
+
+        # ------------------------------------------------------------------ #
+        # 1. optional property-conditioning prefix                           #
+        # ------------------------------------------------------------------ #
         if self.config.conditioning.prepend and target_properties is not None:
-            logger.debug("Sampling with conditioning prefix.")
-            bin_token_ids = map_target_properties_to_bins(self.config, target_properties, self.tokenizer)
-            prefix = torch.tensor(bin_token_ids, device=self.device).unsqueeze(0).expand(batch_dims[0], -1)
-            suffix = torch.full((batch_dims[0], batch_dims[1] - prefix.shape[1]),
-                                self.mask_index, dtype=torch.long, device=self.device)
-            return torch.cat([prefix, suffix], dim=1)
-        return self.mask_index * torch.ones(*batch_dims, dtype=torch.int64, device=self.device)
+            bin_token_ids = map_target_properties_to_bins(
+                self.config, target_properties, self.tokenizer
+            )                                  # e.g. [145, 876, 32]
+            prefix = torch.tensor(
+                bin_token_ids, device=self.device, dtype=torch.long
+            ).unsqueeze(0).expand(batch_size, -1)          # (B, P)
+
+            # make sure prefix fits; stretch L if necessary
+            if prefix.shape[1] > L:
+                L = prefix.shape[1]
+
+            suffix_len = L - prefix.shape[1]
+            suffix = torch.full(
+                (batch_size, suffix_len),
+                self.mask_index,
+                dtype=torch.long,
+                device=self.device,
+            )
+            return torch.cat([prefix, suffix], dim=1)      # (B, L)
+
+        # ------------------------------------------------------------------ #
+        # 2. unconditional prior                                             #
+        # ------------------------------------------------------------------ #
+        return torch.full(
+            (batch_size, L),
+            self.mask_index,
+            dtype=torch.long,
+            device=self.device,
+        )
+
 
     def _ddpm_caching_update(self, x, t, dt, p_x0=None, target_properties=None, current_guidance_scale=0.0):
         assert self.config.noise.type == "loglinear"
@@ -713,7 +790,7 @@ class Diffusion(L.LightningModule):
         return samples
 
     @torch.no_grad
-    def sample_subs_guidance(self, n_samples, stride_length, num_strides, dt=0.001):
+    def sample_subs_guidance(self, n_samples, stride_length, num_strides, dt=0.001, target_properties=None):
         ones = torch.ones(n_samples, dtype=self.dtype, device=self.device)
 
         num_steps = int(1 / dt)
@@ -754,7 +831,7 @@ class Diffusion(L.LightningModule):
             )
         return (sampling_steps, intermediate_text_samples, sequence_lengths)
 
-    def restore_model_and_semi_ar_sample(self, stride_length, num_strides, dt=0.001):
+    def restore_model_and_semi_ar_sample(self, stride_length, num_strides, dt=0.001, target_properties=None):
         """Generate samples from the model with progress tracking."""
         if self.ema:
             self.ema.store(
@@ -772,6 +849,7 @@ class Diffusion(L.LightningModule):
             stride_length=stride_length,
             num_strides=num_strides,
             dt=dt,
+            target_properties=target_properties
         )
         if self.ema:
             self.ema.restore(

@@ -18171,3 +18171,387 @@ KeyboardInterrupt
 2025-07-09 19:11:52,470 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
 2025-07-09 19:13:34,571 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
 2025-07-09 19:13:34,571 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-09 23:23:24,268 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-09 23:23:24,267 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-09 23:23:24,268 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-09 23:23:24,297 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-09 23:23:24,296 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-09 23:23:24,300 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-09 23:23:51,080 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-09 23:23:51,080 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-09 23:23:51,080 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-09 23:23:51,080 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-10 09:49:41,449 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-10 09:49:41,485 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-10 09:51:33,114 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-10 09:51:33,114 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-10 09:52:12,313 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-10 09:52:12,314 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-10 10:53:59,951 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-10 10:53:59,952 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-10 10:55:47,931 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-10 10:55:47,932 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-10 12:28:32,887 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-10 12:28:32,960 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-10 12:45:16,681 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-10 12:45:16,681 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-10 13:05:31,245 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-10 13:05:31,245 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-10 13:07:51,436 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-10 13:07:51,436 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-10 13:08:58,735 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-10 13:08:58,735 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-10 13:10:02,294 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-10 13:10:02,294 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-10 13:30:22,533 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-10 13:30:22,547 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-10 13:57:36,504 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-10 13:57:36,519 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-10 14:15:12,171 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-10 14:15:12,173 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-10 14:19:04,531 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-10 14:19:04,532 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-10 22:31:23,407 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-10 22:31:23,440 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-10 22:32:51,306 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-10 22:32:51,306 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-10 22:34:00,561 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-10 22:34:00,561 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-10 22:34:49,117 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-10 22:34:49,117 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-10 22:35:44,947 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-10 22:35:44,947 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-10 22:56:00,969 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-10 22:56:00,969 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+Traceback (most recent call last):
+  File "/scratch/s3905845/thesis_final_coding/main.py", line 69, in <module>
+    run()
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/main.py", line 94, in decorated_main
+    _run_hydra(
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/utils.py", line 394, in _run_hydra
+    _run_app(
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/utils.py", line 457, in _run_app
+    run_and_report(
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/utils.py", line 220, in run_and_report
+    return func()
+           ^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/utils.py", line 458, in <lambda>
+    lambda: hydra.run(
+            ^^^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/hydra.py", line 119, in run
+    ret = run_job(
+          ^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/core/utils.py", line 186, in run_job
+    ret.return_value = task_function(task_cfg)
+                       ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/thesis_final_coding/main.py", line 51, in run
+    generate_samples(config)
+  File "/scratch/s3905845/thesis_final_coding/src/mdlm/generating.py", line 115, in generate_samples
+    batch_samples = _sample_batch(model, config)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/thesis_final_coding/src/mdlm/generating.py", line 52, in _sample_batch
+    samples = model.restore_model_and_sample(num_steps=config.sampling.steps,
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/thesis_final_coding/src/mdlm/diffusion.py", line 783, in restore_model_and_sample
+    samples = self._sample(num_steps=num_steps, eps=eps, target_properties=target_properties, current_guidance_scale=guidance_scale)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 116, in decorate_context
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/thesis_final_coding/src/mdlm/diffusion.py", line 752, in _sample
+    p_x0_cache, x_next = self._ddpm_caching_update(
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/thesis_final_coding/src/mdlm/diffusion.py", line 530, in _ddpm_caching_update
+    if current_guidance_scale == 0.0 or not self.config.conditioning.cfg:
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/omegaconf/dictconfig.py", line 341, in __getattr__
+    def __getattr__(self, key: str) -> Any:
+    
+KeyboardInterrupt
+2025-07-10 22:57:34,767 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-10 22:57:34,767 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+Traceback (most recent call last):
+  File "/scratch/s3905845/thesis_final_coding/main.py", line 69, in <module>
+    run()
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/main.py", line 94, in decorated_main
+    _run_hydra(
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/utils.py", line 394, in _run_hydra
+    _run_app(
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/utils.py", line 457, in _run_app
+    run_and_report(
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/utils.py", line 220, in run_and_report
+    return func()
+           ^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/utils.py", line 458, in <lambda>
+    lambda: hydra.run(
+            ^^^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/hydra.py", line 119, in run
+    ret = run_job(
+          ^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/core/utils.py", line 186, in run_job
+    ret.return_value = task_function(task_cfg)
+                       ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/thesis_final_coding/main.py", line 51, in run
+    generate_samples(config)
+  File "/scratch/s3905845/thesis_final_coding/src/mdlm/generating.py", line 115, in generate_samples
+    batch_samples = _sample_batch(model, config)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/thesis_final_coding/src/mdlm/generating.py", line 52, in _sample_batch
+    samples = model.restore_model_and_sample(num_steps=config.sampling.steps,
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/thesis_final_coding/src/mdlm/diffusion.py", line 783, in restore_model_and_sample
+    samples = self._sample(num_steps=num_steps, eps=eps, target_properties=target_properties, current_guidance_scale=guidance_scale)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 116, in decorate_context
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/thesis_final_coding/src/mdlm/diffusion.py", line 752, in _sample
+    p_x0_cache, x_next = self._ddpm_caching_update(
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/thesis_final_coding/src/mdlm/diffusion.py", line 530, in _ddpm_caching_update
+    if current_guidance_scale == 0.0 or not self.config.conditioning.cfg:
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/omegaconf/dictconfig.py", line 341, in __getattr__
+    def __getattr__(self, key: str) -> Any:
+    
+KeyboardInterrupt
+2025-07-10 22:58:45,318 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-10 22:58:45,318 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+Traceback (most recent call last):
+  File "/scratch/s3905845/thesis_final_coding/main.py", line 69, in <module>
+    run()
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/main.py", line 94, in decorated_main
+    _run_hydra(
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/utils.py", line 394, in _run_hydra
+    _run_app(
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/utils.py", line 457, in _run_app
+    run_and_report(
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/utils.py", line 220, in run_and_report
+    return func()
+           ^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/utils.py", line 458, in <lambda>
+    lambda: hydra.run(
+            ^^^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/hydra.py", line 119, in run
+    ret = run_job(
+          ^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/core/utils.py", line 186, in run_job
+    ret.return_value = task_function(task_cfg)
+                       ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/thesis_final_coding/main.py", line 51, in run
+    generate_samples(config)
+  File "/scratch/s3905845/thesis_final_coding/src/mdlm/generating.py", line 115, in generate_samples
+    batch_samples = _sample_batch(model, config)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/thesis_final_coding/src/mdlm/generating.py", line 52, in _sample_batch
+    samples = model.restore_model_and_sample(num_steps=config.sampling.steps,
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/thesis_final_coding/src/mdlm/diffusion.py", line 783, in restore_model_and_sample
+    samples = self._sample(num_steps=num_steps, eps=eps, target_properties=target_properties, current_guidance_scale=guidance_scale)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 116, in decorate_context
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/thesis_final_coding/src/mdlm/diffusion.py", line 752, in _sample
+    p_x0_cache, x_next = self._ddpm_caching_update(
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/thesis_final_coding/src/mdlm/diffusion.py", line 530, in _ddpm_caching_update
+    if current_guidance_scale == 0.0 or not self.config.conditioning.cfg:
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/omegaconf/dictconfig.py", line 341, in __getattr__
+    def __getattr__(self, key: str) -> Any:
+    
+KeyboardInterrupt
+2025-07-10 23:16:43,913 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-10 23:16:43,916 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-11 00:13:29,444 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-11 00:13:29,457 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-11 00:25:04,800 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-11 00:25:04,802 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-11 00:49:46,760 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-11 00:49:46,760 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-11 01:00:48,699 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-11 01:00:48,708 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-11 02:05:04,005 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-11 02:05:04,006 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-11 02:05:04,028 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-11 02:05:04,030 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-11 02:13:05,607 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-11 02:13:05,609 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-11 02:25:24,546 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-11 02:25:24,548 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-11 02:31:02,830 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-11 02:31:02,832 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-11 02:31:06,134 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-11 02:31:06,154 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-11 11:36:23,304 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-11 11:36:23,322 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-11 11:41:54,043 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-11 11:41:54,044 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-11 11:43:26,409 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-11 11:43:26,410 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-11 11:44:06,379 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-11 11:44:06,379 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-11 11:48:02,151 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-11 11:48:02,151 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-11 11:49:13,489 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-11 11:49:13,489 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-11 11:49:31,770 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-11 11:49:31,770 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-11 11:49:39,705 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-11 11:49:39,705 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-11 11:51:31,228 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-11 11:51:31,229 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-11 12:00:20,349 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-11 12:00:20,349 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-11 12:03:03,201 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-11 12:03:03,201 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+Traceback (most recent call last):
+  File "/scratch/s3905845/thesis_final_coding/main.py", line 69, in <module>
+    run()
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/main.py", line 94, in decorated_main
+    _run_hydra(
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/utils.py", line 394, in _run_hydra
+    _run_app(
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/utils.py", line 457, in _run_app
+    run_and_report(
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/utils.py", line 220, in run_and_report
+    return func()
+           ^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/utils.py", line 458, in <lambda>
+    lambda: hydra.run(
+            ^^^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/hydra.py", line 119, in run
+    ret = run_job(
+          ^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/core/utils.py", line 186, in run_job
+    ret.return_value = task_function(task_cfg)
+                       ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/thesis_final_coding/main.py", line 51, in run
+    generate_samples(config)
+  File "/scratch/s3905845/thesis_final_coding/src/mdlm/generating.py", line 120, in generate_samples
+    batch_samples = _sample_batch(model, config)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/thesis_final_coding/src/mdlm/generating.py", line 52, in _sample_batch
+    samples = model.restore_model_and_sample(num_steps=config.sampling.steps,
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/thesis_final_coding/src/mdlm/diffusion.py", line 783, in restore_model_and_sample
+    samples = self._sample(num_steps=num_steps, eps=eps, target_properties=target_properties, current_guidance_scale=guidance_scale)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 116, in decorate_context
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/thesis_final_coding/src/mdlm/diffusion.py", line 752, in _sample
+    p_x0_cache, x_next = self._ddpm_caching_update(
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/thesis_final_coding/src/mdlm/diffusion.py", line 540, in _ddpm_caching_update
+    log_p_x0 = self._subs_parameterization(logits=guided_logits, xt=x)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/thesis_final_coding/src/mdlm/diffusion.py", line 255, in _subs_parameterization
+    def _subs_parameterization(self, logits, xt):
+    
+KeyboardInterrupt
+2025-07-11 12:28:20,760 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-11 12:28:20,764 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-11 12:28:20,762 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-11 12:28:20,803 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-11 12:28:20,799 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-11 12:28:20,804 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-11 13:25:43,755 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-11 13:25:43,811 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-11 13:27:08,791 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-11 13:27:08,791 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-11 13:27:47,496 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-11 13:27:47,496 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-11 13:28:19,663 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-11 13:28:19,664 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-11 13:28:50,606 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-11 13:28:50,607 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-11 13:29:23,962 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-11 13:29:23,962 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-11 13:29:57,588 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-11 13:29:57,589 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-11 13:31:59,172 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-11 13:31:59,172 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-11 13:32:30,457 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-11 13:32:30,457 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-11 13:33:03,453 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-11 13:33:03,453 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-11 13:33:32,728 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-11 13:33:32,728 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-11 13:34:00,996 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-11 13:34:00,996 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-11 13:34:30,676 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-11 13:34:30,677 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+Traceback (most recent call last):
+  File "/scratch/s3905845/thesis_final_coding/main.py", line 69, in <module>
+    run()
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/main.py", line 94, in decorated_main
+    _run_hydra(
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/utils.py", line 394, in _run_hydra
+    _run_app(
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/utils.py", line 457, in _run_app
+    run_and_report(
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/utils.py", line 220, in run_and_report
+    return func()
+           ^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/utils.py", line 458, in <lambda>
+    lambda: hydra.run(
+            ^^^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/_internal/hydra.py", line 119, in run
+    ret = run_job(
+          ^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/hydra/core/utils.py", line 186, in run_job
+    ret.return_value = task_function(task_cfg)
+                       ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/thesis_final_coding/main.py", line 61, in run
+    predict_properties(config.property_prediction)
+  File "/scratch/s3905845/thesis_final_coding/src/property_prediction/inference.py", line 204, in predict_properties
+    predictions.append(model(batch).cpu())
+                       ^^^^^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1739, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1750, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/thesis_final_coding/src/property_prediction/gcnn.py", line 108, in forward
+    x = self.set2set(x, graph_data.batch)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/torch_geometric/experimental.py", line 117, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/s3905845/venvs/thesis/lib/python3.11/site-packages/torch_geometric/nn/aggr/base.py", line 128, in __call__
+    dim_size = int(index.max()) + 1 if index.numel() > 0 else 0
+               ^^^^^^^^^^^^^^^^
+KeyboardInterrupt
+2025-07-11 13:40:22,216 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-11 13:40:22,216 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-11 13:40:56,089 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-11 13:40:56,089 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-11 13:41:27,667 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-11 13:41:27,668 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-11 13:41:55,823 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-11 13:41:55,823 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-11 13:42:23,618 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-11 13:42:23,619 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-11 13:42:52,694 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-11 13:42:52,694 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-11 13:43:25,469 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-11 13:43:25,469 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-11 13:43:57,730 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-11 13:43:57,731 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-11 13:44:28,486 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-11 13:44:28,486 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-11 13:44:52,695 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-11 13:44:52,695 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-11 13:45:27,573 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-11 13:45:27,573 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-11 13:45:56,510 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-11 13:45:56,510 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-11 13:46:21,847 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-11 13:46:21,848 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-11 13:46:41,224 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-11 13:46:41,225 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main
+2025-07-11 17:06:13,928 - hydra.core.utils - DEBUG - Setting JobRuntime:name=UNKNOWN_NAME
+2025-07-11 17:06:13,944 - hydra.core.utils - DEBUG - Setting JobRuntime:name=main

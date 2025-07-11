@@ -313,20 +313,9 @@ sampling.target_properties="{"nbo_P": 0.7329, "nmr_P": 202.55, "pyr_P": 0.9096, 
 
 
 ### Conditioned sampling: CFG
-This needs ~2x the time due to the double forward pass of cfg during sampling. Change the script accordingly
-p_cfg=0.1
-```bash
-scripts/sample.sh model=small \
-tokenizer.tokenizer_type=wordlevel \
-mode=generate \
-experiment.name="cfg_01" \
-conditioning="cfg" \
-conditioning.properties="['sa_score','mol_wt','volume']" \
-conditioning.guidance_scale=0.3 \
-sampling.target_properties="{"sa_score": 2.80, "mol_wt": 326.1, "volume": 395.4}"
-```
+This needs ~2x the time due to the double forward pass of cfg during sampling. Change the script accordingl
 
-p_cfg=0.2
+p_cfg=0.2 w=0.3
 ```bash
 scripts/sample.sh model=small \
 tokenizer.tokenizer_type=wordlevel \
@@ -337,16 +326,26 @@ conditioning.properties="['sa_score','mol_wt','volume']" \
 conditioning.guidance_scale=0.3 \
 sampling.target_properties="{"sa_score": 2.80, "mol_wt": 326.1, "volume": 395.4}"
 ```
-
-p_cfg = 0.3
+'
 ```bash
 scripts/sample.sh model=small \
 tokenizer.tokenizer_type=wordlevel \
 mode=generate \
-experiment.name="cfg_03" \
+experiment.name="cfg_02" \
 conditioning="cfg" \
 conditioning.properties="['sa_score','mol_wt','volume']" \
-conditioning.guidance_scale=0.3 \
+conditioning.guidance_scale=1.0 \
+sampling.target_properties="{"sa_score": 2.80, "mol_wt": 326.1, "volume": 395.4}"
+```
+
+```bash
+scripts/sample.sh model=small \
+tokenizer.tokenizer_type=wordlevel \
+mode=generate \
+experiment.name="cfg_02" \
+conditioning="cfg" \
+conditioning.properties="['sa_score','mol_wt','volume']" \
+conditioning.guidance_scale=4.0 \
 sampling.target_properties="{"sa_score": 2.80, "mol_wt": 326.1, "volume": 395.4}"
 ```
 
@@ -356,6 +355,8 @@ sampling.target_properties="{"sa_score": 2.80, "mol_wt": 326.1, "volume": 395.4}
 ```bash
 ./scripts/run.sh mode=evaluate
 ```
+
+
 
 # Property prediction
 ## training
@@ -370,7 +371,8 @@ sampling.target_properties
 Change the experiment name to the relevant experiment to predict the properties of that experiment.
 ```bash
 scripts/sample.sh \
-experiment.name="model_size_tiny" \
-mode="predict_properties" 
+experiment.name="cfg_01" \
+mode="predict_properties" \
+property_prediction.inference.hist=True 
 ```
 

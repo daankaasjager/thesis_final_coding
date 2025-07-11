@@ -52,7 +52,7 @@ def run(config: DictConfig):
     elif config.mode == "evaluate":
         from src.mdlm import evaluate_preliminaries, evaluate_conditioning
         evaluate_preliminaries(config)
-        # evaluate_conditioning(config)
+        evaluate_conditioning(config)
     elif config.mode == "train_property_prediction":
         from src.property_prediction.training import train_property_predictor
         train_property_predictor(config.property_prediction)

@@ -67,7 +67,7 @@ wandb:
 # This is important when working with multi-GPU training, to ensure that 
 # the batch size is divided evenly among all GPUs.
 loader:
-  global_batch_size: 128
+  global_batch_size: 64
   eval_global_batch_size: ${.global_batch_size}
   # Note: batch_size and eval_batch_size are **per machine**
   batch_size: ${div_up:${.global_batch_size}, ${eval:${trainer.devices} * ${trainer.num_nodes}}}
@@ -125,7 +125,7 @@ sampling:
   predictor: ddpm_cache  # analytic, ddpm, ddpm_cache
   steps: 128
   noise_removal: True
-  num_sample_batches: 80  # Total samples: `loader.eval_batch_size` * num_sample_batches
+  num_sample_batches: 160  # Total samples: `loader.eval_batch_size` * num_sample_batches
   num_sample_log: 2
   semi_ar: False
   num_strides: 0

@@ -81,7 +81,7 @@ class MetricPlotter:
 
             filename_safe_model = model_key.replace(" ", "_").lower()
             filename_safe_ref = reference_name.replace(" ", "_").lower()
-            self._save(f"token_frequency_{run_type}_{filename_safe_ref}_vs_{filename_safe_model}.png")
+            self._save(f"{run_type}_token_frequency_{filename_safe_ref}_vs_{filename_safe_model}.png")
 
 
     def plot_length_violin(
@@ -129,7 +129,7 @@ class MetricPlotter:
         plt.grid(True, axis='y', linestyle=':', alpha=0.6)
 
         plt.tight_layout()
-        self._save(f"length_violin_{run_type}.png")
+        self._save(f"{run_type}_length_violin.png")
 
 
     def plot_property_violin(
@@ -185,83 +185,7 @@ class MetricPlotter:
         ax.legend(handles, [reference_name, "Generated models"], loc="best")
 
         fig.tight_layout()
-        self._save(f"{metric}_{run_type}_side_by_side.png")
-
-    def _draw_split_violin(self, ax, data1, data2, label1, label2, color1, color2, position):
-        """Helper function to draw a split violin plot."""
-        violin_width = 0.8
-
-        def draw_half(plot_data, pos, plot_color, is_left):
-            if not plot_data: return
-            vp = ax.violinplot(plot_data, positions=[pos], widths=violin_width, 
-                             showmeans=False, showextrema=False, showmedians=False)
-            for body in vp['bodies']:
-                path = body.get_paths()[0]
-                mean_x = np.mean(path.vertices[:, 0])
-                if is_left:
-                    path.vertices[:, 0] = np.clip(path.vertices[:, 0], -np.inf, mean_x)
-                else:
-                    path.vertices[:, 0] = np.clip(path.vertices[:, 0], mean_x, np.inf)
-                body.set_color(plot_color)
-                body.set_alpha(0.7)
-                body.set_edgecolor('black')
-                body.set_linewidth(1)
-
-        draw_half(data1, position, color1, is_left=True)
-        draw_half(data2, position, color2, is_left=False)
-
-    def plot_split_violin(self, metric: str, data: Dict[str, List[float]], reference_name: str, comparison_prefix: str, output_suffix: str):
-        """
-        Generates split violin plots comparing reference data vs each comparison model.
-        
-        Args:
-            metric: The metric name (e.g. 'logp').
-            data: Dict mapping dataset/model names to lists of metric values.
-            reference_name: The name of the reference dataset (e.g. 'Original data' or 'Baseline model').
-            comparison_prefix: Only models with this prefix will be plotted (e.g. 'Tiny', 'Prepend conditioning').
-            output_suffix: Suffix to append in output filenames (e.g. 'prelim' or 'conditioning').
-        """
-        reference_data = data.get(reference_name, [])
-        if not reference_data:
-            logger.warning(f"Skipping split violin for {metric}: missing reference data ({reference_name}).")
-            return
-
-        model_keys = [k for k in data.keys() if k != reference_name and k.startswith(comparison_prefix)]
-        if not model_keys:
-            logger.warning(f"No comparison models found for {metric} with prefix {comparison_prefix}.")
-            return
-
-        for model_key in model_keys:
-            comparison_data = data[model_key]
-            if not comparison_data:
-                logger.warning(f"No data for model {model_key}, skipping.")
-                continue
-
-            fig, ax = plt.subplots(figsize=(6, 5))
-            
-            # --- CHANGE 1: Use ax.set_title for better placement ---
-            ax.set_title(metric.replace('_', ' ').title(), fontsize=14, pad=15) # `pad` adds some space
-            ax.set_xticks([]) 
-            colors = plt.cm.get_cmap('tab10').colors
-
-            self._draw_split_violin(ax, reference_data, comparison_data,
-                                    reference_name, model_key,
-                                    colors[0], colors[1], position=1)
-
-            # To avoid the x-tick label from becoming too crowded, let's use a more concise format.
-            ax.set_ylabel(metric.replace('_', ' ').title())
-            ax.grid(True, axis='y', linestyle=':', alpha=0.6)
-            
-            handles = [plt.Rectangle((0,0),1,1,color=colors[0],alpha=0.7),
-                       plt.Rectangle((0,0),1,1,color=colors[1],alpha=0.7)]
-            ax.legend(handles, [reference_name, model_key], title="Dataset")
-
-            # --- CHANGE 2: Simplify tight_layout call ---
-            plt.tight_layout() 
-            
-            filename_safe_model = model_key.replace(" ", "_").lower()
-            filename_safe_ref = reference_name.replace(" ", "_").lower()
-            self._save(f"{metric}_{output_suffix}_{filename_safe_ref}_vs_{filename_safe_model}.png")
+        self._save(f"{run_type}_{metric}_side_by_side.png")
 
             
     def display_statistical_summary(self, aggregated_results: Dict[str, Dict[str, any]], fcd_scores: Dict[str, float]):

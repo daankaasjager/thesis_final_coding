@@ -78,6 +78,9 @@ inference:
   model_path: '${cwd:}/checkpoints/property_prediction.ckpt' # Note the '..' to go up one level
   plotting_path: /scratch/s3905845/thesis_final_coding/data/kraken/metric_plots
   sampled_selfies_file: /scratch/s3905845/thesis_final_coding/data/kraken/sampled_data/${experiment.name}/generated_samples.json
+  hist_sampled_selfies_file: /scratch/s3905845/thesis_final_coding/data/kraken/sampled_data/${experiment.name}/hist_generated_samples.json
+  hist: True
   normalization_stats_file: "/scratch/s3905845/thesis_final_coding/data/kraken/mapping/mean_std.json"
   output_path: /scratch/s3905845/thesis_final_coding/data/kraken/sampled_data/${experiment.name}/samples_with_properties.json
+  hist_output_path: /scratch/s3905845/thesis_final_coding/data/kraken/sampled_data/${experiment.name}/hist_samples_with_properties.json
   selfies_alphabet: /scratch/s3905845/thesis_final_coding/data/kraken/training_data/selfies_alphabet.txt

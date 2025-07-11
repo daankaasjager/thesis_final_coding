@@ -71,32 +71,27 @@ def _write_temp_sample(temp_file, sample, sample_count, is_last=False):
     else:
         temp_file.write(json_str + "\n")
 
-def _save_final_output(temp_path, final_path):
-    """
-    Finalizes the output by closing the JSON structure in the temp file
-    and renaming it to the final path. This is an atomic operation on most systems.
-    """
-    # This is a slightly improved version that avoids re-reading the whole file.
-    # It just appends the closing brackets and renames.
-    with open(temp_path, "a", encoding="utf-8") as temp_file:
-        temp_file.write("]\n}\n")
-    
-    os.rename(temp_path, final_path)
-    logger.info(f"Finalized samples saved to {final_path}")
-
-
 def generate_samples(config):
     """
     Main function to generate samples, using robust I/O and Hydra path management.
     """
     # The experiment name should already be set in the config for sampled_data
     samples_dir = config.paths.sampled_data
+
+    if config.conditioning.cfg: # Because the same model is used, we add the guidance scale to the directory name
+        samples_dir = samples_dir.replace(config.experiment.name, f"{config.conditioning.guidance_scale}_cfg")
+
     os.makedirs(samples_dir, exist_ok=True)
+
     
     # The temporary file and final file now live inside the unique run directory
-    temp_path = os.path.join(samples_dir, "generated_samples.json.tmp")
-    final_output_path = os.path.join(samples_dir, "generated_samples.json")
-    
+    if config.model.sample_length_mode == "histogram":
+        temp_path = os.path.join(samples_dir, "hist_generated_samples.json.tmp")
+        final_output_path = os.path.join(samples_dir, "hist_generated_samples.json")
+    else:
+        temp_path = os.path.join(samples_dir, "generated_samples.json.tmp")
+        final_output_path = os.path.join(samples_dir, "generated_samples.json")
+   
     logger.info(f"Run output directory: {samples_dir}")
     logger.info(f"Temporary samples will be written to: {temp_path}")
     logger.info(f"Final samples will be saved as: {final_output_path}")
