@@ -10,6 +10,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from typing import Dict, Any
 import torch_geometric.nn as gnn
+from torch_geometric.utils import dropout_adj  
 
 from typing import TYPE_CHECKING
 
@@ -39,7 +40,8 @@ class MPNNet(nn.Module):
             raise ValueError("MLP layers must be set")
 
         self.num_embeds = config.num_embeds
-
+        """self.edge_dropout_p = config.reg.edge_dropout    # just store the prob
+        self.node_dropout_p = config.reg.node_dropout"""
         self.linatoms = nn.Linear(config.node_dim, config.atom_dim)
 
         nnet = nn.Sequential(
@@ -98,10 +100,17 @@ class MPNNet(nn.Module):
         h = x.unsqueeze(0)
         # Embed graph
         for _ in range(self.num_embeds):
-            edge_attr = graph_data.edge_attr
+            edge_index, edge_attr = dropout_adj(
+                graph_data.edge_index,
+                graph_data.edge_attr,
+                p=self.edge_dropout_p,
+                force_undirected=False,
+                training=self.training,
+            )
             if edge_attr is not None and edge_attr.dtype != torch.float32:
                 edge_attr = edge_attr.float()
-            m = F.relu(self.conv(x, graph_data.edge_index, edge_attr))
+            m = F.relu(self.conv(x, edge_index, edge_attr))
+            m = F.dropout(m, p=self.node_dropout_p, training=self.training)
             x, h = self.gru(m.unsqueeze(0), h)
             x = x.squeeze(0)
 

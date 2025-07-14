@@ -5,8 +5,6 @@ module load CUDA/12.1.1
 source /scratch/s3905845/venvs/thesis/bin/activate
 cd /scratch/s3905845/thesis_final_coding
 
-set -e  # Exit on error
-
 echo "Running property prediction inference for all experiments..."
 
 EXPERIMENTS=(

@@ -26,6 +26,17 @@ class MetricPlotter:
         logger.info(f"Saved plot to {path}")
         plt.close()
 
+    @staticmethod
+    def _visible_names(all_names, reference_name):
+        """
+        Return names in the order [reference, *others*] but hide 'Original data'
+        whenever it is **not** the reference.
+        """
+        return ([reference_name] +
+                [n for n in all_names
+                 if n != reference_name and
+                    (reference_name == "Original data" or n != "Original data")])
+
     def set_global_bins(self, all_metric_values: Dict[str, List[float]]):
         """Calculates and stores global min/max for each chemical metric."""
         for metric, values in all_metric_values.items():
@@ -49,7 +60,11 @@ class MetricPlotter:
         all_tokens_combined = Counter()
         for counter in counts.values():
             all_tokens_combined.update(counter)
-        global_top_tokens = [item[0] for item in all_tokens_combined.most_common(top_n)]
+        global_top_tokens = [tok for tok, _ in all_tokens_combined.most_common(top_n) if tok != '[EOS]']
+
+        if '[EOS]' in all_tokens_combined:
+            if '[EOS]' not in global_top_tokens:
+                global_top_tokens.append('[EOS]')
 
         model_keys = [
             k for k in counts.keys()
@@ -72,7 +87,14 @@ class MetricPlotter:
             plt.bar(x - width/2, ref_freqs, width, label=reference_name)
             plt.bar(x + width/2, model_freqs, width, label=model_key)
 
-            plt.xticks(ticks=x, labels=global_top_tokens, rotation=90)
+            eos_token = "[EOS]"
+            labels = global_top_tokens.copy()
+            if eos_token in labels and labels[-1] != eos_token:
+                eos_rank = labels.index(eos_token) + 1  # 1-based
+                # e.g., change label to "[EOS] (rank 5)" or "[EOS]⁵"
+                labels[labels.index(eos_token)] = f"{eos_token}$^{{{eos_rank}}}$"
+
+            plt.xticks(ticks=x, labels=labels, rotation=90)
             plt.ylabel('Frequency')
             plt.title("Token Frequency (%)", fontsize=14)
             plt.legend(title="Dataset")
@@ -94,17 +116,12 @@ class MetricPlotter:
         Sequence-length distributions as side-by-side violins.
         Reference colour = first entry; all other datasets share the comparison colour.
         """
+        names  = self._visible_names(lengths.keys(), reference_name)
+        if len(names) < 2:
+            logger.warning("Not enough datasets for length violin"); return
+
+        data   = [lengths[n] for n in names]
         plt.figure(figsize=(12, 6))
-
-        data   = []
-        labels = []
-        for name, vals in lengths.items():
-                data.append(vals)
-                labels.append(name)
-
-        if not data:
-            logger.warning("No length data to plot.")
-            return
 
         parts = plt.violinplot(
             data,
@@ -123,7 +140,7 @@ class MetricPlotter:
             pc.set_edgecolor('black')
             pc.set_linewidth(1)
 
-        plt.xticks(range(1, len(labels) + 1), labels, rotation=45, ha='right')
+        plt.xticks(range(1, len(names) + 1), names, rotation=45, ha='right')
         plt.ylabel("Sequence Length")
         plt.title("Sequence Length Distribution", fontsize=14)
         plt.grid(True, axis='y', linestyle=':', alpha=0.6)
@@ -179,6 +196,32 @@ class MetricPlotter:
         ax.set_ylabel(metric.replace('_', ' ').title())
         ax.set_title(metric.replace('_', ' ').title(), fontsize=14, pad=12)
         ax.grid(True, axis='y', linestyle=':', alpha=0.6)
+        try:
+            # Read the CSV with median percentiles
+            percentile_path = Path(self.config.paths.median_percentile)
+            if percentile_path.exists():
+                df_medians = pd.read_csv(percentile_path)
+                
+                # Find the bottom_33 median for this specific metric
+                metric_row = df_medians[df_medians['properties'] == metric]
+                if not metric_row.empty:
+                    bottom33_val = metric_row['bottom33_median'].values[0]
+                    
+                    # Add horizontal dashed line
+                    ax.axhline(
+                        y=bottom33_val,
+                        color='red',
+                        linestyle='--',
+                        linewidth=1.5,
+                        alpha=0.7,
+                        label='Bottom 33% Median'
+                    )
+                    
+                    # Add to existing legend
+                    handles, labels = ax.get_legend_handles_labels()
+                    ax.legend(handles=handles)
+        except Exception as e:
+            logger.warning(f"Couldn't add bottom 33% line for {metric}: {str(e)}")
 
         handles = [plt.Rectangle((0, 0), 1, 1, color=ref_colour,  alpha=0.7),
                    plt.Rectangle((0, 0), 1, 1, color=comp_colour, alpha=0.7)]
@@ -188,7 +231,7 @@ class MetricPlotter:
         self._save(f"{run_type}_{metric}_side_by_side.png")
 
             
-    def display_statistical_summary(self, aggregated_results: Dict[str, Dict[str, any]], fcd_scores: Dict[str, float]):
+    def display_statistical_summary(self, aggregated_results: Dict[str, Dict[str, any]], fcd_scores: Dict[str, float], run_type: str):
         """
         Generates and prints a summary table of key statistics for all metrics and models.
         """
@@ -228,9 +271,13 @@ class MetricPlotter:
         summary_df = summary_df[existing_cols]
 
         logger.info("\n--- Statistical Summary of Molecular Metrics ---")
-        formatters = {col: lambda x: f"{x:.3f}" if pd.notna(x) else "N/A" for col in ['Validity', 'Uniqueness', 'Novelty', 'FCD'] if col in summary_df.columns}
+        formatters = {
+            col: (lambda x: f"{float(x):.3f}" if pd.notna(x) and isinstance(x, (int, float, complex, np.number)) else str(x))
+            for col in ['Validity', 'Uniqueness', 'Novelty', 'FCD']
+            if col in summary_df.columns
+        }
         logger.info(summary_df.to_string(formatters=formatters))
 
-        summary_csv_path = self.plot_and_metrics_dir / "statistical_summary.csv"
+        summary_csv_path = self.plot_and_metrics_dir / f"{run_type}_statistical_summary.csv"
         summary_df.to_csv(summary_csv_path)
         logger.info(f"\nStatistical summary saved to {summary_csv_path}")

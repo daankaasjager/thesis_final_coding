@@ -20,6 +20,7 @@ pre_processed_data: ${paths.data_root}/training_data/preprocessed_data.parquet
 train_data_encoding: ${paths.data_root}/training_data/${experiment.name}
 selfies_ape_vocab: ${paths.data_root}/tokenizer/ # This is the APE vocabulary for SELFIES, changes for each APE experiment. Should this be hydra dir?
 length_histogram: ${paths.data_root}/training_data/length_histogram.json
+median_percentile: ${paths.data_root}/training_data/bottom_top_medians.csv
 
 # --- Output Paths For plots and molecules---
 metrics_dir: ${paths.data_root}/metric_plots/
@@ -35,14 +36,15 @@ ape_80: ${paths.data_root}/sampled_data/ape_80/hist_samples_with_properties.json
 ape_110: ${paths.data_root}/sampled_data/ape_110/hist_samples_with_properties.json
 
 # Conditioning paths
-prepend_1: ${paths.data_root}/sampled_data/prepend_1/samples_with_properties.json
-prepend_3: ${paths.data_root}/sampled_data/prepend_3/samples_with_properties.json
-prepend_8: ${paths.data_root}/sampled_data/prepend_8/samples_with_properties.json
-prepend_all: ${paths.data_root}/sampled_data/prepend_all/samples_with_properties.json
-embedding_1: ${paths.data_root}/sampled_data/embedding_1/samples_with_properties.json
-embedding_3: ${paths.data_root}/sampled_data/embedding_3/samples_with_properties.json
-embedding_8: ${paths.data_root}/sampled_data/embedding_8/samples_with_properties.json
-embedding_all: ${paths.data_root}/sampled_data/embedding_all/samples_with_properties.json
-cfg_01: ${paths.data_root}/sampled_data/cfg_01/samples_with_properties.json
-cfg_02: ${paths.data_root}/sampled_data/cfg_02/samples_with_properties.json
-cfg_03: ${paths.data_root}/sampled_data/cfg_03/samples_with_properties.json
+baseline_model_path: ${paths.small_wordlevel}
+prepend_1: ${paths.data_root}/sampled_data/prepend_1/hist_samples_with_properties.json
+prepend_3: ${paths.data_root}/sampled_data/prepend_3/hist_samples_with_properties.json
+prepend_8: ${paths.data_root}/sampled_data/prepend_8/hist_samples_with_properties.json
+prepend_all: ${paths.data_root}/sampled_data/prepend_all/hist_samples_with_properties.json
+embedding_1: ${paths.data_root}/sampled_data/embedding_1/hist_samples_with_properties.json
+embedding_3: ${paths.data_root}/sampled_data/embedding_3/hist_samples_with_properties.json
+embedding_8: ${paths.data_root}/sampled_data/embedding_8/hist_samples_with_properties.json
+embedding_all: ${paths.data_root}/sampled_data/embedding_all/hist_samples_with_properties.json
+cfg_03: ${paths.data_root}/sampled_data/0.3_cfg/hist_samples_with_properties.json
+cfg_10: ${paths.data_root}/sampled_data/1.0_cfg/hist_samples_with_properties.json
+cfg_40: ${paths.data_root}/sampled_data/4.0_cfg/hist_samples_with_properties.json

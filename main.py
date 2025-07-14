@@ -1,6 +1,7 @@
 import sys
 from pathlib import Path
 
+
 sys.path.append(str(Path(__file__).resolve().parent / "src"))
 
 import logging
@@ -51,14 +52,18 @@ def run(config: DictConfig):
         generate_samples(config)
     elif config.mode == "evaluate":
         from src.mdlm import evaluate_preliminaries, evaluate_conditioning
+        evaluate_conditioning(config, "Small WordLevel")
         evaluate_preliminaries(config)
-        evaluate_conditioning(config)
     elif config.mode == "train_property_prediction":
         from src.property_prediction.training import train_property_predictor
         train_property_predictor(config.property_prediction)
     elif config.mode == "predict_properties":
         from src.property_prediction.inference import predict_properties
         predict_properties(config.property_prediction)
+    elif config.mode == "visualize_cutoffs":
+        from src.property_prediction.visualize_cutoffs import aggregate_model_summaries
+        sample_dir = Path(config.property_prediction.sample_dir)
+        aggregate_model_summaries(sample_dir)
         
 
 if __name__ == "__main__":

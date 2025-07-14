@@ -125,7 +125,7 @@ sampling:
   predictor: ddpm_cache  # analytic, ddpm, ddpm_cache
   steps: 128
   noise_removal: True
-  num_sample_batches: 160  # Total samples: `loader.eval_batch_size` * num_sample_batches
+  num_sample_batches: 320  # Total samples: `loader.eval_batch_size` * num_sample_batches
   num_sample_log: 2
   semi_ar: False
   num_strides: 0

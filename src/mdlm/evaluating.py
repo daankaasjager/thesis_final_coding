@@ -79,7 +79,7 @@ def evaluate_by_comparison(config, sample_sources: dict, reference_name: str, ru
 
     runner = MetricRunner(config)
     aggregated_results, fcd_scores = runner.run_multi(sample_sources, METRICS + PROPERTY_COLS, PROPERTY_COLS, reference_name, run_type)
-    runner.plotter.display_statistical_summary(aggregated_results, fcd_scores)
+    runner.plotter.display_statistical_summary(aggregated_results, fcd_scores, run_type)
 
 
 def evaluate_preliminaries(config):
@@ -88,12 +88,13 @@ def evaluate_preliminaries(config):
     """
     sample_sources = {
         "Original data": load_original_samples(config.paths.filtered_original_data, 10000),
+        "Small WordLevel": load_generated_samples(config.paths.small_wordlevel)
+    }
+    """
         "Tiny WordLevel": load_generated_samples(config.paths.tiny_wordlevel),
-        "Small WordLevel": load_generated_samples(config.paths.small_wordlevel),
         "Small APE 70": load_generated_samples(config.paths.ape_70),
         "Small APE 80": load_generated_samples(config.paths.ape_80),
-        "Small APE 110": load_generated_samples(config.paths.ape_110)
-    }
+        "Small APE 110": load_generated_samples(config.paths.ape_110)"""
     evaluate_by_comparison(config, sample_sources, reference_name="Original data", run_type="prelim")
 
 
@@ -102,7 +103,7 @@ def evaluate_conditioning(config, baseline_model_name):
     Evaluates conditioning experiments: Baseline vs conditioning strategies.
     """
     sample_sources = {
-        "Original data": load_original_samples(config.paths.filtered_original_data, 10000),
+        "Original data": load_original_samples(config.paths.filtered_original_data, None),
         baseline_model_name: load_generated_samples(config.paths.baseline_model_path),
         "Prepend 1": load_generated_samples(config.paths.prepend_1),
         "Prepend 3": load_generated_samples(config.paths.prepend_3),
@@ -112,9 +113,9 @@ def evaluate_conditioning(config, baseline_model_name):
         "Embedding 3": load_generated_samples(config.paths.embedding_3),
         "Embedding 8": load_generated_samples(config.paths.embedding_8),
         "Embedding all": load_generated_samples(config.paths.embedding_all),
-        "CFG 0.1": load_generated_samples(config.paths.cfg_01),
-        "CFG 0.2": load_generated_samples(config.paths.cfg_02),
-        "CFG 0.3": load_generated_samples(config.paths.cfg_03)
+        "CFG 0.3": load_generated_samples(config.paths.cfg_03),
+        "CFG 1.0": load_generated_samples(config.paths.cfg_10),
+        "CFG 4.0": load_generated_samples(config.paths.cfg_40)
     }
 
     evaluate_by_comparison(config, sample_sources, reference_name=baseline_model_name, run_type="conditioning")

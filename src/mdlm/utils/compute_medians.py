@@ -32,7 +32,7 @@ def compute_bottom_top_medians(df: pd.DataFrame, exclude: set, output_csv: str):
     return result_df
 
 if __name__ == "__main__":
-    df = pd.read_csv("/scratch/s3905845/thesis_final_coding/data/kraken/training_data/descriptors_v3.csv")
+    df = pd.read_csv("/scratch/s3905845/thesis_final_coding/data/kraken/training_data/filtered_selfies.csv")
     exclude = {"smiles", "selfies", "tokenized_selfies"}
 
     output_csv = "/scratch/s3905845/thesis_final_coding/data/kraken/training_data/bottom_top_medians.csv"

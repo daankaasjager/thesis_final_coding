@@ -362,16 +362,15 @@ sampling.target_properties="{"sa_score": 2.80, "mol_wt": 326.1, "volume": 395.4}
 ## training
 ```bash
 scripts/sample.sh \
-experiment.name=null \
+experiment.name="training_predictor" \
 mode="train_property_prediction"
-sampling.target_properties
 ```
 
 ## inference
 Change the experiment name to the relevant experiment to predict the properties of that experiment.
 ```bash
 scripts/sample.sh \
-experiment.name="cfg_01" \
+experiment.name="model_size_small" \
 mode="predict_properties" \
 property_prediction.inference.hist=True 
 ```

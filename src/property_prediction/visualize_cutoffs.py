@@ -3,49 +3,83 @@ import pandas as pd
 from pathlib import Path
 import matplotlib.pyplot as plt
 import seaborn as sns
-from sympy import plot
 
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
 def plot_cutoff_summary(metrics_dir: Path, df_percent: pd.DataFrame):
-
-    plt.figure(figsize=(10, len(df_percent)*0.5 + 2))
-    sns.heatmap(df_percent, annot=True, fmt=".1f", cmap="Reds")
-    plt.title("Filter % per Hard Bound and Model")
+    """
+    Plots a heatmap from a percent_filtered pivot table and saves it.
+    """
+    plt.figure(figsize=(10, len(df_percent) * 0.5 + 2))
+    sns.heatmap(df_percent, annot=True, fmt=".2f", cmap="Reds")
+    title = "Filter % per Property and Model"
+    plt.title(title)
     plt.xlabel("Model")
     plt.ylabel("Property")
     plt.tight_layout()
 
-    heatmap_path = metrics_dir/ "hard_bound_cutoff_heatmap.png"
+    heatmap_path = metrics_dir / "hard_bound_cutoff_heatmap.png"
     plt.savefig(heatmap_path)
     plt.close()
     logger.info(f"Saved cutoff heatmap to {heatmap_path}")
 
 
-def aggregate_cutoff_summaries(metrics_dir: Path):
+def aggregate_model_summaries(base_dir: Path):
     """
-    Loads all cutoff summary CSVs in a metrics directory and aggregates counts.
+    Aggregates all model summary CSVs from subdirectories and plots a single heatmap.
     """
-    all_files = list(metrics_dir.glob("*hard_bound_cutoff_summary.csv"))
-    total_df = None
+    all_dfs = []
 
-    for file in all_files:
-        df = pd.read_csv(file, index_col=0)
-        if total_df is None:
-            total_df = df
-        else:
-            total_df = total_df.add(df, fill_value=0)
+    for model_dir in base_dir.iterdir():
+        if not model_dir.is_dir():
+            continue
 
-    total_df['total_cutoffs'] = total_df.sum(axis=1)
-    df_percent = total_df.div(total_df['total_cutoffs'], axis=0) * 100
-    plot_cutoff_summary(metrics_dir, df_percent)
-    agg_path = metrics_dir / "aggregate_hard_bound_cutoff_summary.csv"
-    total_df.to_csv(agg_path)
-    logger.info(f"Saved aggregated hard bound cutoff counts to {agg_path}")
+        csv_files = list(model_dir.glob("*hard_bound_cutoff_summary.csv"))
+        if not csv_files:
+            logger.warning(f"No summary file found in {model_dir}")
+            continue
 
-    agg_path_pct = metrics_dir / "aggregate_hard_bound_cutoff_summary_percent.csv"
-    df_percent.to_csv(agg_path_pct)
-    logger.info(f"Saved aggregated hard bound cutoff percentages to {agg_path_pct}")
+        df = pd.read_csv(csv_files[0])
+        if df.empty:
+            logger.warning(f"Empty summary file in {model_dir}")
+            continue
 
-    return total_df, df_percent
+        # Replace model name with directory name (and make it prettier for X-axis)
+        model_name = model_dir.name.replace("_", " ")
+        df["model"] = model_name
+        all_dfs.append(df[["model", "property", "percent_filtered"]])
+
+    if not all_dfs:
+        logger.error("No valid summary data found.")
+        return
+
+    combined_df = pd.concat(all_dfs, ignore_index=True)
+    df_pivot = combined_df.pivot(index="property", columns="model", values="percent_filtered")
+
+    # Desired order of models (after replacing _ with space)
+    desired_order = [
+        "model size tiny",
+        "model size small",
+        "ape 70",
+        "ape 80",
+        "ape 110",
+        "prepend 1",
+        "prepend 3",
+        "prepend 8",
+        "prepend all",
+        "embedding 1",
+        "embedding 3",
+        "embedding 8",
+        "embedding all",
+        "0.3 cfg",
+        "1.0 cfg",
+        "4.0 cfg",
+    ]
+
+    # Keep only columns that exist in the pivot
+    existing_order = [col for col in desired_order if col in df_pivot.columns]
+    df_pivot = df_pivot[existing_order]
+
+    plot_cutoff_summary(base_dir, df_pivot)

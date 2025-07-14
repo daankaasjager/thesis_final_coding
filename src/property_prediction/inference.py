@@ -58,20 +58,41 @@ def save_samples_with_metadata(original_json: dict, new_samples: list[str], save
     with open(save_path, "w", encoding="utf-8") as f:
         json.dump(original_json, f, indent=4)
 
-def load_normalization_stats(path: str):
+def load_scaling_stats(path: str):
+    """
+    Loads normalization statistics from a JSON file.
+    Expects a file with top-level "mean" and "std" keys,
+    each containing a dictionary of property-wise stats.
+    """
     stats_path = Path(path)
     if not stats_path.exists():
         logger.warning(f"Normalization stats file not found at {path}. Predictions will not be denormalized.")
         return None, None, None
+
     with open(stats_path, "r") as f:
         stats = json.load(f)
-    prop_names = list(stats.keys())
-    mean_dict = {prop: data['mean'] for prop, data in stats.items()}
-    std_dict = {prop: data['std'] for prop, data in stats.items()}
-    mean_series = pd.Series(mean_dict)[prop_names]
-    std_series = pd.Series(std_dict)[prop_names]
-    logger.info(f"Loaded normalization stats for {len(prop_names)} properties.")
-    return prop_names, mean_series, std_series
+
+    if "mean" in stats and "std" in stats:
+        mean_dict = stats["mean"]
+        std_dict  = stats["std"]
+        prop_names = list(mean_dict.keys())
+        μ = pd.Series(mean_dict)[prop_names]
+        σ = pd.Series(std_dict)[prop_names]
+        return "zscore", prop_names, μ, σ
+
+    # ── Min-max style ────────────────────────────────────────
+    if "min_max_vals" in stats:
+        mm_dict = stats["min_max_vals"]
+        prop_names = list(mm_dict.keys())
+        mins = pd.Series({k: v[0] for k, v in mm_dict.items()})[prop_names]
+        maxs = pd.Series({k: v[1] for k, v in mm_dict.items()})[prop_names]
+        return "minmax", prop_names, mins, maxs
+
+    # ── Anything else = unsupported ──────────────────────────
+    raise KeyError(
+        f"File at {path} is malformed. Expected keys "
+        "'mean/std' or 'min_max_vals', found: {list(stats.keys())}"
+    )
 
 def clean_generated_data(sample: str, alphabet: Set[str]) -> str:
     tokens = [tok for tok in TOKEN_PATTERN.split(sample) if tok]
@@ -100,8 +121,9 @@ def predict_properties(config):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
 
-    prop_columns, props_mean, props_std = load_normalization_stats(config.inference.normalization_stats_file)
-
+    scale_type, prop_columns, a_series, b_series = load_scaling_stats(
+        config.inference.normalization_stats_file
+    )
     try:
         valid_alphabet = load_selfies_alphabet(config.inference.selfies_alphabet)
     except Exception as e:
@@ -142,8 +164,12 @@ def predict_properties(config):
             predictions.append(model(batch).cpu())
     predictions = torch.cat(predictions, dim=0).numpy()
 
-    if props_mean is not None and props_std is not None:
-        predictions = (predictions * props_std.values) + props_mean.values
+    if scale_type == "zscore":
+        # y_actual = y_pred * σ + μ
+        predictions = predictions * b_series.values + a_series.values
+    elif scale_type == "minmax":
+        # y_actual = y_pred * (max − min) + min
+        predictions = predictions * (b_series.values - a_series.values) + a_series.values
 
     total_molecules = len(predictions)
     model_name = config.experiment.name
@@ -185,5 +211,15 @@ def predict_properties(config):
     cutoff_path = output_path.parent / "hard_bound_cutoff_summary.csv"
     df.to_csv(cutoff_path, index=False)
     logger.info(f"Saved hard bound cutoff summary to {cutoff_path}")
+    # --- Save total filtering summary ---
+    total_filtered = total_molecules - len(results)
+    filtering_summary_path = output_path.parent / "total_filtering_summary.txt"
+
+    with open(filtering_summary_path, "w") as f:
+        f.write(f"Total valid molecules before filtering: {total_molecules}\n")
+        f.write(f"Total retained after filtering: {len(results)}\n")
+        f.write(f"Total filtered out: {total_filtered} ({total_filtered / total_molecules * 100:.2f}%)\n")
+
+    logger.info(f"Saved total filtering summary to {filtering_summary_path}")
 
     logger.info(f"Top filtered properties:\n{df.sort_values('percent_filtered', ascending=False).head(5)}")

@@ -165,12 +165,12 @@ class MetricRunner:
         # --- FCD vs. reference ---
         fcd_scores = {}
         fcd_model = load_ref_model()
-        ref_smi = canonicalized.get(reference_name, [])
+        ref_smi = canonicalized.get("Original data", [])
         for name, smi in canonicalized.items():
-            if name == reference_name or not smi or not ref_smi:
+            if name == "Original data" or not smi or not ref_smi:
                 fcd_scores[name] = "N/A"
                 continue
             fcd_scores[name] = get_fcd(smi, ref_smi, fcd_model)
-            logger.info(f"[{name}] FCD vs {reference_name}: {fcd_scores[name]:.3f}")
+            logger.info(f"[{name}] FCD vs Original data: {fcd_scores[name]:.3f}")
 
         return aggregated, fcd_scores

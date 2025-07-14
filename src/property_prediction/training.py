@@ -57,8 +57,6 @@ def train_property_predictor(prop_pred_config: DictConfig):
     wandb.login()  
     _setup_cuda()  
     wandb_logger, callbacks = setup_training_logging(prop_pred_config)
-    output_dir = Path(prop_pred_config.training.output_dir)
-    output_dir.mkdir(parents=True, exist_ok=True)
     
     logger.info("Loading and preparing dataset...")
     df = pd.read_csv(prop_pred_config.data.path)
@@ -67,7 +65,8 @@ def train_property_predictor(prop_pred_config: DictConfig):
     data_list, props_mean, props_std = prepare_graph_dataset(
         df, 
         prop_columns=prop_pred_config.data.prop_columns, 
-        normalize=True
+        normalize=True,
+        stats_path=prop_pred_config.inference.normalization_stats_file
     )
 
     if data_list:
