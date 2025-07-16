@@ -1,16 +1,16 @@
-"""Graph Convolutional Neural Network (GCN) for Molecular Property Prediction
-This module defines a GCN model for predicting molecular properties using PyTorch Geometric.
-It is taken the GitLab repository of Andrei Voinea."""
+# This pa rt is heavily inspired by code written
+# by Akshat Nigam for the KRAKEN project found
+# at https://github.com/aspuru-guzik-group/kraken
 
 from pathlib import Path
+from venv import logger
 import lightning as L
 from lightning.pytorch.cli import instantiate_class
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import Dict, Any
+
 import torch_geometric.nn as gnn
-from torch_geometric.utils import dropout_adj  
 
 from typing import TYPE_CHECKING
 
@@ -40,8 +40,7 @@ class MPNNet(nn.Module):
             raise ValueError("MLP layers must be set")
 
         self.num_embeds = config.num_embeds
-        """self.edge_dropout_p = config.reg.edge_dropout    # just store the prob
-        self.node_dropout_p = config.reg.node_dropout"""
+
         self.linatoms = nn.Linear(config.node_dim, config.atom_dim)
 
         nnet = nn.Sequential(
@@ -94,23 +93,12 @@ class MPNNet(nn.Module):
         if graph_data.edge_attr.shape[1] == 0:
             raise ValueError("Edge attributes are empty")
 
-        
-        x = F.relu(self.linatoms(graph_data.x.float()))
+        x = F.relu(self.linatoms(graph_data.x))
 
         h = x.unsqueeze(0)
         # Embed graph
         for _ in range(self.num_embeds):
-            edge_index, edge_attr = dropout_adj(
-                graph_data.edge_index,
-                graph_data.edge_attr,
-                p=self.edge_dropout_p,
-                force_undirected=False,
-                training=self.training,
-            )
-            if edge_attr is not None and edge_attr.dtype != torch.float32:
-                edge_attr = edge_attr.float()
-            m = F.relu(self.conv(x, edge_index, edge_attr))
-            m = F.dropout(m, p=self.node_dropout_p, training=self.training)
+            m = F.relu(self.conv(x, graph_data.edge_index, graph_data.edge_attr))
             x, h = self.gru(m.unsqueeze(0), h)
             x = x.squeeze(0)
 
@@ -129,8 +117,8 @@ class MolPropModule(L.LightningModule):
         self.config = config
 
     def configure_model(self):
-        # The model now correctly uses self.hparams, which is the saved config
-        self.model = MPNNet(self.hparams, self.hparams.out_dim)
+        self.model = MPNNet(self.config, self.config.out_dim)
+
         logger.info(f"Number of parameters: {sum(p.numel() for p in self.model.parameters())}")
         try:
             torch.compile(self.model)
@@ -138,65 +126,61 @@ class MolPropModule(L.LightningModule):
             logger.error(f"Error compiling model: {e}\nSkipping compilation...")
 
     def configure_optimizers(self):
-        optimizer = instantiate_class(self.model.parameters(), self.hparams.optimizer)
-        lr_scheduler = instantiate_class(optimizer, self.hparams.lr_scheduler)
+        optimizer = instantiate_class(self.model.parameters(), self.config.optimizer)
+        lr_scheduler = instantiate_class(optimizer, self.config.lr_scheduler)
+
         return {
             "optimizer": optimizer,
-            "lr_scheduler": {"scheduler": lr_scheduler, "monitor": "val/loss"},
+            "lr_scheduler": lr_scheduler,
+            "monitor": "val/loss",
         }
 
-    def on_save_checkpoint(self, checkpoint: Dict[str, Any]) -> None:
-        """
-        Saves a clean, inference-ready version of the model and its config.
-        This version is more robust than iterating through callback keys.
-        """
-        model_checkpoint_callback = None
-        for callback in self.trainer.callbacks:
-            if isinstance(callback, L.pytorch.callbacks.ModelCheckpoint):
-                model_checkpoint_callback = callback
+    def on_save_checkpoint(self, checkpoint) -> None:
+        ckpt_key = None
+        for key in checkpoint["callbacks"].keys():
+            if "ModelCheckpoint" in key:
+                ckpt_key = key
                 break
 
-        if model_checkpoint_callback is None:
-            logger.warning("Could not find ModelCheckpoint callback, skipping model export.")
-            return
-            
-        output_dir = Path(model_checkpoint_callback.dirpath)
-        export_path = output_dir / "pytorch"
-        export_path.mkdir(parents=True, exist_ok=True)
+        if ckpt_key:
+            ckpt_dir = checkpoint["callbacks"][ckpt_key]["dirpath"]
+            Path(ckpt_dir / "pytorch").mkdir(parents=True, exist_ok=True)
 
-        logger.info(f"Exporting inference-ready model to {export_path}")
-        
-        config_to_save = OmegaConf.to_container(self.hparams, resolve=True)
-        
-        keys_to_remove = ["optimizer", "lr_scheduler"]
-        inference_config = {
-            k: v for k, v in config_to_save.items() if k not in keys_to_remove
-        }
+            with open(Path(ckpt_dir) / "pytorch" / "config.json", "w") as f:
+                cfg = OmegaConf.to_container(self.config, resolve=True)
+                cfg = {
+                    k: v
+                    for k, v in cfg.items()
+                    if k not in ["optimizer", "lr_scheduler"]
+                }
+                json.dump(cfg, f, indent=4)
 
-        with open(export_path / "config.json", "w") as f:
-            json.dump(inference_config, f, indent=4)
-
-        torch.save(self.model.state_dict(), export_path / "model.pt")
-
+            torch.save(self.model.state_dict(), Path(ckpt_dir) / "pytorch" / "model.pt")
 
     def training_step(self, batch, batch_idx):
         output = self.model(batch)
-        loss = F.mse_loss(output, batch.y.reshape(-1, self.hparams.out_dim))
-        
-        batch_size = self.trainer.datamodule.batch_size if self.trainer.datamodule else self.trainer.train_dataloader.batch_size
-        self.log("train/loss", loss, prog_bar=True, logger=True, batch_size=batch_size)
+
+        loss = F.mse_loss(output, batch.y.reshape(-1, self.config.out_dim))
+
+        self.log(
+            "train/loss", loss, prog_bar=True, logger=True, batch_size=self.batch_size
+        )
+
+        if "ReduceLROnPlateau" not in self.config.lr_scheduler.class_path:
+            sch = self.lr_schedulers()
+            sch.step()
+
         return loss
 
     def validation_step(self, batch, batch_idx):
         output = self.model(batch)
-        loss = F.mse_loss(output, batch.y.reshape(-1, self.hparams.out_dim))
-        
-        val_loader = self.trainer.val_dataloaders
-        if isinstance(val_loader, list):
-            val_loader = val_loader[0]
-        batch_size = getattr(val_loader, 'batch_size', None)
-        self.log("val/loss", loss, prog_bar=True, logger=True, batch_size=batch_size)
-    
+        loss = F.mse_loss(output, batch.y.reshape(-1, self.config.out_dim))
+
+        if not hasattr(self, "batch_size"):
+            self.batch_size = int(max(batch.batch) + 1)
+        self.log(
+            "val/loss", loss, prog_bar=True, logger=True, batch_size=self.batch_size
+        )
 
     def test_step(self, batch, batch_idx):
         output = self.model(batch)

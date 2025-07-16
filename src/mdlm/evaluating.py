@@ -15,8 +15,11 @@ PROPERTY_COLS = [
     'efgtens_yy_P', 'nbo_bd_e_max', 'nbo_lp_P_occ', 'qpoletens_yy',
     'E_solv_elstat', 'nbo_bds_e_avg', 'sterimol_burL', 'nbo_bd_occ_avg',
     'sterimol_burB5', 'vbur_ovbur_min', 'vbur_qvbur_min',
-    'nbo_bds_occ_max', 'vbur_ratio_vbur_vtot', 'mol_wt', 'sa_score'
+    'nbo_bds_occ_max', 'vbur_ratio_vbur_vtot'
 ]
+
+GROUP_123_PROPS = ["sascore", "molweight", "volume", "vbur_vbur", "vmin_r", 
+                   "sterimol_L", "sterimol_B1", "dipolemoment"]
 
 METRICS = [
     "validity", "uniqueness", "novelty", "token_frequency", "length_distribution",
@@ -78,8 +81,7 @@ def evaluate_by_comparison(config, sample_sources: dict, reference_name: str, ru
     sample_sources = {k: v for k, v in sample_sources.items() if v}
 
     runner = MetricRunner(config)
-    aggregated_results, fcd_scores = runner.run_multi(sample_sources, METRICS + PROPERTY_COLS, PROPERTY_COLS, reference_name, run_type)
-    runner.plotter.display_statistical_summary(aggregated_results, fcd_scores, run_type)
+    runner.run_multi(sample_sources, METRICS + PROPERTY_COLS, PROPERTY_COLS, reference_name, run_type)
 
 
 def evaluate_preliminaries(config):
@@ -88,13 +90,14 @@ def evaluate_preliminaries(config):
     """
     sample_sources = {
         "Original data": load_original_samples(config.paths.filtered_original_data, 10000),
-        "Small WordLevel": load_generated_samples(config.paths.small_wordlevel)
-    }
-    """
         "Tiny WordLevel": load_generated_samples(config.paths.tiny_wordlevel),
+        "Small WordLevel": load_generated_samples(config.paths.small_wordlevel),
         "Small APE 70": load_generated_samples(config.paths.ape_70),
         "Small APE 80": load_generated_samples(config.paths.ape_80),
-        "Small APE 110": load_generated_samples(config.paths.ape_110)"""
+        "Small APE 110": load_generated_samples(config.paths.ape_110)
+    }
+    """
+        """
     evaluate_by_comparison(config, sample_sources, reference_name="Original data", run_type="prelim")
 
 
@@ -103,7 +106,7 @@ def evaluate_conditioning(config, baseline_model_name):
     Evaluates conditioning experiments: Baseline vs conditioning strategies.
     """
     sample_sources = {
-        "Original data": load_original_samples(config.paths.filtered_original_data, None),
+        "Original data": load_original_samples(config.paths.filtered_original_data, 10000),
         baseline_model_name: load_generated_samples(config.paths.baseline_model_path),
         "Prepend 1": load_generated_samples(config.paths.prepend_1),
         "Prepend 3": load_generated_samples(config.paths.prepend_3),
@@ -112,10 +115,17 @@ def evaluate_conditioning(config, baseline_model_name):
         "Emedding 1": load_generated_samples(config.paths.embedding_1),
         "Embedding 3": load_generated_samples(config.paths.embedding_3),
         "Embedding 8": load_generated_samples(config.paths.embedding_8),
-        "Embedding all": load_generated_samples(config.paths.embedding_all),
+        "Embedding all": load_generated_samples(config.paths.embedding_all)
+    }
+
+    evaluate_by_comparison(config, sample_sources, reference_name=baseline_model_name, run_type="conditioning")
+
+    sample_sources = {
+        "Original data": load_original_samples(config.paths.filtered_original_data, 10000),
+        baseline_model_name: load_generated_samples(config.paths.baseline_model_path),
+        "Embedding 3": load_generated_samples(config.paths.embedding_3),
         "CFG 0.3": load_generated_samples(config.paths.cfg_03),
         "CFG 1.0": load_generated_samples(config.paths.cfg_10),
         "CFG 4.0": load_generated_samples(config.paths.cfg_40)
     }
-
-    evaluate_by_comparison(config, sample_sources, reference_name=baseline_model_name, run_type="conditioning")
+    evaluate_by_comparison(config, sample_sources, reference_name=baseline_model_name, run_type="conditioning_cfg")

@@ -15,7 +15,7 @@ import hydra
 logger = logging.getLogger(__name__)
 
 from .gcnn import MolPropModule
-from .gnn_dataset import prepare_graph_dataset, split_and_load
+from .graph_utils import prepare_graph_dataset, split_and_load
 
 def _setup_cuda():
     os.environ["TOKENIZERS_PARALLELISM"] = "false"

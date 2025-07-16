@@ -4,7 +4,7 @@ from torch_geometric.loader import DataLoader
 from pathlib import Path
 
 from gcnn import MolPropModule          # your LightningModule
-from gnn_dataset import prepare_graph_dataset, split_and_load
+from property_prediction.graph_utils import prepare_graph_dataset, split_and_load
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 

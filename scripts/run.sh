@@ -1,10 +1,10 @@
 #!/bin/bash
-#SBATCH --time=7:30:00
+#SBATCH --time=6:45:00
 #SBATCH --partition=gpu
 #SBATCH --nodes=1
-#SBATCH --gpus-per-node=a100:2
+#SBATCH --gpus-per-node=1
 #SBATCH --cpus-per-task=8
-#SBATCH --mem-per-cpu=7GB
+#SBATCH --mem-per-cpu=3GB
 
 
 # --- Load Environment ---

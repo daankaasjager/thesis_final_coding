@@ -37,13 +37,13 @@ do
       echo "Running inference for $EXP_NAME with guidance_scale $GS"
 
       # Set sampled_data path based on guidance scale (matches your example)
-      SAMPLED_DATA_DIR="/scratch/s3905845/thesis_final_coding/data/kraken/sampled_data/${GS}_cfg"
+      SAMPLED_DATA="/scratch/s3905845/thesis_final_coding/data/kraken/sampled_data/${GS}_cfg/hist_generated_samples.json"
 
       # Run inference
-      scripts/sample.sh \
+      python main.py \
         experiment.name="$EXP_NAME" \
         conditioning.guidance_scale="$GS" \
-        property_prediction.inference.hist_sampled_selfies_file="$SAMPLED_DATA_DIR" \
+        property_prediction.inference.hist_sampled_selfies_file="$SAMPLED_DATA" \
         mode="predict_properties" \
         property_prediction.inference.hist=True
     done
@@ -51,7 +51,7 @@ do
     echo "Running inference for $EXP_NAME"
 
     # Standard inference run for other experiments
-    scripts/sample.sh \
+    python main.py \
       experiment.name="$EXP_NAME" \
       mode="predict_properties" \
       property_prediction.inference.hist=True

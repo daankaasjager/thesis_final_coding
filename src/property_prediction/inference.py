@@ -14,8 +14,9 @@ from rdkit import Chem
 import selfies as sf
 
 from .gcnn import MolPropModule
-from .gnn_dataset import _smiles_to_graph
+from .graph_utils import get_molecule_graph
 from ..mdlm.analysis.bos_eos_analyzer import bos_eos_analysis
+
 
 logger = logging.getLogger(__name__)
 
@@ -76,19 +77,19 @@ def load_scaling_stats(path: str):
         mean_dict = stats["mean"]
         std_dict  = stats["std"]
         prop_names = list(mean_dict.keys())
-        μ = pd.Series(mean_dict)[prop_names]
-        σ = pd.Series(std_dict)[prop_names]
-        return "zscore", prop_names, μ, σ
+        mu = pd.Series(mean_dict)[prop_names]
+        sigma = pd.Series(std_dict)[prop_names]
+        return "zscore", prop_names, mu, sigma, None
 
     # ── Min-max style ────────────────────────────────────────
     if "min_max_vals" in stats:
+        available_atoms = stats["available_atoms"]
         mm_dict = stats["min_max_vals"]
         prop_names = list(mm_dict.keys())
         mins = pd.Series({k: v[0] for k, v in mm_dict.items()})[prop_names]
         maxs = pd.Series({k: v[1] for k, v in mm_dict.items()})[prop_names]
-        return "minmax", prop_names, mins, maxs
-
-    # ── Anything else = unsupported ──────────────────────────
+        return "minmax", prop_names, mins, maxs, available_atoms
+    
     raise KeyError(
         f"File at {path} is malformed. Expected keys "
         "'mean/std' or 'min_max_vals', found: {list(stats.keys())}"
@@ -99,12 +100,25 @@ def clean_generated_data(sample: str, alphabet: Set[str]) -> str:
     cleaned_tokens = [tok for tok in tokens if tok in alphabet and tok not in SPECIAL_TOKENS]
     return "".join(cleaned_tokens)
 
-def selfies_to_graph(cleaned_selfies_string: str) -> Data | None:
+def selfies_to_graph(cleaned_selfies_string: str, available_atoms: list[str]) -> Data | None:
+    """
+    Converts a SELFIES string to a detailed graph object using the
+    project's specific featurization.
+    """
     if not cleaned_selfies_string:
         return None
     try:
         smiles = sf.decoder(cleaned_selfies_string)
-        return _smiles_to_graph(smiles, props=pd.Series([0.0]))
+        mol = Chem.MolFromSmiles(smiles)
+        if mol is None:
+            logger.error(f"RDKit could not process SMILES: {smiles}")
+            return None
+
+        graph = get_molecule_graph(mol, available_atoms)
+
+        graph.y = torch.tensor([0.0], dtype=torch.float32) 
+        return graph
+
     except Exception as e:
         logger.error(f"Failed to convert SELFIES '{cleaned_selfies_string}' to graph: {e}")
         return None
@@ -121,7 +135,7 @@ def predict_properties(config):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
 
-    scale_type, prop_columns, a_series, b_series = load_scaling_stats(
+    scale_type, prop_columns, a_series, b_series, available_atoms = load_scaling_stats(
         config.inference.normalization_stats_file
     )
     try:
@@ -147,7 +161,7 @@ def predict_properties(config):
     cleaned_selfies_list = [clean_generated_data(s, valid_alphabet) for s in trimmed_selfies_list]
 
     logger.info("--> Step 3: Converting to graph objects...")
-    data_list = [selfies_to_graph(s) for s in cleaned_selfies_list]
+    data_list = [selfies_to_graph(s, available_atoms) for s in cleaned_selfies_list]
 
     valid_data = [(cleaned_selfies_list[i], data) for i, data in enumerate(data_list) if data is not None]
     if not valid_data:
