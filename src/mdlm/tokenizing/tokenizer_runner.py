@@ -1,202 +1,242 @@
-import logging
+"""
+Tokenization utilities for SELFIES datasets, with caching and conditioning support.
+"""
+
 import math
 import os
+import logging
 from collections import defaultdict
 from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 import datasets
 import pandas as pd
+import torch
 from datasets import Dataset
+
+from .selfies_tokenizer import SelfiesTokenizer
 
 logger = logging.getLogger(__name__)
 
 
-def _load_cached_tokenized_data(config, tokenizer):
-    """Load tokenized data from disk if available."""
+def _load_cached_tokenized_data(config: Any, tokenizer: SelfiesTokenizer) -> Optional[datasets.Dataset]:
+    """
+    Load tokenized dataset from disk if it exists.
+
+    Args:
+        config: configuration object with paths.
+        tokenizer: tokenizer instance for reporting vocab size.
+
+    Returns:
+        Loaded Dataset or None if not found or on error.
+    """
     path = config.paths.train_data_encoding
     logger.info(f"Looking for cached SELFIES training data at {path}")
     try:
         if os.path.exists(path):
             tokenized_data = datasets.load_from_disk(path, keep_in_memory=True)
-            logger.info(
-                f"SELFIES data loaded successfully. Vocab size: {tokenizer.vocab_size}"
-            )
-            print(
-                f"Print first 5 tokenized sequences: {[tokenized_data[i]['input_ids'] for i in range(5)]}"
-            )
+            logger.info(f"SELFIES data loaded; vocab size: {tokenizer.vocab_size}")
+            sample_ids = [tokenized_data[i]["input_ids"] for i in range(min(5, len(tokenized_data)))]
+            logger.info(f"First 5 tokenized sequences: {sample_ids}")
             return tokenized_data
-        else:
-            logger.info(f"No cached data found at {path}")
-            return None
+        logger.info(f"No cached data found at {path}")
+        return None
     except Exception as e:
         logger.error(f"Error loading SELFIES data: {e}")
         return None
 
 
-def _save_tokenized_data(config, tokenized_data):
-    """Save tokenized data as a datasets.Dataset to disk in an efficient format."""
+def _save_tokenized_data(config: Any, tokenized_data: Any) -> datasets.Dataset:
+    """
+    Save tokenized data to disk in HuggingFace format.
+
+    Args:
+        config: configuration with output paths.
+        tokenized_data: dict or Dataset to save.
+
+    Returns:
+        The saved Dataset.
+    """
     path = Path(config.paths.train_data_encoding)
-    try:
-        # Create directory if it doesn't exist
-        path.parent.mkdir(parents=True, exist_ok=True)
-
-        # Convert dictionary to datasets.Dataset
-        if isinstance(tokenized_data, dict):
-            dataset = Dataset.from_dict(tokenized_data)
-        else:
-            dataset = tokenized_data
-
-        # Save dataset to disk
-        dataset.save_to_disk(str(path))
-        logger.info(f"Tokenized data saved to {path}")
-        return dataset
-    except Exception as e:
-        logger.error(f"Error saving tokenized SELFIES data: {e}")
-        raise
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if isinstance(tokenized_data, dict):
+        dataset = Dataset.from_dict(tokenized_data)
+    else:
+        dataset = tokenized_data
+    dataset.save_to_disk(str(path))
+    logger.info(f"Tokenized data saved to {path}")
+    return dataset
 
 
-def _prepend_conditioning_tokens(config, raw_data):
-    input_selfies = []
-    bin_column_names = [f"{prop}_bin" for prop in config.conditioning.properties]
-    for col in bin_column_names:
-        if col not in raw_data.columns:
-            raise ValueError(f"Expected discretized column '{col}' not found in data")
+def _prepend_conditioning_tokens(config: Any, raw_data: pd.DataFrame) -> List[str]:
+    """
+    Prepend discretized conditioning tokens to each SELFIES string.
+
+    Args:
+        config: configuration containing conditioning properties.
+        raw_data: DataFrame with SELFIES and bin columns.
+
+    Returns:
+        List of conditioned SELFIES strings.
+
+    Raises:
+        ValueError: if expected bin columns are missing.
+    """
+    props = config.conditioning.properties
+    bin_cols = [f"{p}_bin" for p in props]
+    missing = [c for c in bin_cols if c not in raw_data.columns]
+    if missing:
+        raise ValueError(f"Missing discretized columns: {missing}")
+
+    sequences = []
     for _, row in raw_data.iterrows():
-        bin_tokens = [
-            str(row[f"{prop}_bin"]) for prop in config.conditioning.properties
-        ]
-        if any(pd.isna(tok) for tok in bin_tokens):
+        bins = [row[f"{p}_bin"] for p in props]
+        if any(pd.isna(b) for b in bins):
             continue
-        prefix = "".join(bin_tokens)
-        full_sequence = f"{prefix}{row['selfies']}"
-        input_selfies.append(full_sequence)
-    if config.debug:
-        logger.info(
-            f"Conditioning tokens added. Number of sequences: {len(input_selfies)}"
-        )
-        if len(input_selfies) > 5:
-            logger.info(
-                f"show some examples of conditioning tokens: {input_selfies[:5]}"
-            )
-    return input_selfies
+        prefix = "".join(str(int(b)) for b in bins)
+        sequences.append(f"{prefix}{row['selfies']}")
+
+    if config.debug and sequences:
+        logger.info(f"Conditioned {len(sequences)} sequences; examples: {sequences[:5]}")
+    return sequences
 
 
-def _extract_cond_vectors(cfg, df):
-    props = list(cfg.conditioning.properties)
+def _extract_cond_vectors(config: Any, df: pd.DataFrame) -> List[List[float]]:
+    """
+    Extract normalized conditioning vectors from DataFrame.
+
+    Args:
+        config: configuration with conditioning properties.
+        df: DataFrame containing normalized columns.
+
+    Returns:
+        List of conditioning vectors per row.
+
+    Raises:
+        ValueError: if normalized columns are missing.
+    """
+    props = list(config.conditioning.properties)
     cols = [f"{p}_norm" for p in props]
-    if any(c not in df.columns for c in cols):
-        raise ValueError(f"Missing normalised columns {cols}")
+    missing = [c for c in cols if c not in df.columns]
+    if missing:
+        raise ValueError(f"Missing normalized columns: {missing}")
     return df[cols].astype("float32").values.tolist()
 
 
-def greedy_selfies_splitter(selfies_string: str, vocab_keys: list) -> list[str]:
+def _greedy_selfies_splitter(selfies_string: str, vocab_keys: List[str]) -> List[str]:
     """
-    Splits a SELFIES string using a greedy, longest-match algorithm based on a vocabulary.
+    Split a SELFIES string into tokens using a greedy longest-match strategy.
 
     Args:
-        selfies_string: The raw SELFIES string to split (e.g., "[C][C][O]").
-        vocab_keys: A list of all tokens in the vocabulary, pre-sorted by length descending.
+        selfies_string: raw SELFIES string (e.g., "[C][O]").
+        vocab_keys: vocabulary tokens sorted by descending length.
 
     Returns:
-        A list of SELFIES tokens (e.g., ['[C][C]', '[O]']).
+        List of SELFIES tokens.
+
+    Raises:
+        ValueError: if any part of the string cannot be matched.
     """
-    tokens = []
+    tokens: List[str] = []
     i = 0
     while i < len(selfies_string):
-        found_match = False
-        for key in vocab_keys:
-            if selfies_string.startswith(key, i):
-                tokens.append(key)
-                i += len(key)
-                found_match = True
-                break  #
-        if not found_match:
-            remaining_str = selfies_string[i:]
+        match = next((k for k in vocab_keys if selfies_string.startswith(k, i)), None)
+        if not match:
+            remainder = selfies_string[i:]
             raise ValueError(
-                f"Could not find a vocab match for the remainder of the string: '{remaining_str}'. "
-                f"Please ensure your vocabulary is complete."
+                f"No vocab match for remainder '{remainder}'; ensure vocabulary completeness."
             )
+        tokens.append(match)
+        i += len(match)
     return tokens
 
 
 def tokenize_selfies_vocab(
-    config, tokenizer, raw_data=None, chunk_size=50000, max_length=310
-):
-    if (
-        os.path.exists(config.paths.train_data_encoding)
-        and not config.checkpointing.retrain_tokenizer
-    ):
-        return _load_cached_tokenized_data(
-            config, tokenizer
-        )  # this is none if tokenizer is being retrained and is a datasets dict othewise
+    config: Any,
+    tokenizer: SelfiesTokenizer,
+    raw_data: pd.DataFrame,
+    chunk_size: int = 50000,
+    max_length: int = 310,
+) -> Any:
+    """
+    Tokenize SELFIES dataset with optional caching and conditioning.
+
+    Args:
+        config: configuration object with tokenizer and conditioning settings.
+        tokenizer: tokenizer instance.
+        raw_data: DataFrame containing 'selfies'.
+        chunk_size: number of sequences per processing chunk.
+        max_length: maximum token sequence length.
+
+    Returns:
+        Tokenized data dict or loaded Dataset.
+    """
+    if os.path.exists(config.paths.train_data_encoding) and not config.checkpointing.retrain_tokenizer:
+        return _load_cached_tokenized_data(config, tokenizer)
 
     if "selfies" not in raw_data.columns:
         logger.warning("'selfies' column not found in raw_data.")
-        raise
+        raise KeyError("Missing 'selfies' column.")
 
-    if config.conditioning.properties is not None:
-        input_selfies = (
+    if config.conditioning.properties:
+        sequences = (
             _prepend_conditioning_tokens(config, raw_data)
             if config.conditioning.prepend
             else raw_data["selfies"].tolist()
         )
-        cond_vectors_full = (
+        cond_vectors = (
             _extract_cond_vectors(config, raw_data)
             if config.conditioning.embeddings or config.conditioning.cfg
             else None
         )
+    else:
+        sequences = raw_data["selfies"].tolist()
+        cond_vectors = None
 
-    vocab_dict = tokenizer.get_vocab()
-    sorted_vocab_keys = sorted(vocab_dict.keys(), key=len, reverse=True)
-    total_samples = len(input_selfies)
-    logger.info(f"Tokenizing {total_samples} SELFIES in chunks of {chunk_size}...")
-    num_chunks = math.ceil(total_samples / chunk_size)
-    tokenized_data = defaultdict(list)
-    for chunk_idx in range(num_chunks):
-        start_idx = chunk_idx * chunk_size
-        end_idx = min((chunk_idx + 1) * chunk_size, total_samples)
-        chunk = input_selfies[start_idx:end_idx]
-        logger.info(
-            f"Processing chunk {chunk_idx+1}/{num_chunks}: {len(chunk)} sequences"
-        )
-        if (
-            config.tokenizer.tokenizer_type == "ape"
-            or config.tokenizer.tokenizer_type == "APE"
-        ):
-            pre_split_chunk = [
-                greedy_selfies_splitter(s, sorted_vocab_keys) for s in chunk
-            ]
-            tokenized_chunk = tokenizer(
-                pre_split_chunk,
+    vocab = tokenizer.get_vocab()
+    vocab_keys = sorted(vocab.keys(), key=len, reverse=True)
+    total = len(sequences)
+    logger.info(f"Tokenizing {total} sequences in chunks of {chunk_size}.")
+    chunks = math.ceil(total / chunk_size)
+    tokenized: Dict[str, List[Any]] = defaultdict(list)
+
+    for idx in range(chunks):
+        start = idx * chunk_size
+        end = min((idx + 1) * chunk_size, total)
+        batch = sequences[start:end]
+        logger.info(f"Processing chunk {idx+1}/{chunks} with {len(batch)} sequences.")
+
+        if config.tokenizer.tokenizer_type.lower() == "ape":
+            split_batch = [_greedy_selfies_splitter(s, vocab_keys) for s in batch]
+            tk = tokenizer(
+                split_batch,
                 is_split_into_words=True,
                 max_length=max_length,
                 padding="longest",
                 truncation=False,
                 add_special_tokens=True,
             )
-        else:  # Wordlevel
-            tokenized_chunk = tokenizer(
-                chunk,
+        else:
+            tk = tokenizer(
+                batch,
                 is_split_into_words=False,
                 max_length=max_length,
                 padding="longest",
                 truncation=False,
                 add_special_tokens=True,
             )
-        tokenized_data["input_ids"].extend(tokenized_chunk["input_ids"])
-        tokenized_data["attention_mask"].extend(tokenized_chunk["attention_mask"])
-        token_type_ids = tokenized_chunk.get(
-            "token_type_ids",
-            [[0] * len(ids) for ids in tokenized_chunk["input_ids"]],
-        )
-        tokenized_data["token_type_ids"].extend(token_type_ids)
-        if cond_vectors_full and config.conditioning.properties:
-            tokenized_data["cond_props"].extend(cond_vectors_full[start_idx:end_idx])
-        else:
-            tokenized_data["cond_props"].extend(
-                [[0] * len(config.conditioning.properties)] * len(chunk)
-            )
 
-    _save_tokenized_data(config, tokenized_data)
-    logger.info(f"Done tokenizing. Vocab size: {tokenizer.vocab_size}")
-    return tokenized_data
+        tokenized["input_ids"].extend(tk["input_ids"])
+        tokenized["attention_mask"].extend(tk["attention_mask"])
+        tokenized["token_type_ids"].extend(
+            tk.get("token_type_ids", [[0] * len(ids) for ids in tk["input_ids"]])
+        )
+        if cond_vectors:
+            tokenized["cond_props"].extend(cond_vectors[start:end])
+        else:
+            zeros = [0] * len(config.conditioning.properties or [])
+            tokenized["cond_props"].extend([zeros] * len(batch))
+
+    _save_tokenized_data(config, tokenized)
+    logger.info(f"Tokenization complete; vocab size: {tokenizer.vocab_size}")
+    return tokenized

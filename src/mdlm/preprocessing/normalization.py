@@ -1,12 +1,11 @@
 import json
 import logging
-from venv import logger
 
 import pandas as pd
 from omegaconf import DictConfig
 from tqdm import tqdm
 
-from ..utils import select_numeric_columns
+from common.utils import select_numeric_columns
 
 logger = logging.getLogger(__name__)
 

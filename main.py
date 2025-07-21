@@ -1,8 +1,6 @@
-import sys
-from pathlib import Path
-
 import logging
 import os
+from pathlib import Path
 
 import hydra
 import lightning as L

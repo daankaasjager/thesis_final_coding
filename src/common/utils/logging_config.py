@@ -1,6 +1,12 @@
+"""
+Configure logging with colored console output and file logging,
+adapted for multi-GPU with Lightning’s rank_zero_only decorator.
+"""
+
 import logging
 import sys
 import traceback
+from typing import Callable
 
 from colorama import Fore, Style, init
 from lightning.pytorch.utilities import rank_zero_only
@@ -9,6 +15,12 @@ init(autoreset=True)
 
 
 class ColoredFormatter(logging.Formatter):
+    """
+    Formatter that adds ANSI colors based on log level.
+
+    DEBUG: cyan, INFO: green, WARNING: yellow, ERROR: red, CRITICAL: magenta+bright.
+    """
+
     COLORS = {
         "DEBUG": Fore.CYAN,
         "INFO": Fore.GREEN,
@@ -17,47 +29,62 @@ class ColoredFormatter(logging.Formatter):
         "CRITICAL": Fore.MAGENTA + Style.BRIGHT,
     }
 
-    def format(self, record):
-        log_message = super().format(record)
-        return f"{self.COLORS.get(record.levelname, '')}{log_message}{Style.RESET_ALL}"
+    def format(self, record: logging.LogRecord) -> str:
+        """
+        Apply base formatting and wrap result in level-specific ANSI codes.
+
+        Args:
+            record: the LogRecord to format.
+
+        Returns:
+            Colored log message string.
+        """
+        message = super().format(record)
+        color = self.COLORS.get(record.levelname, "")
+        return f"{color}{message}{Style.RESET_ALL}"
 
 
-def configure_logging():
-    colored_formatter = ColoredFormatter(
-        fmt="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
-    )
+def configure_logging(log_file: str = "app.log") -> None:
+    """
+    Set up global logging configuration:
+    - FileHandler writing to `log_file`
+    - StreamHandler with colored output
+    - All log methods wrapped with rank_zero_only for Lightning multi-GPU safety
+    - Global exception hook that logs uncaught exceptions
 
-    file_handler = logging.FileHandler("app.log")
+    Args:
+        log_file: filename for persistent logs.
+    """
+    # Handlers
+    file_handler = logging.FileHandler(log_file)
     file_handler.setFormatter(
         logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
     )
 
-    stream_handler = logging.StreamHandler()
-    stream_handler.setFormatter(colored_formatter)
-
-    logging.basicConfig(level=logging.DEBUG, handlers=[file_handler, stream_handler], force=True)
-
-    # Wrap logging methods with rank_zero_only for multi-GPU support.
-    # https://github.com/kuleshov-group/mdlm/tree/bbc8fb61077a3ca38eab2423d0f81a5484754f51
-    logger = logging.getLogger()
-    for level in (
-        "debug",
-        "info",
-        "warning",
-        "error",
-        "exception",
-        "fatal",
-        "critical",
-    ):
-        setattr(logger, level, rank_zero_only(getattr(logger, level)))
-
-    def exception_handler(exc_type, exc_value, exc_traceback):
-        formatted_exception = "".join(
-            traceback.format_exception(exc_type, exc_value, exc_traceback)
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(
+        ColoredFormatter(
+            fmt="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+            datefmt="%Y-%m-%d %H:%M:%S",
         )
-        print(Fore.RED + formatted_exception + Style.RESET_ALL)
-        with open("app.log", "a") as log_file:
-            log_file.write(formatted_exception)
+    )
 
-    sys.excepthook = exception_handler
+    logging.basicConfig(level=logging.DEBUG, handlers=[file_handler, console_handler], force=True)
+
+    # Wrap logging methods to run only on rank zero in distributed setups
+    root_logger = logging.getLogger()
+    for method in ("debug", "info", "warning", "error", "exception", "fatal", "critical"):
+        setattr(root_logger, method, rank_zero_only(getattr(root_logger, method)))  # type: ignore
+
+    def _exception_handler(exc_type, exc_value, exc_traceback) -> None:
+        """
+        Global exception hook that prints and logs uncaught exceptions.
+
+        Writes the traceback in red to console and appends it to the log file.
+        """
+        tb = "".join(traceback.format_exception(exc_type, exc_value, exc_traceback))
+        print(f"{Fore.RED}{tb}{Style.RESET_ALL}")
+        with open(log_file, "a") as f:
+            f.write(tb)
+
+    sys.excepthook = _exception_handler

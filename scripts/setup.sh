@@ -15,3 +15,8 @@ poetry lock
 poetry install
 
 echo "venv, python is: $(which python)"
+
+# Dev import and linting check
+black .
+isort .
+ruff check . --fix

@@ -11,18 +11,16 @@ from rdkit.Chem import Crippen, RDConfig, rdMolDescriptors
 sys.path.append(os.path.join(RDConfig.RDContribDir, "SA_Score"))
 import sascorer
 
-TOKEN_PATTERN = re.compile(r"\[[^\]]+\]")
+TOKEN_PATTERN = re.compile("\\[[^\\]]+\\]")
 
 
 def compute_token_stats(samples: List[str]) -> Tuple[Counter, List[int]]:
     token_counts = Counter()
     lengths = []
-
     for s in samples:
         tokens = TOKEN_PATTERN.findall(s)
         token_counts.update(tokens)
         lengths.append(len(tokens))
-
     total_tokens = sum(token_counts.values())
     if total_tokens == 0:
         token_freqs = {tok: 0.0 for tok in token_counts}
@@ -30,15 +28,16 @@ def compute_token_stats(samples: List[str]) -> Tuple[Counter, List[int]]:
         token_freqs = {
             tok: count / total_tokens * 100 for tok, count in token_counts.items()
         }
+    return (token_freqs, lengths)
 
-    return token_freqs, lengths
 
-
-def clean_generated_data(sample: str, alphabet: List[str]) -> str:
+def _clean_generated_data(sample: str, alphabet: List[str]) -> str:
     return "".join(
-        tok
-        for tok in TOKEN_PATTERN.findall(sample)
-        if tok not in ("[BOS]", "[EOS]", "[PAD]", "[UNK]") and tok in alphabet
+        (
+            tok
+            for tok in TOKEN_PATTERN.findall(sample)
+            if tok not in ("[BOS]", "[EOS]", "[PAD]", "[UNK]") and tok in alphabet
+        )
     )
 
 
@@ -49,9 +48,8 @@ def get_valid_molecules(samples: List[str], config) -> List[Chem.Mol]:
             raw_tokens = {line.strip() for line in f if line.strip()}
     except FileNotFoundError:
         raise ValueError(f"Alphabet file not found at {config.paths.selfies_alphabet}")
-
     for s in samples:
-        cleaned_selfies = clean_generated_data(s, list(raw_tokens))
+        cleaned_selfies = _clean_generated_data(s, list(raw_tokens))
         try:
             smiles = selfies.decoder(cleaned_selfies)
             mol = Chem.MolFromSmiles(smiles)
@@ -100,12 +98,9 @@ def compute_novelty(
 ) -> float:
     if not generated_canonical_smiles:
         return 0.0
-
     unique_generated_smiles = set(generated_canonical_smiles)
     original_smiles_set = set(original_canonical_smiles)
-
     novel_smiles = unique_generated_smiles - original_smiles_set
-
     return len(novel_smiles) / len(unique_generated_smiles) * 100.0
 
 
