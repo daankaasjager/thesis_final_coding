@@ -417,9 +417,9 @@ class DDiTBlock(nn.Module):
             x = rearrange(attn_out, "(b s) h d -> b s (h d)", b=b)
         else:
             q, k, v = rearrange(qkv, "(b s) three h d -> three b s h d", b=b)
-            q = rearrange(q, "three b s h d -> (b h) s d")
-            k = rearrange(k, "three b s h d -> (b h) s d")
-            v = rearrange(v, "three b s h d -> (b h) s d")
+            q = rearrange(q, "b s h d -> (b h) s d")
+            k = rearrange(k, "b s h d -> (b h) s d")
+            v = rearrange(v, "b s h d -> (b h) s d")
             attn = F.scaled_dot_product_attention(q, k, v, dropout_p=0.0)
             x = rearrange(attn, "(b h) s d -> b s (h d)", b=b)
         x = bias_dropout(self.attn_out(x), None, shifts_scales[2], x_skip, self.dropout)
