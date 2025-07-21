@@ -1,6 +1,8 @@
 # MDLM Experiments
 
-This README documents the setup and execution of prepend conditioning experiments for the AI Msc final research project of Daan Kaasjager, using various conditioning strategies for a Masked Diffusion Language Model (MDLM) to generate novel, valid, unique, and representative molecules.
+This README documents the setup and execution of prepend conditioning experiments for the AI Msc final research project of Daan Kaasjager, using various conditioning strategies for a Masked Diffusion Language Model (MDLM) (link to paper, blog, and Github https://s-sahoo.com/mdlm/) to generate novel, valid, unique, and representative molecules.
+
+LLMs were used to generate docstring. 
 
 ## 📚 Overview
 

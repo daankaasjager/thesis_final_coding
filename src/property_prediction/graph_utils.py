@@ -1,11 +1,7 @@
-"""This function is only used to convert SMILES strings
-into PyTorch Geometric Data objects, for molecular property prediction outside
-of the diffusion model."""
-
 import json
 import logging
 from pathlib import Path
-from venv import logger
+from typing import Any, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -15,75 +11,91 @@ from torch.utils.data import random_split
 from torch_geometric.data import Data as GraphData
 from torch_geometric.loader import DataLoader
 
-# This part contains modified code written
-# by Akshat Nigam for the KRAKEN project found
-# at https://github.com/aspuru-guzik-group/kraken
-
-
 logger = logging.getLogger(__name__)
 
 
-def one_hot_encode(x, allowable_set, check_validity=False):
+def one_hot_encode(
+    value: Any,
+    allowable_set: List[Any],
+    check_validity: bool = False,
+) -> List[bool]:
     """
-    Maps inputs to a one-hot encoding, according to a given list.
-    If `check_validity` is set to true, the element not in the
-    allowable set is set to the last element.
-    """
-    if x not in allowable_set:
-        if check_validity:
-            raise ValueError(f"{x} is not in the allowable set: {allowable_set}")
-        x = allowable_set[-1]
+    Return a one-hot encoding for `value` against `allowable_set`.
 
-    return list(map(lambda s: x == s, allowable_set))
+    Args:
+        value: Element to encode.
+        allowable_set: Sequence of allowed values.
+        check_validity: If True, invalid value raises ValueError.
+    """
+    if value not in allowable_set:
+        if check_validity:
+            raise ValueError(f"{value} not in allowable set {allowable_set}")
+        value = allowable_set[-1]
+    return [value == item for item in allowable_set]
 
 
 def atom_features(
-    atom,
-    available_atoms: list[str],
-    atomdata=[],
-    atomidx=None,
-    explicit_H=True,
-    use_chirality=True,
-):
-    possible_hybridizations = [
+    atom: Chem.rdchem.Atom,
+    available_atoms: List[str],
+    extra_features: Optional[List[List[float]]] = None,
+    atom_idx: Optional[int] = None,
+    explicit_h: bool = True,
+    use_chirality: bool = True,
+) -> List[Union[bool, float]]:
+    """
+    Generate feature vector for an atom.
+
+    Args:
+        atom: RDKit Atom instance.
+        available_atoms: List of element symbols.
+        extra_features: Optional additional feature lists.
+        atom_idx: Index for extra_features lookup.
+        explicit_h: Include explicit hydrogen count features.
+        use_chirality: Include chirality features.
+    """
+    hybridizations = [
         Chem.rdchem.HybridizationType.SP,
         Chem.rdchem.HybridizationType.SP2,
         Chem.rdchem.HybridizationType.SP3,
         Chem.rdchem.HybridizationType.SP3D,
         Chem.rdchem.HybridizationType.SP3D2,
     ]
-    results = []
-    results += one_hot_encode(atom.GetSymbol(), available_atoms)
-    results += one_hot_encode(
-        atom.GetDegree(), [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10], check_validity=True
-    )
-    results += one_hot_encode(atom.GetImplicitValence(), [0, 1, 2, 3, 4, 5, 6])
-    results += [atom.GetFormalCharge(), atom.GetNumRadicalElectrons()]
-    results += one_hot_encode(atom.GetHybridization(), possible_hybridizations)
-    results += [atom.GetIsAromatic()]
-
-    if len(atomdata) != 0:
-        print("Add additional atomdata")
-        results += atomdata[atomidx]
-
-    # In case of explicit hydrogen(QM8, QM9), avoid calling `GetTotalNumHs`
-    if not explicit_H:
-        results += one_hot_encode(atom.GetTotalNumHs(), [0, 1, 2, 3, 4])
-
+    features: List[Union[bool, float]] = []
+    features += one_hot_encode(atom.GetSymbol(), available_atoms)
+    features += one_hot_encode(atom.GetDegree(), list(range(11)), check_validity=True)
+    features += one_hot_encode(atom.GetImplicitValence(), list(range(7)))
+    features += [atom.GetFormalCharge(), atom.GetNumRadicalElectrons()]
+    features += one_hot_encode(atom.GetHybridization(), hybridizations)
+    features += [atom.GetIsAromatic()]
+    if extra_features and atom_idx is not None:
+        logger.info("Adding extra atom features")
+        features += extra_features[atom_idx]
+    if not explicit_h:
+        features += one_hot_encode(atom.GetTotalNumHs(), list(range(5)))
     if use_chirality:
-        try:
-            results += one_hot_encode(atom.GetProp("_CIPCode"), ["R", "S"])
-        except KeyError:
-            results += [False, False]
-        results += [atom.HasProp("_ChiralityPossible")]
-
-    return results
+        cip = atom.GetProp("_CIPCode") if atom.HasProp("_CIPCode") else None
+        features += one_hot_encode(cip, ["R", "S"])
+        features += [atom.HasProp("_ChiralityPossible")]
+    return features
 
 
-def bond_features(bond, bonddata=[], bondidx=None, use_chirality=False):
+def bond_features(
+    bond: Chem.rdchem.Bond,
+    extra_features: Optional[List[List[float]]] = None,
+    bond_idx: Optional[int] = None,
+    use_chirality: bool = False,
+) -> List[Union[bool, float]]:
+    """
+    Generate feature vector for a bond.
+
+    Args:
+        bond: RDKit Bond instance.
+        extra_features: Optional additional feature lists.
+        bond_idx: Index for extra_features lookup.
+        use_chirality: Include stereochemistry features.
+    """
     bt = bond.GetBondType()
-
-    bond_feats = [
+    feats: List[Union[bool, float]] = [
         bt == Chem.rdchem.BondType.SINGLE,
         bt == Chem.rdchem.BondType.DOUBLE,
         bt == Chem.rdchem.BondType.TRIPLE,
@@ -91,131 +103,156 @@ def bond_features(bond, bonddata=[], bondidx=None, use_chirality=False):
         bond.GetIsConjugated(),
         bond.IsInRing(),
     ]
-    if len(bonddata) != 0:
-        logger.info("Adding additional bond data")
-        bond_feats += bonddata[bondidx]
+    if extra_features and bond_idx is not None:
+        logger.info("Adding extra bond features")
+        feats += extra_features[bond_idx]
     if use_chirality:
-        logger.info("Adding chirality bond data")
-        bond_feats = bond_feats + one_hot_encode(
-            str(bond.GetStereo()), ["STEREONONE", "STEREOANY", "STEREOZ", "STEREOE"]
-        )
-
-    return bond_feats
+        stereo = str(bond.GetStereo())
+        feats += one_hot_encode(stereo, ["STEREONONE", "STEREOANY", "STEREOZ", "STEREOE"])
+    return feats
 
 
-def get_bond_pair(mol):
-    bonds = mol.GetBonds()
-    res = [[], []]
-    for bond in bonds:
-        res[0] += [bond.GetBeginAtomIdx(), bond.GetEndAtomIdx()]
-        res[1] += [bond.GetEndAtomIdx(), bond.GetBeginAtomIdx()]
-    return res
+def get_bond_pair(mol: Chem.rdchem.Mol) -> Tuple[List[int], List[int]]:
+    """
+    Return paired bond indices for graph edges.
+    """
+    begin, end = [], []
+    for bond in mol.GetBonds():
+        i, j = bond.GetBeginAtomIdx(), bond.GetEndAtomIdx()
+        begin += [i, j]
+        end += [j, i]
+    return begin, end
 
 
-def n_atom_features(available_atoms: list[str], additional_atom_features: int = 0):
+def n_atom_features(
+    available_atoms: List[str], extra: int = 0
+) -> int:
+    """Return dimension of atom feature vector."""
     atom = Chem.MolFromSmiles("C").GetAtomWithIdx(0)
-    return len(atom_features(atom, available_atoms)) + additional_atom_features
+    return len(atom_features(atom, available_atoms)) + extra
 
 
-def n_bond_features(additional_bond_features: int = 0):
+def n_bond_features(extra: int = 0) -> int:
+    """Return dimension of bond feature vector."""
     bond = Chem.MolFromSmiles("CC").GetBondWithIdx(0)
-    return len(bond_features(bond)) + additional_bond_features
+    return len(bond_features(bond)) + extra
 
 
 def get_molecule_info(
-    mol, available_atoms
-) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-    sorted_atoms = sorted(available_atoms)
+    mol: Union[str, Chem.rdchem.Mol],
+    available_atoms: List[str],
+) -> Tuple[List[List[Union[bool, float]]], Tuple[List[int], List[int]], List[List[Union[bool, float]]]]:
+    """
+    Extract node and edge features from a molecule.
 
-    atoms = mol.GetAtoms()
-    bonds = mol.GetBonds()
-    node_f = [atom_features(atom, sorted_atoms) for atom in atoms]
-
-    edge_index = get_bond_pair(mol)
-    edge_attr = [bond_features(bond, use_chirality=False) for bond in bonds]
-
-    edge_attr = edge_attr + edge_attr
-
-    return node_f, edge_index, edge_attr  # float, long, float
-
-
-def get_molecule_graph(mol, available_atoms, dtype=torch.float):
+    Args:
+        mol: SMILES string or RDKit Mol.
+        available_atoms: List of element symbols.
+    Returns:
+        node features, edge indices, edge features
+    """
     if isinstance(mol, str):
         mol = Chem.MolFromSmiles(mol)
+    atoms = mol.GetAtoms()
+    bonds = mol.GetBonds()
+    node_feats = [atom_features(a, available_atoms) for a in atoms]
+    edge_idx = get_bond_pair(mol)
+    bond_feats = [bond_features(b) for b in bonds]
+    return node_feats, edge_idx, bond_feats + bond_feats
 
-    node_f, edge_index, edge_attr = get_molecule_info(mol, available_atoms)
-    node_f = torch.tensor(node_f, dtype=dtype)
-    edge_index = torch.tensor(edge_index, dtype=torch.long)
+
+def get_molecule_graph(
+    mol: Union[str, Chem.rdchem.Mol],
+    available_atoms: List[str],
+    dtype: torch.dtype = torch.float,
+) -> GraphData:
+    """
+    Build a PyG GraphData object from a molecule.
+
+    Args:
+        mol: SMILES string or RDKit Mol.
+        available_atoms: List of element symbols.
+        dtype: Torch tensor data type.
+    """
+    node_feats, edge_idx, edge_attr = get_molecule_info(mol, available_atoms)
+    x = torch.tensor(node_feats, dtype=dtype)
+    edge_index = torch.tensor(edge_idx, dtype=torch.long)
     edge_attr = torch.tensor(edge_attr, dtype=dtype)
+    return GraphData(x=x, edge_index=edge_index, edge_attr=edge_attr)
 
-    return GraphData(x=node_f, edge_index=edge_index, edge_attr=edge_attr)
 
-
-def to_serializable(x):
+def to_serializable(obj: Any) -> Any:
     """
-    Convert NumPy / Torch / pandas objects to JSON-friendly types.
+    Convert numpy, pandas, or torch objects to JSON-serializable types.
     """
-    if isinstance(x, (np.generic,)):  # numpy scalar (float32, int64, …)
-        return x.item()
-    if hasattr(x, "tolist"):  # ndarray, pandas Series, Torch tensor
-        return x.tolist()
-    if isinstance(x, (dict, list, int, float, str, bool)) or x is None:
-        return x
-    raise TypeError(f"{type(x)} is not JSON serializable")
+    if isinstance(obj, np.generic):
+        return obj.item()
+    if hasattr(obj, "tolist"):
+        return obj.tolist()
+    if isinstance(obj, (dict, list, int, float, str, bool)) or obj is None:
+        return obj
+    raise TypeError(f"Type {type(obj)} not JSON serializable")
 
 
 def prepare_graph_dataset(
     df: pd.DataFrame,
-    prop_columns: list[str],
+    prop_columns: List[str],
     normalize: bool = True,
-    stats_path: str | None = None,
-):
+    stats_path: Optional[str] = None,
+) -> Tuple[List[GraphData], pd.Series, pd.Series]:
     """
-    Calculates normalization stats, saves them, and converts a DataFrame to a list of graph objects.
+    Convert DataFrame to graph dataset with optional normalization.
+
+    Args:
+        df: Input DataFrame with a 'smiles' column.
+        prop_columns: Columns to normalize and attach as features.
+        normalize: Whether to z-score normalize properties.
+        stats_path: Path to save normalization stats JSON.
+    Returns:
+        list of GraphData, mean series, std series
     """
     props = df[prop_columns].astype(np.float32)
-
-    # --- Normalization ---
     if normalize:
-        mean = props.mean()
-        std = props.std()
-        normed_props = (props - mean) / std
+        mean, std = props.mean(), props.std()
+        props = (props - mean) / std
     else:
-        mean = pd.Series(0.0, index=prop_columns)  # dummy values
+        mean = pd.Series(0.0, index=prop_columns)
         std = pd.Series(1.0, index=prop_columns)
-        normed_props = props
-
-    # --- Save stats ---
     if stats_path:
-        # This saves the mean/std as a dictionary keyed by property name, which is more robust.
-        stats_to_save = {"mean": mean.to_dict(), "std": std.to_dict()}
-        path = Path(stats_path)
-        path.parent.mkdir(parents=True, exist_ok=True)  # Ensure directory exists
-        path.write_text(json.dumps(stats_to_save, indent=4))
-        print(f"Normalization stats saved to {path}")
-
-    data_list = []
-    for i, row in df.iterrows():
-        graph = get_molecule_graph(row["smiles"], normed_props.iloc[i].values)
-        if graph is not None:
-            data_list.append(graph)
-
-    return data_list, mean, std
+        stats = {"mean": mean.to_dict(), "std": std.to_dict()}
+        p = Path(stats_path)
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text(json.dumps(stats, indent=4))
+        logger.info(f"Saved normalization stats to {p}")
+    dataset = []
+    for idx, row in df.iterrows():
+        graph = get_molecule_graph(row["smiles"], row[prop_columns].tolist())
+        dataset.append(graph)
+    return dataset, mean, std
 
 
-def split_and_load(data_list, batch_size=32, val_ratio=0.2, num_workers=0):
-    """Splits PyG Data objects into train/val loaders using torch random_split."""
-    n = len(data_list)
-    n_val = int(val_ratio * n)
-    n_train = n - n_val
+def split_and_load(
+    data_list: List[GraphData],
+    batch_size: int = 32,
+    val_ratio: float = 0.2,
+    num_workers: int = 0,
+) -> Tuple[DataLoader, DataLoader]:
+    """
+    Split dataset into train/validation loaders.
 
-    train_data, val_data = random_split(data_list, [n_train, n_val])
-
-    train_loader = DataLoader(
-        train_data, batch_size=batch_size, shuffle=True, num_workers=num_workers
+    Args:
+        data_list: List of GraphData objects.
+        batch_size: Batch size for loaders.
+        val_ratio: Fraction of data for validation.
+        num_workers: DataLoader worker count.
+    Returns:
+        train and validation DataLoaders.
+    """
+    total = len(data_list)
+    val_count = int(val_ratio * total)
+    train_count = total - val_count
+    train_ds, val_ds = random_split(data_list, [train_count, val_count])
+    return (
+        DataLoader(train_ds, batch_size=batch_size, shuffle=True, num_workers=num_workers),
+        DataLoader(val_ds, batch_size=batch_size, shuffle=False, num_workers=num_workers),
     )
-    val_loader = DataLoader(
-        val_data, batch_size=batch_size, shuffle=False, num_workers=num_workers
-    )
-
-    return train_loader, val_loader

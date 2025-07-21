@@ -16,7 +16,8 @@ from .gcnn import MolPropModule
 from .graph_utils import prepare_graph_dataset, split_and_load
 
 
-def _setup_cuda():
+def _setup_cuda() -> None:
+    """Sets up CUDA environment variables for better performance."""
     os.environ["TOKENIZERS_PARALLELISM"] = "false"
     if (
         torch.cuda.is_available() and torch.cuda.get_device_capability()[0] >= 7
@@ -46,7 +47,7 @@ def setup_training_logging(config) -> tuple:
     return wandb_logger, callbacks
 
 
-def train_property_predictor(prop_pred_config: DictConfig):
+def train_property_predictor(prop_pred_config: DictConfig) -> None:
     """
     Trains the Lightning model for property prediction.
 
@@ -97,6 +98,6 @@ def train_property_predictor(prop_pred_config: DictConfig):
         logger=wandb_logger,
     )
 
-    print("Starting training...")
+    logger.info("Starting training...")
     trainer.fit(model, train_loader, val_loader)
-    print("Training finished.")
+    logger.info("Training finished.")
