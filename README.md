@@ -1,24 +1,32 @@
 # MDLM Experiments
 
-This README documents the setup and execution of prepend conditioning experiments for the Msc thesis of Daan Kaasjager, using various conditioning strategies for a Masked Diffusion Language Model (MDLM) to generate novel, valid, and unique molecules.
+This README documents the setup and execution of prepend conditioning experiments for the AI Msc final research project of Daan Kaasjager, using various conditioning strategies for a Masked Diffusion Language Model (MDLM) to generate novel, valid, unique, and representative molecules.
 
 ## 📚 Overview
 
 These experiments aim to answer:
 
-1. **RQ1.** Can an unconditioned MDLM trained on SELFIES generate valid, novel, and high-quality molecules?
-2. **RQ2.** How effective is prepend conditioning at improving validity, novelty, and quality of generated molecules?
+1. **RQ1.** Can a Masked Diffusion Language Model trained on SELFIES generate valid, novel, unique, and representative molecules? 
+2. **RQ2.** How effective are prepend conditioning, embedding conditioning, and classifier-free guidance at targeting molecular properties during generation?
 
-This repository focuses on **RQ2 prepend conditioning**. The core idea is to prepend scalar molecular property tokens to the input sequence as conditioning, allowing the model to learn correlations between properties and molecular structure.
+This repository focuses on answers both research questions by comparing conditioned and unconditioned models.
 
 ---
 
-
-## Training
+## Setup 
+The run.sh scripts can be run in the terminal by running the scripts directly or can be submitted as a SLURM job using the 'sbatch' command. This might require running 'chmod +x ./sripts/name_of_script.sh' beforehand. 
 
 ```bash
-pip install -r requirements.txt
+scripts/setup.sh
 ```
+
+## Training
+To continue from a checkpoint, set 
+```bash
+checkpointing.resume_from_ckpt=True
+```
+alongside the normal command
+
 
 ### Preliminary experiments
 tiny (28 M) – baseline training from scratch
@@ -196,9 +204,7 @@ checkpointing.retrain_tokenizer=False \
 
 
 ## Sampling
-You might notice that during sampling the script has changed. This is script is nearly identical except that it
-specifies different SLURM configurations, therefore it is completely optional, the program works fine with 
-the run.sh script
+You might notice that during sampling the script has changed. This is script is nearly identical except that it specifies different SLURM configurations (allocates less compute), therefore it is completely optional, the program works fine with the run.sh script
 
 ### Unconditioned sampling
 tiny model

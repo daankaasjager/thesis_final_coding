@@ -1,29 +1,26 @@
 """This function is only used to convert SMILES strings
- into PyTorch Geometric Data objects, for molecular property prediction outside
- of the diffusion model."""
+into PyTorch Geometric Data objects, for molecular property prediction outside
+of the diffusion model."""
 
+import json
+import logging
+from pathlib import Path
 from venv import logger
+
+import numpy as np
+import pandas as pd
 import torch
 from rdkit import Chem
-from torch_geometric.data import Data
-from torch_geometric.utils import from_smiles
-from torch_geometric.loader import DataLoader
 from torch.utils.data import random_split
-import pandas as pd
-import numpy as np
-import json
-from pathlib import Path
+from torch_geometric.data import Data as GraphData
+from torch_geometric.loader import DataLoader
 
 # This part contains modified code written
 # by Akshat Nigam for the KRAKEN project found
 # at https://github.com/aspuru-guzik-group/kraken
 
-from rdkit import Chem
-from torch_geometric.data import Data as GraphData
-import torch
-import logging
 
-logger  = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 def one_hot_encode(x, allowable_set, check_validity=False):
@@ -158,13 +155,14 @@ def to_serializable(x):
     """
     Convert NumPy / Torch / pandas objects to JSON-friendly types.
     """
-    if isinstance(x, (np.generic,)):        # numpy scalar (float32, int64, …)
+    if isinstance(x, (np.generic,)):  # numpy scalar (float32, int64, …)
         return x.item()
-    if hasattr(x, "tolist"):                # ndarray, pandas Series, Torch tensor
+    if hasattr(x, "tolist"):  # ndarray, pandas Series, Torch tensor
         return x.tolist()
     if isinstance(x, (dict, list, int, float, str, bool)) or x is None:
         return x
     raise TypeError(f"{type(x)} is not JSON serializable")
+
 
 def prepare_graph_dataset(
     df: pd.DataFrame,
@@ -213,7 +211,11 @@ def split_and_load(data_list, batch_size=32, val_ratio=0.2, num_workers=0):
 
     train_data, val_data = random_split(data_list, [n_train, n_val])
 
-    train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True, num_workers=num_workers)
-    val_loader = DataLoader(val_data, batch_size=batch_size, shuffle=False, num_workers=num_workers)
+    train_loader = DataLoader(
+        train_data, batch_size=batch_size, shuffle=True, num_workers=num_workers
+    )
+    val_loader = DataLoader(
+        val_data, batch_size=batch_size, shuffle=False, num_workers=num_workers
+    )
 
     return train_loader, val_loader

@@ -2,30 +2,16 @@
 module purge
 module load Python/3.11.5-GCCcore-13.2.0
 module load CUDA/12.1.1
-source /scratch/s3905845/venvs/thesis/bin/activate
+module load poetry/1.6.1-GCCcore-13.2.0 
 
-# (B) Print out which python just to check
+# If you are in a non-GUI environment, set the keyring backend to null
+export PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring
+
+# Set the venv directory
+poetry config virtualenvs.in-project false
+poetry config virtualenvs.path /scratch/s3905845/venvs
+
+poetry lock
+poetry install
+
 echo "venv, python is: $(which python)"
-
-
-# to use moses, different python version is needed.
-module purge
-module load Python/3.8.6-GCCcore-10.2.0
-source /scratch/s3905845/venvs/evaluate_molecules/bin/activate
-# 2. Upgrade pip, setuptools, wheel
-pip install --upgrade pip setuptools wheel
-
-# 3. Install numpy first (helps with some Cython dependencies)
-pip install numpy cython
-
-# 4. Install pomegranate
-pip install pomegranate
-
-pip install molsets
-
-# sort out imports and format code
-black .
-isort .
-ruff check . --fix
-
-#

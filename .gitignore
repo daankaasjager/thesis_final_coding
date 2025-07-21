@@ -27,3 +27,5 @@ slurm-*
 .vscode/
 
 lightning_logs/
+
+.ruff_cache/

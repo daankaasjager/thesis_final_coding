@@ -1,12 +1,11 @@
 import json
 import logging
-from os import path
 import re
 from collections import defaultdict
-from typing import Dict, List
+from os import path
 from pathlib import Path
+from typing import Dict, List
 
-from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
 
@@ -92,7 +91,7 @@ def train_selfies_bpe_vocab(
                 logger.info(
                     f"Merge iteration {i+1}: No more pairs found in the corpus representation."
                 )
-            break 
+            break
         # Find the best pair that hasn't been merged into a token already present
         best_pair = (None, None)
         max_freq = -1
@@ -155,9 +154,7 @@ def train_selfies_bpe_vocab(
         )
     if not path.exists(config.paths.selfies_ape_vocab):
         Path(config.paths.selfies_ape_vocab).parent.mkdir(parents=True, exist_ok=True)
-    with open(
-        config.paths.selfies_ape_vocab, "w", encoding="utf-8)"
-    ) as vocab_file:
+    with open(config.paths.selfies_ape_vocab, "w", encoding="utf-8)") as vocab_file:
         json.dump(current_vocab, vocab_file, ensure_ascii=False, indent=4)
     logger.info(f"Final vocabulary saved to {config.paths.selfies_ape_vocab}")
     return current_vocab

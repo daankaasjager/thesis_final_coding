@@ -1,8 +1,10 @@
-from venv import logger
-from transformers import PreTrainedTokenizerFast
 import logging
+from venv import logger
 
-logger  = logging.getLogger(__name__)
+from transformers import PreTrainedTokenizerFast
+
+logger = logging.getLogger(__name__)
+
 
 class SelfiesTokenizer(PreTrainedTokenizerFast):
     def __init__(self, *args, **kwargs):
@@ -12,5 +14,7 @@ class SelfiesTokenizer(PreTrainedTokenizerFast):
         """
         Decodes token IDS into a string without spaces. E.g., "[C][Branch1]"
         """
-        decoded = super().decode(token_ids, skip_special_tokens=skip_special_tokens, **kwargs)
+        decoded = super().decode(
+            token_ids, skip_special_tokens=skip_special_tokens, **kwargs
+        )
         return decoded.replace(" ", "")

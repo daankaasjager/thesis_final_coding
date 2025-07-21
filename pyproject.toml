@@ -1,0 +1,32 @@
+[tool.poetry]
+name = "src"
+version = "0.1.0"
+description = "This project uses two models, a Masked Diffusion Language Model to generate SELFIES and a property prediction GCNN model to calculate the properties of the generated molecules."
+authors = ["Daan Kaasjager <daankaasjager@hotmail.com>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+datasets = "^3.3.1"
+einops = "^0.8.1"
+fcd = "^1.2.2"
+hydra-core = "^1.2.0"           # for hydra.utils, hydra-submitit-launcher if used as plugin
+lightning = "2.5.0.post0"
+scienceplots = "^2.1.1"
+seaborn = "^0.13.2"
+torch-geometric = "^2.6.1"
+transformers = "^4.49.0"
+wandb = "^0.19.11"
+
+[tool.poetry.group.dev.dependencies]
+isort = "^6.0.1"
+black = "^25.1.0"
+ruff = "^0.11.7"
+pip-chill = "^1.0.3"
+pip-tools = "^7.4.1"
+pipdeptree = "^2.26.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

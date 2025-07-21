@@ -6,9 +6,7 @@ import torch
 
 from .preprocessing import get_dataloaders, prepare_data_for_training
 from .tokenizing import get_tokenizer, tokenize_selfies_vocab
-from .utils import setup_training_logging, print_batch
-
-from omegaconf import DictConfig, OmegaConf
+from .utils import setup_training_logging
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +23,7 @@ def _run_model(
     import src.mdlm.diffusion as diffusion
 
     model = diffusion.Diffusion(config, tokenizer=tokenizer)
-    #print_batch(train_dataloader, val_dataloader, tokenizer) # takes a a long time so only run if necessary.
+    # print_batch(train_dataloader, val_dataloader, tokenizer) # takes a a long time so only run if necessary.
     # Print the resolved Hydra config (optional, for full context)
 
     # Inspect the callbacks being passed to the function
@@ -39,6 +37,7 @@ def _run_model(
         logger=wandb_logger,
     )
     trainer.fit(model, train_dataloader, val_dataloader, ckpt_path=ckpt_path)
+
 
 def _setup_cuda():
     os.environ["TOKENIZERS_PARALLELISM"] = "false"
@@ -57,12 +56,17 @@ def _setup_cuda():
 
 def train(config):
     import wandb
+
     wandb.login()
 
     _setup_cuda()
     wandb_logger, callbacks = setup_training_logging(config)
 
-    ckpt_path = config.checkpointing.resume_ckpt_path if config.checkpointing.resume_from_ckpt else None
+    ckpt_path = (
+        config.checkpointing.resume_ckpt_path
+        if config.checkpointing.resume_from_ckpt
+        else None
+    )
     logger.info(f"Checkpoint path: {ckpt_path}")
     selfies_vocab, data = prepare_data_for_training(config)
     # Passes the selfies data to the tokenizer, so that it can train from scratch if it doesn't already exist

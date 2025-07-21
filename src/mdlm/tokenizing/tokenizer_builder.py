@@ -59,6 +59,7 @@ def _build_ape_tokenizer(config, data, vocab):
         return Tokenizer(WordLevel(vocab=vocab_json, unk_token="[UNK]"))
     raise ValueError("No valid APE vocab found and retrain flag is not set.")
 
+
 def _configure_tokenizer(tokenizer: Tokenizer, vocab: dict) -> Tokenizer:
     tokenizer.post_processor = processors.TemplateProcessing(
         single="[BOS] $A [EOS]",
@@ -71,6 +72,7 @@ def _configure_tokenizer(tokenizer: Tokenizer, vocab: dict) -> Tokenizer:
     )
     return tokenizer
 
+
 def _add_conditioning_tokens(config, vocab: dict) -> dict:
     logger.info("Adding conditioning tokens to the vocabulary")
     number_of_properties = len(config.conditioning.properties)
@@ -80,6 +82,7 @@ def _add_conditioning_tokens(config, vocab: dict) -> dict:
             if token not in vocab:
                 vocab[token] = len(vocab)
     return vocab
+
 
 def _train_tokenizer(config, data=None):
     logger.info("Training tokenizer from alphabet")

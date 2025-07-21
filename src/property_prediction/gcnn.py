@@ -3,23 +3,23 @@
 # at https://github.com/aspuru-guzik-group/kraken
 
 from pathlib import Path
+from typing import TYPE_CHECKING
 from venv import logger
+
 import lightning as L
-from lightning.pytorch.cli import instantiate_class
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
 import torch_geometric.nn as gnn
-
-from typing import TYPE_CHECKING
+from lightning.pytorch.cli import instantiate_class
 
 if TYPE_CHECKING:
     from omegaconf import DictConfig
 
-from omegaconf import OmegaConf
 import json
 import logging
+
+from omegaconf import OmegaConf
 
 logger = logging.getLogger(__name__)
 
@@ -119,7 +119,9 @@ class MolPropModule(L.LightningModule):
     def configure_model(self):
         self.model = MPNNet(self.config, self.config.out_dim)
 
-        logger.info(f"Number of parameters: {sum(p.numel() for p in self.model.parameters())}")
+        logger.info(
+            f"Number of parameters: {sum(p.numel() for p in self.model.parameters())}"
+        )
         try:
             torch.compile(self.model)
         except Exception as e:

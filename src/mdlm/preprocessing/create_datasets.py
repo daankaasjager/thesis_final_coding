@@ -1,10 +1,11 @@
 import logging
-from omegaconf import DictConfig
+
 import datasets
 import torch
 from transformers import DataCollatorWithPadding
 
 logger = logging.getLogger(__name__)
+
 
 def _check_gpu_compatibility(config) -> None:
     """
@@ -20,9 +21,13 @@ def _check_gpu_compatibility(config) -> None:
     batch_size = config.loader.batch_size
 
     expected_global = requested_gpus * nodes * accumulate * batch_size
-    logger.info(f"Configured GPUs: {requested_gpus} | Accumulate: {accumulate} | Nodes: {nodes} | Batch size: {batch_size}")
-    logger.info(f"Expected global batch size: {expected_global} | Actual: {config.loader.global_batch_size}")
-    
+    logger.info(
+        f"Configured GPUs: {requested_gpus} | Accumulate: {accumulate} | Nodes: {nodes} | Batch size: {batch_size}"
+    )
+    logger.info(
+        f"Expected global batch size: {expected_global} | Actual: {config.loader.global_batch_size}"
+    )
+
     assert (
         config.loader.global_batch_size == expected_global
     ), f"Mismatch: expected global_batch_size={expected_global}, got {config.loader.global_batch_size}"
@@ -39,11 +44,13 @@ def _check_gpu_compatibility(config) -> None:
             f"by number of GPUs ({requested_gpus})."
         )
 
+
 class CondPropertyCollator(DataCollatorWithPadding):
     """
     Pads the usual sequence fields and stacks the conditional properties
     into a float tensor of shape (Batch_size, Properties).
     """
+
     def __call__(self, features):
         # let HF collator pad input_ids, attention_mask, …
         padded = super().__call__(features)
@@ -54,6 +61,7 @@ class CondPropertyCollator(DataCollatorWithPadding):
             padded["cond_props"] = torch.tensor(props, dtype=torch.float32)
 
         return padded
+
 
 def _create_train_val_dataloaders(config, tokenized_selfies_data, tokenizer) -> tuple:
     """
@@ -67,7 +75,9 @@ def _create_train_val_dataloaders(config, tokenized_selfies_data, tokenizer) -> 
         data = tokenized_selfies_data
         logger.info("Using provided datasets.Dataset")
     else:
-        raise TypeError(f"Expected dict or datasets.Dataset, got {type(tokenized_selfies_data)}")
+        raise TypeError(
+            f"Expected dict or datasets.Dataset, got {type(tokenized_selfies_data)}"
+        )
 
     if config.train_test_split.train < 1.0:
         split_dataset = data.train_test_split(

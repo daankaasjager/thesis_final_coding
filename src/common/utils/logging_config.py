@@ -36,7 +36,7 @@ def configure_logging():
     stream_handler = logging.StreamHandler()
     stream_handler.setFormatter(colored_formatter)
 
-    logging.basicConfig(level=logging.DEBUG, handlers=[file_handler, stream_handler])
+    logging.basicConfig(level=logging.DEBUG, handlers=[file_handler, stream_handler], force=True)
 
     # Wrap logging methods with rank_zero_only for multi-GPU support.
     # https://github.com/kuleshov-group/mdlm/tree/bbc8fb61077a3ca38eab2423d0f81a5484754f51

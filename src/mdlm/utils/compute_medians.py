@@ -1,7 +1,6 @@
 import pandas as pd
-import numpy as np
-
 from column_selector import select_numeric_columns
+
 
 def compute_bottom_top_medians(df: pd.DataFrame, exclude: set, output_csv: str):
     cols_to_process = select_numeric_columns(df, exclude)
@@ -31,8 +30,11 @@ def compute_bottom_top_medians(df: pd.DataFrame, exclude: set, output_csv: str):
     print(f"Saved bottom/top 33rd percentile medians to {output_csv}")
     return result_df
 
+
 if __name__ == "__main__":
-    df = pd.read_csv("/scratch/s3905845/thesis_final_coding/data/kraken/training_data/filtered_selfies.csv")
+    df = pd.read_csv(
+        "/scratch/s3905845/thesis_final_coding/data/kraken/training_data/filtered_selfies.csv"
+    )
     exclude = {"smiles", "selfies", "tokenized_selfies"}
 
     output_csv = "/scratch/s3905845/thesis_final_coding/data/kraken/training_data/bottom_top_medians.csv"

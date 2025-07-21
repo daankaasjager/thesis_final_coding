@@ -1,13 +1,15 @@
-from math import log
+import json
+import logging
 from venv import logger
+
 import pandas as pd
 from omegaconf import DictConfig
 from tqdm import tqdm
-import json
-import logging
+
 from ..utils import select_numeric_columns
 
 logger = logging.getLogger(__name__)
+
 
 def apply_normalization(config: DictConfig, df: pd.DataFrame) -> pd.DataFrame:
     """
@@ -27,22 +29,23 @@ def apply_normalization(config: DictConfig, df: pd.DataFrame) -> pd.DataFrame:
                       disabled or no columns are normalized, returns the original DataFrame.
     """
 
-    cols_to_normalize = select_numeric_columns(df, ["smiles", "selfies", "tokenized_selfies"])
+    cols_to_normalize = select_numeric_columns(
+        df, ["smiles", "selfies", "tokenized_selfies"]
+    )
     mean_std_dict = {}
     for col in tqdm(cols_to_normalize, desc="Normalizing columns", unit="column"):
         if col not in df.columns:
-            raise ValueError(f"Column '{col}' not found in DataFrame. Please check your configuration.")
+            raise ValueError(
+                f"Column '{col}' not found in DataFrame. Please check your configuration."
+            )
         mean = df[col].mean()
         std = df[col].std()
         df[f"{col}_norm"] = (df[col] - mean) / std
 
-        mean_std_dict[col] = {
-            "mean": mean,
-            "std": std
-        }
+        mean_std_dict[col] = {"mean": mean, "std": std}
     try:
-        with open (config.paths.mean_std, "w") as f:
-            json.dump(mean_std_dict, f) 
+        with open(config.paths.mean_std, "w") as f:
+            json.dump(mean_std_dict, f)
         logger.info(f"Mean and std values saved to {config.paths.mean_std}")
     except Exception as e:
         logger.error(f"Error saving mean and std values: {e}")
@@ -50,7 +53,9 @@ def apply_normalization(config: DictConfig, df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def normalize_scalar_target_properties(target_properties: dict, mean_std_path: str) -> dict:
+def normalize_scalar_target_properties(
+    target_properties: dict, mean_std_path: str
+) -> dict:
     """
     Normalize a dictionary of target properties using mean and std from a JSON file.
 

@@ -1,21 +1,20 @@
 # train.py
 
-import pandas as pd
-import torch
-import lightning as L
-from lightning.pytorch.callbacks import ModelCheckpoint, EarlyStopping
-from omegaconf import DictConfig, OmegaConf
-import json
-from pathlib import Path
 import logging
 import os
-from lightning.pytorch.loggers import WandbLogger
+
 import hydra
+import lightning as L
+import pandas as pd
+import torch
+from lightning.pytorch.loggers import WandbLogger
+from omegaconf import DictConfig, OmegaConf
 
 logger = logging.getLogger(__name__)
 
 from .gcnn import MolPropModule
 from .graph_utils import prepare_graph_dataset, split_and_load
+
 
 def _setup_cuda():
     os.environ["TOKENIZERS_PARALLELISM"] = "false"
@@ -30,6 +29,7 @@ def _setup_cuda():
             )
         except Exception as e:
             logger.warning(f"Could not set float32 matmul precision: {e}")
+
 
 def setup_training_logging(config) -> tuple:
     """Sets up wandb logging for training. Also checks for any checkpoints to resume from and implements callbacks"""
@@ -54,19 +54,20 @@ def train_property_predictor(prop_pred_config: DictConfig):
         config: A DictConfig object containing all configuration parameters.
     """
     import wandb
-    wandb.login()  
-    _setup_cuda()  
+
+    wandb.login()
+    _setup_cuda()
     wandb_logger, callbacks = setup_training_logging(prop_pred_config)
-    
+
     logger.info("Loading and preparing dataset...")
     df = pd.read_csv(prop_pred_config.data.path)
-    
+
     logger.info(f"Dataset contains {len(df)} molecules. Normalizing properties...")
     data_list, props_mean, props_std = prepare_graph_dataset(
-        df, 
-        prop_columns=prop_pred_config.data.prop_columns, 
+        df,
+        prop_columns=prop_pred_config.data.prop_columns,
         normalize=True,
-        stats_path=prop_pred_config.inference.normalization_stats_file
+        stats_path=prop_pred_config.inference.normalization_stats_file,
     )
 
     if data_list:
@@ -81,22 +82,21 @@ def train_property_predictor(prop_pred_config: DictConfig):
         data_list,
         batch_size=prop_pred_config.training.batch_size,
         val_ratio=prop_pred_config.training.val_ratio,
-        num_workers=prop_pred_config.training.num_workers
+        num_workers=prop_pred_config.training.num_workers,
     )
 
     logger.info("Initializing model...")
     model = MolPropModule(prop_pred_config.model)
-    model.configure_model() 
+    model.configure_model()
 
     trainer = L.Trainer(
         max_epochs=prop_pred_config.training.max_epochs,
         accelerator=prop_pred_config.training.accelerator,
         devices=prop_pred_config.training.devices,
         callbacks=callbacks,
-        logger=wandb_logger
+        logger=wandb_logger,
     )
 
     print("Starting training...")
     trainer.fit(model, train_loader, val_loader)
     print("Training finished.")
-

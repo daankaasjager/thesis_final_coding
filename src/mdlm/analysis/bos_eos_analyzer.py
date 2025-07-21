@@ -3,9 +3,8 @@ import os
 import re
 
 import matplotlib.pyplot as plt
-import scienceplots
 
-plt.style.use(['science', 'no-latex'])
+plt.style.use(["science", "no-latex"])
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +20,6 @@ def bos_eos_analysis(samples, name="default", output_path=None):
     """
     total_mols = len(samples)
     bos_start_count = 0
-    eos_end_count = 0
     bos_eos_middle_count = 0
 
     token_pattern = re.compile(r"\[[^\]]*\]")
@@ -63,9 +61,7 @@ def bos_eos_analysis(samples, name="default", output_path=None):
     )
     plt.title(f"Molecules: Start w/ [BOS] vs. No [BOS] ({name})")
     plt.tight_layout()
-    plt.savefig(
-        os.path.join(output_path, f"bos_start_bar_{name}.png")
-    )
+    plt.savefig(os.path.join(output_path, f"bos_start_bar_{name}.png"))
     plt.close()
 
     # 3) Molecules that have [BOS]/[EOS] in the middle
@@ -77,11 +73,7 @@ def bos_eos_analysis(samples, name="default", output_path=None):
     )
     plt.title(f"Molecules: [BOS] or [EOS] in Middle ({name})")
     plt.tight_layout()
-    plt.savefig(
-        os.path.join(
-            output_path, f"bos_eos_middle_bar_{name}.png"
-        )
-    )
+    plt.savefig(os.path.join(output_path, f"bos_eos_middle_bar_{name}.png"))
     plt.close()
 
     return trimmed_samples

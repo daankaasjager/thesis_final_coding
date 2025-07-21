@@ -1,4 +1,7 @@
-import json, torch
+import json
+
+import torch
+
 
 class LengthSampler:
     def __init__(self, hist_file, max_len=None, device="cpu", dtype=torch.long):
@@ -9,8 +12,8 @@ class LengthSampler:
         lengths, counts = zip(*items)
 
         lengths = torch.tensor(lengths, dtype=dtype, device=device)
-        probs   = torch.tensor(counts, dtype=torch.float32, device=device)
-        probs  /= probs.sum()
+        probs = torch.tensor(counts, dtype=torch.float32, device=device)
+        probs /= probs.sum()
 
         if max_len is not None:
             keep = lengths <= max_len

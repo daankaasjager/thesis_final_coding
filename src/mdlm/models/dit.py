@@ -203,6 +203,7 @@ class ContinuousPropertyEmbedder(nn.Module):
     """
     Maps a (Batch_size, Property_n) vector of normalised scalars to (B, cond_dim).
     """
+
     def __init__(self, in_dim: int, out_dim: int):
         super().__init__()
         self.p_emb = nn.Sequential(
@@ -210,7 +211,8 @@ class ContinuousPropertyEmbedder(nn.Module):
             nn.SiLU(),
             nn.Linear(out_dim, out_dim),
         )
-    def forward(self, x):        # x: (B, P)
+
+    def forward(self, x):  # x: (B, P)
         return self.p_emb(x.float())
 
 
@@ -344,9 +346,12 @@ class DIT(nn.Module, huggingface_hub.PyTorchModelHubMixin):
         self.vocab_embed = EmbeddingLayer(config.model.hidden_size, vocab_size)
         self.sigma_map = TimestepEmbedder(config.model.cond_dim)
         self.rotary_emb = Rotary(config.model.hidden_size // config.model.n_heads)
-        if (self.config.conditioning.embeddings or self.config.conditioning.cfg) and self.config.conditioning.properties:
+        if (
+            self.config.conditioning.embeddings or self.config.conditioning.cfg
+        ) and self.config.conditioning.properties:
             self.property_map = ContinuousPropertyEmbedder(
-                len(self.config.conditioning.properties), config.model.cond_dim)
+                len(self.config.conditioning.properties), config.model.cond_dim
+            )
         else:
             self.property_map = None
 
@@ -371,7 +376,13 @@ class DIT(nn.Module, huggingface_hub.PyTorchModelHubMixin):
         else:
             return bias_dropout_add_scale_fused_inference
 
-    def forward(self, indices, sigma, property_conditioning_vector=None, force_unconditional_pass: bool = False):
+    def forward(
+        self,
+        indices,
+        sigma,
+        property_conditioning_vector=None,
+        force_unconditional_pass: bool = False,
+    ):
         x = self.vocab_embed(indices)
 
         time_cond_embedding = F.silu(self.sigma_map(sigma))
@@ -380,30 +391,45 @@ class DIT(nn.Module, huggingface_hub.PyTorchModelHubMixin):
         if self.property_map is not None:
             if self.training and property_conditioning_vector is not None:
                 batch_size = property_conditioning_vector.size(0)
-                if self.config.conditioning.cfg: # For classifier-free guidance
-                    kept_mask = torch.rand(batch_size, device=property_conditioning_vector.device) > self.config.conditioning.cfg_prob
-                elif self.config.conditioning.embeddings: # This is standard conditional embedding
-                    kept_mask = torch.ones(batch_size, device=property_conditioning_vector.device, dtype=torch.bool)
+                if self.config.conditioning.cfg:  # For classifier-free guidance
+                    kept_mask = (
+                        torch.rand(
+                            batch_size, device=property_conditioning_vector.device
+                        )
+                        > self.config.conditioning.cfg_prob
+                    )
+                elif (
+                    self.config.conditioning.embeddings
+                ):  # This is standard conditional embedding
+                    kept_mask = torch.ones(
+                        batch_size,
+                        device=property_conditioning_vector.device,
+                        dtype=torch.bool,
+                    )
                 else:
                     kept_mask = None
                 if kept_mask is not None:
                     null_props = torch.zeros_like(property_conditioning_vector)
                     # This first broadcasts the kept mask boolean [B,] to the property_conditioning_vector ()
                     # shape [B, P] and then uses it to either keep the original properties or replace them with null properties.
-                    mixed_props = torch.where( 
-                        kept_mask[:, None],  
-                        property_conditioning_vector,
-                        null_props
+                    mixed_props = torch.where(
+                        kept_mask[:, None], property_conditioning_vector, null_props
                     )
-                    prop_cond_embedding = self.property_map(mixed_props.to(x.device, dtype=torch.float))
+                    prop_cond_embedding = self.property_map(
+                        mixed_props.to(x.device, dtype=torch.float)
+                    )
                 final_cond_embedding += prop_cond_embedding  # Add property conditioning to the time embedding
 
             elif not self.training and property_conditioning_vector is not None:
                 if force_unconditional_pass:
-                    prop_cond_embedding = torch.zeros_like(property_conditioning_vector, device=x.device, dtype=torch.float)
+                    prop_cond_embedding = torch.zeros_like(
+                        property_conditioning_vector, device=x.device, dtype=torch.float
+                    )
                     prop_cond_embedding = self.property_map(prop_cond_embedding)
                 else:
-                    prop_cond_embedding = self.property_map(property_conditioning_vector.to(x.device, dtype=torch.float))
+                    prop_cond_embedding = self.property_map(
+                        property_conditioning_vector.to(x.device, dtype=torch.float)
+                    )
                 final_cond_embedding += prop_cond_embedding
 
         rotary_cos_sin = self.rotary_emb(x)

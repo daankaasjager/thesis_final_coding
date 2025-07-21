@@ -1,7 +1,8 @@
 import logging
-import pandas as pd
 from pathlib import Path
+
 import matplotlib.pyplot as plt
+import pandas as pd
 import seaborn as sns
 
 logging.basicConfig(level=logging.INFO)
@@ -56,7 +57,9 @@ def aggregate_model_summaries(base_dir: Path):
         return
 
     combined_df = pd.concat(all_dfs, ignore_index=True)
-    df_pivot = combined_df.pivot(index="property", columns="model", values="percent_filtered")
+    df_pivot = combined_df.pivot(
+        index="property", columns="model", values="percent_filtered"
+    )
 
     # Desired order of models (after replacing _ with space)
     desired_order = [
