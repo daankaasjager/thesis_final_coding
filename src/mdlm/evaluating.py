@@ -11,7 +11,7 @@ from typing import Any, Dict, List, Optional
 
 import pandas as pd
 
-from .analysis import MetricRunner
+from .analysis import MetricRunner, generate_qualitative_comparison_grid
 from .preprocessing import read_csv
 
 logger = logging.getLogger(__name__)
@@ -26,6 +26,9 @@ PROPERTY_COLS: List[str] = [
     "vbur_ovbur_min", "vbur_qvbur_min", "nbo_bds_occ_max",
     "vbur_ratio_vbur_vtot",
 ]
+
+GROUP_123_PROPS = ["sascore", "molweight", "volume", "vbur_vbur", "vmin_r", 
+                   "sterimol_L", "sterimol_B1", "dipolemoment"]
 
 METRICS: List[str] = [
     "validity", "uniqueness", "novelty", "token_frequency",
@@ -129,8 +132,9 @@ def evaluate_conditioning(config: Any, baseline_model_name: str) -> None:
         config: Hydra configuration object.
         baseline_model_name: name of the baseline model source.
     """
-    first_set = {
-        "Original data": _load_original_samples(config.paths.filtered_original_data, 10000),
+    original_samples = _load_original_samples(config.paths.filtered_original_data, 10000)
+    sample_sources_1 = {
+        "Original data": original_samples,
         baseline_model_name: _load_generated_samples(config.paths.baseline_model_path),
         "Prepend 1": _load_generated_samples(config.paths.prepend_1),
         "Prepend 3": _load_generated_samples(config.paths.prepend_3),
@@ -139,20 +143,41 @@ def evaluate_conditioning(config: Any, baseline_model_name: str) -> None:
         "Embedding 1": _load_generated_samples(config.paths.embedding_1),
         "Embedding 3": _load_generated_samples(config.paths.embedding_3),
         "Embedding 8": _load_generated_samples(config.paths.embedding_8),
-        "Embedding all": _load_generated_samples(config.paths.embedding_all),
+        "Embedding all": _load_generated_samples(config.paths.embedding_all)
     }
-    _evaluate_by_comparison(
-        config, first_set, reference_name=baseline_model_name, run_type="conditioning"
-    )
+    #_evaluate_by_comparison(config, sample_sources_1, reference_name=baseline_model_name, run_type="conditioning")
 
-    second_set = {
-        "Original data": _load_original_samples(config.paths.filtered_original_data, 10000),
+    # --- Second comparison set (CFG) ---
+    sample_sources_2 = {
+        "Original data": original_samples,
         baseline_model_name: _load_generated_samples(config.paths.baseline_model_path),
-        "Embedding 3": _load_generated_samples(config.paths.embedding_3),
+        "Embedding 3": _load_generated_samples(config.paths.embedding_3), # A good one to compare against
         "CFG 0.3": _load_generated_samples(config.paths.cfg_03),
         "CFG 1.0": _load_generated_samples(config.paths.cfg_10),
-        "CFG 4.0": _load_generated_samples(config.paths.cfg_40),
+        "CFG 4.0": _load_generated_samples(config.paths.cfg_40)
     }
-    _evaluate_by_comparison(
-        config, second_set, reference_name=baseline_model_name, run_type="conditioning_cfg"
+    #_evaluate_by_comparison(config, sample_sources_2, reference_name=baseline_model_name, run_type="conditioning_cfg")
+
+
+    
+    logger.info("--- Starting Qualitative Analysis for Prepend/Embedding ---")
+    generate_qualitative_comparison_grid(
+        sample_sources=sample_sources_1,
+        baseline_model_name=baseline_model_name,
+        properties_to_visualize=GROUP_123_PROPS,
+        output_dir=config.paths.metrics_dir, # Save images alongside other metrics
+        num_samples=4, # You can set this to 3, 4, or 5
+        run_type="conditioning",
+        conditioning_targets_path=config.paths.median_percentile # Path to the CSV with global targets
+    )
+    
+    logger.info("--- Starting Qualitative Analysis for CFG ---")
+    generate_qualitative_comparison_grid(
+        sample_sources=sample_sources_2,
+        baseline_model_name=baseline_model_name,
+        properties_to_visualize=GROUP_123_PROPS,
+        output_dir=config.paths.metrics_dir,
+        num_samples=4,
+        run_type="conditioning_cfg",
+        conditioning_targets_path=config.paths.median_percentile # Path to the CSV with global targets
     )

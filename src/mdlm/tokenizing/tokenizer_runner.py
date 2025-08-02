@@ -36,8 +36,6 @@ def _load_cached_tokenized_data(config: Any, tokenizer: SelfiesTokenizer) -> Opt
         if os.path.exists(path):
             tokenized_data = datasets.load_from_disk(path, keep_in_memory=True)
             logger.info(f"SELFIES data loaded; vocab size: {tokenizer.vocab_size}")
-            sample_ids = [tokenized_data[i]["input_ids"] for i in range(min(5, len(tokenized_data)))]
-            logger.info(f"First 5 tokenized sequences: {sample_ids}")
             return tokenized_data
         logger.info(f"No cached data found at {path}")
         return None

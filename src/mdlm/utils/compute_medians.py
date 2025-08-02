@@ -1,5 +1,5 @@
 import pandas as pd
-from common.utils.column_selector import select_numeric_columns
+from src.common.utils.column_selector import select_numeric_columns
 
 
 def _compute_bottom_top_medians(df: pd.DataFrame, exclude: set, output_csv: str):

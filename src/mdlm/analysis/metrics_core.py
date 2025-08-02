@@ -3,10 +3,13 @@ import re
 import sys
 from collections import Counter
 from typing import Dict, List, Tuple
+import logging
 
 import selfies
 from rdkit import Chem
 from rdkit.Chem import Crippen, RDConfig, rdMolDescriptors
+
+logger = logging.getLogger(__name__)
 
 sys.path.append(os.path.join(RDConfig.RDContribDir, "SA_Score"))
 import sascorer
@@ -56,7 +59,7 @@ def get_valid_molecules(samples: List[str], config) -> List[Chem.Mol]:
             if mol:
                 mols.append(mol)
         except Exception:
-            continue
+            logger.warning(f"Failed to decode SELFIES: {cleaned_selfies}")
     return mols
 
 

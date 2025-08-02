@@ -1,7 +1,7 @@
-from mdlm.diffusion import Diffusion
-from mdlm.evaluating import evaluate_conditioning, evaluate_preliminaries
-from mdlm.generating import generate_samples
-from mdlm.training import train
+from .diffusion import Diffusion
+from .evaluating import evaluate_conditioning, evaluate_preliminaries
+from .generating import generate_samples
+from .training import train
 
 __all__ = [
     "Diffusion",

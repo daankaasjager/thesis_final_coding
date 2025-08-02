@@ -16,7 +16,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 import pandas as pd
 from omegaconf import DictConfig
 
-from common.utils import select_numeric_columns
+from src.common.utils import select_numeric_columns
 
 logger = logging.getLogger(__name__)
 

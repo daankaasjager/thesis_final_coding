@@ -15,7 +15,7 @@ import omegaconf
 import huggingface_hub
 from einops import rearrange
 
-from mdlm.utils import get_torch_dtype
+from ..utils import get_torch_dtype
 
 logger = logging.getLogger(__name__)
 USE_FLASH_ATTN = False

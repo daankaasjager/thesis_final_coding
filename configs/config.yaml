@@ -2,7 +2,7 @@ defaults:
   - _self_
   - /callbacks: [checkpoint_every_n_steps, checkpoint_monitor, learning_rate_monitor]
   - /noise: loglinear # Model appeared invariant to noise schedule types in MDLM paper
-  - /lr_scheduler: constant_warmup # cosine decay not implemented yet
+  - /lr_scheduler: constant_warmup 
   - /data: kraken
   - /model: small
   - /tokenizer: wordlevel 
@@ -17,8 +17,8 @@ experiment:
 mode: train
 seed: 8
 diffusion: absorbing_state
-backbone: dit  # dit only available now
-parameterization: subs  # subs / d3pm / sedd
+backbone: dit  # dit only available now (legacy mdlm)
+parameterization: subs  # subs only available (legacy mdlm)
 row_limit: null
 debug: False
 
@@ -41,12 +41,12 @@ preprocessing:
   augmentations_max_attempts: 50
   discretize: True
   discretize_num_bins: 3
-  permitted_selfies_length: 175 # CHANGE THIS TO THE ACTUAL PERCENTILE LATER
+  permitted_selfies_length: 175 # Maximum SELFIES length to consider for training. This is a hard limit.
 
 tokenizer:
   tokenizer_type: wordlevel # wordlevel / APE
-  max_vocab_size: 200 # EXPERIMENT WITH THIS!!!! pairs for APE
-  min_freq_for_merge: 500 #min frequency of pairs for APE
+  max_vocab_size: 200 # maximum vocabulary size for wordlevel tokenizer
+  min_freq_for_merge: 500 # minimum frequency for merge operation in wordlevel tokenizer
 
 checkpointing:
   save_dir: ${paths.base_dir}/checkpoints
@@ -60,29 +60,21 @@ wandb:
   project: SELFIES-diffusion
   notes: testing a selfies model
   group: model_size_selection # Group runs by experiment name
-  name: ${experiment.name} # A descriptive name
-  job_type: ${mode} # The type of job, e.g., train, test, etc.
-  id: ${.name}_${seed}_${now:%Y%m%d_%H%M%S} #Sets unique name and seed
+  name: ${experiment.name}
+  job_type: ${mode} #
+  id: ${.name}_${seed}_${now:%Y%m%d_%H%M%S} 
 
 # This is important when working with multi-GPU training, to ensure that 
 # the batch size is divided evenly among all GPUs.
 loader:
   global_batch_size: 64
   eval_global_batch_size: ${.global_batch_size}
-  # Note: batch_size and eval_batch_size are **per machine**
   batch_size: ${div_up:${.global_batch_size}, ${eval:${trainer.devices} * ${trainer.num_nodes}}}
   eval_batch_size: ${div_up:${.eval_global_batch_size}, ${eval:${trainer.devices} * ${trainer.num_nodes}}}
-  num_workers: 8 # this should be set to the number of CPU cores available
+  num_workers: 8 
   pin_memory: True
 
-#conditioning possibilities: ['nbo_P', 'nmr_P', 'pyr_P', 'fmo_mu', 'vmin_r', 'volume', 'fmo_eta', 
-#'fukui_m', 'fukui_p', 'nuesp_P', 'somo_rc', 'nbo_P_rc', 'pyr_alpha', 'qpole_amp', 'vbur_vbur', 
-#'Pint_P_min', 'sterimol_L', 'sterimol_B1', 'sterimol_B5', 'dipolemoment', 'efgtens_xx_P', 
-#'efgtens_yy_P', 'nbo_bd_e_max', 'nbo_lp_P_occ', 'qpoletens_yy', 'E_solv_elstat', 'nbo_bds_e_avg', 
-#'sterimol_burL', 'nbo_bd_occ_avg', 'sterimol_burB5', 'vbur_ovbur_min', 'vbur_qvbur_min', 
-#'nbo_bds_occ_max', 'vbur_ratio_vbur_vtot', 'mol_wt', 'sa_score']
 
-  
 training:
   ema: 0.9999
   antithetic_sampling: True
@@ -116,10 +108,9 @@ trainer:
   #check_val_every_n_epoch: 1 # validate every epoch
 
 eval:
-  checkpoint_path: ${cwd:}/checkpoints/12_hour_run_24_april.ckpt # Used to evaluate a checkpoint after training.
+  checkpoint_path: /path/to/your/checkpoint.ckpt # Path to the checkpoint for evaluation
   disable_ema: False
   generate_samples: True
-  overlay: True # Overlay the generated samples on the original data distribution
 
 sampling:
   predictor: ddpm_cache  # analytic, ddpm, ddpm_cache
@@ -130,7 +121,7 @@ sampling:
   semi_ar: False
   num_strides: 0
   stride_length: 0
-  time_conditioning: False # experiment with this during sampling. In the paper this had negligible results
+  time_conditioning: False 
   T: 0  # 0 (continuous time) / 1000 
   target_properties: null
   guidance_scale: 1.0 # This is the scale of the classifier-free guidance used during sampling. 

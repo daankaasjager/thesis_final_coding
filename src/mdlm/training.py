@@ -13,7 +13,7 @@ import wandb
 
 from .preprocessing import get_dataloaders, prepare_data_for_training
 from .tokenizing import get_tokenizer, tokenize_selfies_vocab
-from common.utils import setup_cuda, setup_training_logging
+from src.common.utils import setup_cuda, setup_training_logging
 
 logger = logging.getLogger(__name__)
 

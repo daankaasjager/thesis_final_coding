@@ -10,7 +10,7 @@ from omegaconf import DictConfig, OmegaConf
 
 from .gcnn import MolPropModule
 from .graph_utils import prepare_graph_dataset, split_and_load
-from common.utils.cuda_settings import setup_cuda
+from src.common.utils.cuda_settings import setup_cuda
 
 logger = logging.getLogger(__name__)
 
