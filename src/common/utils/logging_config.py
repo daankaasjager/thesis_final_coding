@@ -6,7 +6,6 @@ adapted for multi-GPU with Lightning’s rank_zero_only decorator.
 import logging
 import sys
 import traceback
-from typing import Callable
 
 from colorama import Fore, Style, init
 from lightning.pytorch.utilities import rank_zero_only
@@ -69,11 +68,21 @@ def configure_logging(log_file: str = "app.log") -> None:
         )
     )
 
-    logging.basicConfig(level=logging.DEBUG, handlers=[file_handler, console_handler], force=True)
+    logging.basicConfig(
+        level=logging.DEBUG, handlers=[file_handler, console_handler], force=True
+    )
 
     # Wrap logging methods to run only on rank zero in distributed setups
     root_logger = logging.getLogger()
-    for method in ("debug", "info", "warning", "error", "exception", "fatal", "critical"):
+    for method in (
+        "debug",
+        "info",
+        "warning",
+        "error",
+        "exception",
+        "fatal",
+        "critical",
+    ):
         setattr(root_logger, method, rank_zero_only(getattr(root_logger, method)))  # type: ignore
 
     def _exception_handler(exc_type, exc_value, exc_traceback) -> None:

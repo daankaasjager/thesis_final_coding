@@ -151,7 +151,11 @@ def generate_samples(config: Any) -> list[str]:
         )
     os.makedirs(base_dir, exist_ok=True)
 
-    stem = "hist_generated_samples" if config.model.sample_length_mode == "histogram" else "generated_samples"
+    stem = (
+        "hist_generated_samples"
+        if config.model.sample_length_mode == "histogram"
+        else "generated_samples"
+    )
     temp_path = Path(base_dir) / f"{stem}.json.tmp"
     final_path = Path(base_dir) / f"{stem}.json"
 
@@ -161,7 +165,9 @@ def generate_samples(config: Any) -> list[str]:
 
     # Load resources
     tokenizer = _load_tokenizer(config)
-    model = _load_from_checkpoint(config.checkpointing.resume_ckpt_path, tokenizer, config)
+    model = _load_from_checkpoint(
+        config.checkpointing.resume_ckpt_path, tokenizer, config
+    )
     if config.eval.disable_ema:
         logger.info("Disabling EMA.")
         model.ema = None
@@ -180,8 +186,10 @@ def generate_samples(config: Any) -> list[str]:
             ):
                 for sample in _sample_batch(model, config):
                     count += 1
-                    is_last = (batch_idx == config.sampling.num_sample_batches - 1 and
-                               count % config.loader.eval_batch_size == 0)
+                    is_last = (
+                        batch_idx == config.sampling.num_sample_batches - 1
+                        and count % config.loader.eval_batch_size == 0
+                    )
                     _write_temp_sample(tmp, sample, count, is_last)
                     samples.append(sample)
         with open(temp_path, "a", encoding="utf-8") as tmp:

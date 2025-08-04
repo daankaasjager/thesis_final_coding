@@ -13,9 +13,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch_geometric.nn as gnn
-from torch_geometric.data import Data as GraphData
 from lightning.pytorch.cli import instantiate_class
 from omegaconf import OmegaConf
+from torch_geometric.data import Data as GraphData
 
 if TYPE_CHECKING:
     from omegaconf import DictConfig
@@ -38,10 +38,10 @@ class MPNNet(nn.Module):
             - mlp.layers: list of hidden sizes for final MLP
             - mlp.batch_norm: whether to use BatchNorm in MLP
             - mlp.dropout: dropout probability in MLP
-        out_dim (int): dimensionality of final prediction (default: 1)
+        out_dim (int): dimensionality of final prediction (default: 34 for KRAKEN properties).
     """
 
-    def __init__(self, config: "DictConfig", out_dim: int = 1):
+    def __init__(self, config: "DictConfig", out_dim: int = 34):
         super().__init__()
         self.config = config
 
@@ -145,7 +145,7 @@ class MolPropModule(L.LightningModule):
 
     def configure_model(self) -> None:
         """Instantiate and optionally compile the MPNNet model."""
-        self.model = MPNNet(self.config, self.config.out_dim)
+        self.model = MPNNet(self.config, 34)
         logger.info(
             f"Number of parameters: {sum(p.numel() for p in self.model.parameters())}"
         )
@@ -163,7 +163,11 @@ class MolPropModule(L.LightningModule):
         """
         optimizer = instantiate_class(self.model.parameters(), self.config.optimizer)
         lr_scheduler = instantiate_class(optimizer, self.config.lr_scheduler)
-        return {"optimizer": optimizer, "lr_scheduler": lr_scheduler, "monitor": "val/loss"}
+        return {
+            "optimizer": optimizer,
+            "lr_scheduler": lr_scheduler,
+            "monitor": "val/loss",
+        }
 
     def on_save_checkpoint(self, checkpoint: dict) -> None:
         """
@@ -201,8 +205,13 @@ class MolPropModule(L.LightningModule):
         preds = self.model(batch)
         target = batch.y.view(-1, self.config.out_dim)
         loss = F.mse_loss(preds, target)
-        self.log("train/loss", loss, prog_bar=True, logger=True,
-                 batch_size=getattr(self, "batch_size", batch.num_graphs))
+        self.log(
+            "train/loss",
+            loss,
+            prog_bar=True,
+            logger=True,
+            batch_size=getattr(self, "batch_size", batch.num_graphs),
+        )
         if "ReduceLROnPlateau" not in self.config.lr_scheduler.class_path:
             self.lr_schedulers().step()
         return loss
@@ -218,7 +227,9 @@ class MolPropModule(L.LightningModule):
         preds = self.model(batch)
         loss = F.mse_loss(preds, batch.y.view(-1, self.config.out_dim))
         self.batch_size = getattr(self, "batch_size", batch.num_graphs)
-        self.log("val/loss", loss, prog_bar=True, logger=True, batch_size=self.batch_size)
+        self.log(
+            "val/loss", loss, prog_bar=True, logger=True, batch_size=self.batch_size
+        )
 
     def test_step(self, batch: GraphData, batch_idx: int) -> None:
         """
@@ -231,7 +242,9 @@ class MolPropModule(L.LightningModule):
         preds = self.model(batch)
         loss = F.mse_loss(preds, batch.y.view(-1, self.config.out_dim))
         self.batch_size = getattr(self, "batch_size", batch.num_graphs)
-        self.log("test/loss", loss, prog_bar=True, logger=True, batch_size=self.batch_size)
+        self.log(
+            "test/loss", loss, prog_bar=True, logger=True, batch_size=self.batch_size
+        )
 
     def forward(self, batch: GraphData) -> torch.Tensor:
         """Direct forward pass to the underlying MPNNet model."""

@@ -58,9 +58,7 @@ def _build_wordlevel_tokenizer(vocab: Dict[str, int]) -> Tokenizer:
     return tokenizer
 
 
-def _build_ape_tokenizer(
-    config: Any, data: Any, vocab: Dict[str, int]
-) -> Tokenizer:
+def _build_ape_tokenizer(config: Any, data: Any, vocab: Dict[str, int]) -> Tokenizer:
     """
     Construct or load an APE (BPE) tokenizer for SELFIES.
 
@@ -116,7 +114,9 @@ def _configure_tokenizer(tokenizer: Tokenizer, vocab: Dict[str, int]) -> Tokeniz
         single="[BOS] $A [EOS]",
         special_tokens=[("[BOS]", vocab["[BOS]"]), ("[EOS]", vocab["[EOS]"])],
     )
-    tokenizer.enable_padding(direction="right", pad_id=vocab["[PAD]"], pad_token="[PAD]")
+    tokenizer.enable_padding(
+        direction="right", pad_id=vocab["[PAD]"], pad_token="[PAD]"
+    )
     return tokenizer
 
 
@@ -165,7 +165,9 @@ def _train_tokenizer(config: Any, data: Any) -> SelfiesTokenizer:
     elif "ape" in ttype:
         tok = _build_ape_tokenizer(config, data, vocab)
     else:
-        raise ValueError(f"Unsupported tokenizer_type: {config.tokenizer.tokenizer_type}")
+        raise ValueError(
+            f"Unsupported tokenizer_type: {config.tokenizer.tokenizer_type}"
+        )
 
     tok = _configure_tokenizer(tok, vocab)
     selfies_tok = SelfiesTokenizer(

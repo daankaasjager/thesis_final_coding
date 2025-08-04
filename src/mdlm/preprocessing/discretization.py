@@ -11,7 +11,7 @@ import bisect
 import json
 import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple
 
 import pandas as pd
 from omegaconf import DictConfig
@@ -54,7 +54,9 @@ def _bin_column(
 
     values = numeric[valid]
     try:
-        bins, edges = pd.qcut(values, q=num_bins, labels=labels, retbins=True, duplicates="drop")
+        bins, edges = pd.qcut(
+            values, q=num_bins, labels=labels, retbins=True, duplicates="drop"
+        )
     except ValueError as e:
         logger.warning(f"qcut failed for '{col_name}': {e}; falling back to cut")
         try:
@@ -86,7 +88,9 @@ def apply_discretization(config: DictConfig, df: pd.DataFrame) -> pd.DataFrame:
         A copy of df with new "<col>_bin" columns appended.
     """
     num_bins = config.preprocessing.discretize_num_bins
-    cols = select_numeric_columns(df, exclude=["smiles", "selfies", "tokenized_selfies"])
+    cols = select_numeric_columns(
+        df, exclude=["smiles", "selfies", "tokenized_selfies"]
+    )
     logger.info(f"Discretizing {len(cols)} columns into {num_bins} bins: {cols}")
 
     result = df.copy()

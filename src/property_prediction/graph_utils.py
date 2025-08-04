@@ -162,7 +162,7 @@ def _get_molecule_info(
     return (node_feats, edge_idx, bond_feats + bond_feats)
 
 
-def _get_molecule_graph(
+def get_molecule_graph(
     mol: Union[str, Chem.rdchem.Mol],
     available_atoms: List[str],
     dtype: torch.dtype = torch.float,
@@ -227,7 +227,7 @@ def prepare_graph_dataset(
         logger.info(f"Saved normalization stats to {p}")
     dataset = []
     for idx, row in df.iterrows():
-        graph = _get_molecule_graph(row["smiles"], row[prop_columns].tolist())
+        graph = get_molecule_graph(row["smiles"], row[prop_columns].tolist())
         dataset.append(graph)
     return (dataset, mean, std)
 

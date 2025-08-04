@@ -2,16 +2,15 @@
 Tokenization utilities for SELFIES datasets, with caching and conditioning support.
 """
 
+import logging
 import math
 import os
-import logging
 from collections import defaultdict
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import datasets
 import pandas as pd
-import torch
 from datasets import Dataset
 
 from .selfies_tokenizer import SelfiesTokenizer
@@ -19,7 +18,9 @@ from .selfies_tokenizer import SelfiesTokenizer
 logger = logging.getLogger(__name__)
 
 
-def _load_cached_tokenized_data(config: Any, tokenizer: SelfiesTokenizer) -> Optional[datasets.Dataset]:
+def _load_cached_tokenized_data(
+    config: Any, tokenizer: SelfiesTokenizer
+) -> Optional[datasets.Dataset]:
     """
     Load tokenized dataset from disk if it exists.
 
@@ -95,7 +96,9 @@ def _prepend_conditioning_tokens(config: Any, raw_data: pd.DataFrame) -> List[st
         sequences.append(f"{prefix}{row['selfies']}")
 
     if config.debug and sequences:
-        logger.info(f"Conditioned {len(sequences)} sequences; examples: {sequences[:5]}")
+        logger.info(
+            f"Conditioned {len(sequences)} sequences; examples: {sequences[:5]}"
+        )
     return sequences
 
 
@@ -169,7 +172,10 @@ def tokenize_selfies_vocab(
     Returns:
         Tokenized data dict or loaded Dataset.
     """
-    if os.path.exists(config.paths.train_data_encoding) and not config.checkpointing.retrain_tokenizer:
+    if (
+        os.path.exists(config.paths.train_data_encoding)
+        and not config.checkpointing.retrain_tokenizer
+    ):
         return _load_cached_tokenized_data(config, tokenizer)
 
     if "selfies" not in raw_data.columns:

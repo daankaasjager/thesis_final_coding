@@ -8,12 +8,12 @@ import logging
 import os
 
 import hydra
-import torch
+
 import wandb
+from src.common.utils import setup_cuda, setup_training_logging
 
 from .preprocessing import get_dataloaders, prepare_data_for_training
 from .tokenizing import get_tokenizer, tokenize_selfies_vocab
-from src.common.utils import setup_cuda, setup_training_logging
 
 logger = logging.getLogger(__name__)
 

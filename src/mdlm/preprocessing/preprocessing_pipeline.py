@@ -5,13 +5,12 @@ augmentation, discretization, normalization, and saving artifacts.
 
 import logging
 from pathlib import Path
-from typing import Any, List, Tuple
+from typing import List, Tuple
 
 import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 import selfies as sf
-import re
 from omegaconf import DictConfig
 from tqdm import tqdm
 
@@ -36,7 +35,10 @@ def _optimize_memory(df: pd.DataFrame) -> pd.DataFrame:
     float_cols = df.select_dtypes(include=["float64"]).columns
     if not float_cols.empty:
         df[float_cols] = df[float_cols].apply(pd.to_numeric, downcast="float")
-    if "tokenized_selfies" in df.columns and df["tokenized_selfies"].apply(lambda x: isinstance(x, list)).any():
+    if (
+        "tokenized_selfies" in df.columns
+        and df["tokenized_selfies"].apply(lambda x: isinstance(x, list)).any()
+    ):
         df["tokenized_selfies"] = df["tokenized_selfies"].apply(
             lambda lst: " ".join(lst) if isinstance(lst, list) else lst
         )
@@ -61,7 +63,9 @@ def _load_alphabet_from_txt(path: Path) -> List[str]:
     return path.read_text(encoding="utf-8").splitlines()
 
 
-def _load_preprocessed_data(preproc_path: Path, alphabet_path: Path) -> Tuple[List[str], pd.DataFrame]:
+def _load_preprocessed_data(
+    preproc_path: Path, alphabet_path: Path
+) -> Tuple[List[str], pd.DataFrame]:
     """
     Load cached preprocessed DataFrame (Parquet) and alphabet.
 
@@ -93,7 +97,9 @@ def _load_preprocessed_data(preproc_path: Path, alphabet_path: Path) -> Tuple[Li
     return alphabet, df
 
 
-def _save_selfies_alphabet(alphabet_path: Path, alphabet: List[str], include_special_tokens: bool = True) -> None:
+def _save_selfies_alphabet(
+    alphabet_path: Path, alphabet: List[str], include_special_tokens: bool = True
+) -> None:
     """
     Save SELFIES alphabet tokens, ensuring special tokens appear first.
 
@@ -146,7 +152,9 @@ def _tokenize_selfies_and_filter(
 
     token_map: dict[int, List[str]] = {}
     skipped = errors = 0
-    for idx, seq in tqdm(df[selfies_col].items(), total=len(df), desc="Tokenizing & filtering"):
+    for idx, seq in tqdm(
+        df[selfies_col].items(), total=len(df), desc="Tokenizing & filtering"
+    ):
         if not seq:
             continue
         try:
@@ -212,7 +220,9 @@ def prepare_data_for_training(config: DictConfig) -> Tuple[List[str], pd.DataFra
 
     df = _optimize_memory(df)
     preproc_path.parent.mkdir(parents=True, exist_ok=True)
-    pq.write_table(pa.Table.from_pandas(df, preserve_index=False), preproc_path, compression="zstd")
+    pq.write_table(
+        pa.Table.from_pandas(df, preserve_index=False), preproc_path, compression="zstd"
+    )
     _save_selfies_alphabet(alphabet_path, alphabet)
 
     logger.info("Preprocessing pipeline completed successfully")

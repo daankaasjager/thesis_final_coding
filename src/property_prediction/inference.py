@@ -12,7 +12,7 @@ from rdkit import Chem
 from torch_geometric.data import Data
 from torch_geometric.loader import DataLoader
 
-from mdlm.analysis.bos_eos_analyzer import bos_eos_analysis
+from ..mdlm.analysis.bos_eos_analyzer import bos_eos_analysis
 from .gcnn import MolPropModule
 from .graph_utils import get_molecule_graph
 
@@ -204,25 +204,33 @@ def predict_properties(config):
             prop_name: float(predictions[i, j])
             for j, prop_name in enumerate(prop_columns)
         }
-        invalid = False
+
+        # Collect all out-of-bounds properties for this molecule
+        oob_props = []
         for key, (min_val, max_val) in HARD_BOUNDS.items():
-            if key in props:
-                val = props[key]
-                if (
-                    min_val is not None
-                    and val < min_val
-                    or (max_val is not None and val > max_val)
-                ):
-                    logger.warning(
-                        f"Property {key} out of bounds ({val}) for molecule {valid_selfies_samples[i]}"
-                    )
-                    invalid = True
-                    cutoff_counters[model_name][key] += 1
-                    break
-        if not invalid:
-            results.append(
-                {"selfies": valid_selfies_samples[i], "predicted_properties": props}
-            )
+            if key not in props:
+                continue
+            val = props[key]
+            if (min_val is not None and val < min_val) or (
+                max_val is not None and val > max_val
+            ):
+                oob_props.append((key, val))
+
+        if oob_props:
+            # Count every OOB property (no break -> no skew)
+            for key, val in oob_props:
+                cutoff_counters[model_name][key] += 1
+                logger.warning(
+                    f"Property {key} out of bounds ({val}) for molecule {valid_selfies_samples[i]}"
+                )
+            # Molecule is invalid if any property is OOB
+            continue
+
+        # Keep only molecules that are within bounds for all properties
+        results.append(
+            {"selfies": valid_selfies_samples[i], "predicted_properties": props}
+        )
+
     output_path = (
         Path(config.inference.hist_output_path)
         if config.inference.hist

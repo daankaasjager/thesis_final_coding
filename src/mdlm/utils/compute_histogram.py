@@ -10,7 +10,7 @@ from typing import Dict
 import numpy as np
 import pandas as pd
 
-logger = __import__('logging').getLogger(__name__)
+logger = __import__("logging").getLogger(__name__)
 
 TOKEN_PATTERN = re.compile(r"\[[^\]]+\]")
 

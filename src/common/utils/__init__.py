@@ -8,5 +8,5 @@ __all__ = [
     "setup_cuda",
     "configure_logging",
     "resolve_paths",
-    "setup_training_logging"
+    "setup_training_logging",
 ]

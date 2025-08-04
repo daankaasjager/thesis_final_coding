@@ -1,9 +1,9 @@
+import logging
 import os
 import re
 import sys
 from collections import Counter
 from typing import Dict, List, Tuple
-import logging
 
 import selfies
 from rdkit import Chem
@@ -11,8 +11,11 @@ from rdkit.Chem import Crippen, RDConfig, rdMolDescriptors
 
 logger = logging.getLogger(__name__)
 
+# isort: off
 sys.path.append(os.path.join(RDConfig.RDContribDir, "SA_Score"))
-import sascorer
+import sascorer  # noqa: E402
+
+# isort: on
 
 TOKEN_PATTERN = re.compile("\\[[^\\]]+\\]")
 

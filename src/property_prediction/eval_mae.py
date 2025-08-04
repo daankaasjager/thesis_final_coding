@@ -11,7 +11,7 @@ This script:
 7. Writes results to CSV.
 """
 
-import json
+import logging
 from pathlib import Path
 from typing import Sequence
 
@@ -19,8 +19,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import torch
-import torch.nn.functional as F
-import logging
 from torch_geometric.loader import DataLoader
 
 from .gcnn import MolPropModule
@@ -117,14 +115,42 @@ if __name__ == "__main__":
     CHECKPOINT = "/scratch/.../property_prediction.ckpt"
     CSV = "/scratch/.../filtered_selfies.csv"
     PROP_COLS = [
-        "nbo_P", "nmr_P", "pyr_P", "fmo_mu", "vmin_r", "volume", "fmo_eta",
-        "fukui_m", "fukui_p", "nuesp_P", "somo_rc", "nbo_P_rc", "pyr_alpha",
-        "qpole_amp", "vbur_vbur", "Pint_P_min", "sterimol_L", "sterimol_B1",
-        "sterimol_B5", "dipolemoment", "efgtens_xx_P", "efgtens_yy_P",
-        "nbo_bd_e_max", "nbo_lp_P_occ", "qpoletens_yy", "E_solv_elstat",
-        "nbo_bds_e_avg", "sterimol_burL", "nbo_bd_occ_avg", "sterimol_burB5",
-        "vbur_ovbur_min", "vbur_qvbur_min", "nbo_bds_occ_max",
-        "vbur_ratio_vbur_vtot", "mol_wt", "sa_score",
+        "nbo_P",
+        "nmr_P",
+        "pyr_P",
+        "fmo_mu",
+        "vmin_r",
+        "volume",
+        "fmo_eta",
+        "fukui_m",
+        "fukui_p",
+        "nuesp_P",
+        "somo_rc",
+        "nbo_P_rc",
+        "pyr_alpha",
+        "qpole_amp",
+        "vbur_vbur",
+        "Pint_P_min",
+        "sterimol_L",
+        "sterimol_B1",
+        "sterimol_B5",
+        "dipolemoment",
+        "efgtens_xx_P",
+        "efgtens_yy_P",
+        "nbo_bd_e_max",
+        "nbo_lp_P_occ",
+        "qpoletens_yy",
+        "E_solv_elstat",
+        "nbo_bds_e_avg",
+        "sterimol_burL",
+        "nbo_bd_occ_avg",
+        "sterimol_burB5",
+        "vbur_ovbur_min",
+        "vbur_qvbur_min",
+        "nbo_bds_occ_max",
+        "vbur_ratio_vbur_vtot",
+        "mol_wt",
+        "sa_score",
     ]
 
     table = _evaluate(CHECKPOINT, CSV, PROP_COLS)

@@ -1,5 +1,6 @@
 import torch
 
+
 def get_torch_dtype(precision):
     """Converts precision string from config to PyTorch dtype."""
     mapping = {

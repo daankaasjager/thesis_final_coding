@@ -6,6 +6,7 @@ from transformers import DataCollatorWithPadding
 
 logger = logging.getLogger(__name__)
 
+
 def _check_gpu_compatibility(config) -> None:
     """
     Check if the batch sizes are consistent with the configured number of GPUs.

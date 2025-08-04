@@ -5,9 +5,14 @@ import numpy as np
 import rdkit.Chem as Chem
 from fcd import get_fcd
 
-from .metrics_core import (compute_chemical_metrics, compute_novelty,
-                           compute_token_stats, compute_uniqueness,
-                           compute_validity, get_valid_molecules)
+from .metrics_core import (
+    compute_chemical_metrics,
+    compute_novelty,
+    compute_token_stats,
+    compute_uniqueness,
+    compute_validity,
+    get_valid_molecules,
+)
 from .metrics_plotting import MetricPlotter
 
 logger = logging.getLogger(__name__)

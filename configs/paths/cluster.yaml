@@ -9,6 +9,9 @@ original_data: ${paths.data_root}/training_data/descriptors_v3.csv
 mean_std: ${paths.data_root}/mapping/mean_std.json
 bin_edges: ${paths.data_root}/mapping/bin_edges.json
 selfies_alphabet: ${paths.data_root}/training_data/selfies_alphabet.txt # Base learned SELFIES tokens (also present in APE)
+property_columns: ${paths.data_root}/mapping/property_columns.txt
+group_123_properties: ${paths.data_root}/mapping/group_123_properties.txt
+rdkit_metrics: ${paths.data_root}/mapping/rdkit_metrics.txt
 
 # --- Dynamically Generated Paths based on experiment config ---
 # The tokenizer path changes based on the selected tokenizer config.

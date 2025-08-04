@@ -7,6 +7,5 @@ __all__ = [
     "MetricRunner",
     "MetricPlotter",
     "bos_eos_analysis",
-    "generate_qualitative_comparison_grid"
+    "generate_qualitative_comparison_grid",
 ]
-

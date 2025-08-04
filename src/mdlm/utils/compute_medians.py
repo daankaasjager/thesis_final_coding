@@ -1,4 +1,5 @@
 import pandas as pd
+
 from src.common.utils.column_selector import select_numeric_columns
 
 

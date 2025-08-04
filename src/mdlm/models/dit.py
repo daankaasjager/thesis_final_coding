@@ -3,19 +3,17 @@ Core modules for the conditioned diffusion Transformer (DDiT) model, adapted
 from Sahoo et al. (2024) to implement property conditioning strategies.
 """
 
+import logging
 import math
 import sys
-import logging
 from typing import Any, Optional, Tuple
 
+import huggingface_hub
+import omegaconf
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import omegaconf
-import huggingface_hub
 from einops import rearrange
-
-from ..utils import get_torch_dtype
 
 logger = logging.getLogger(__name__)
 USE_FLASH_ATTN = False
@@ -25,6 +23,7 @@ if not sys.platform.startswith("win"):
     try:
         import flash_attn  # noqa: F401
         import flash_attn.layers.rotary  # noqa: F401
+
         USE_FLASH_ATTN = True
     except ImportError:
         USE_FLASH_ATTN = False
@@ -72,8 +71,10 @@ def get_bias_dropout_add_scale(training: bool):
     Returns:
         A callable with signature (x, bias, scale, residual, prob) -> Tensor
     """
+
     def fn(x, bias, scale, residual, prob):
         return _bias_dropout_add_scale(x, bias, scale, residual, prob, training)
+
     return fn
 
 
@@ -99,7 +100,9 @@ def bias_dropout_add_scale_fused_inference(
     return _bias_dropout_add_scale(x, bias, scale, residual, prob, False)
 
 
-def _modulate(x: torch.Tensor, shift: torch.Tensor, scale: torch.Tensor) -> torch.Tensor:
+def _modulate(
+    x: torch.Tensor, shift: torch.Tensor, scale: torch.Tensor
+) -> torch.Tensor:
     """
     Apply adaptive layer-norm modulation: x * (1 + scale) + shift.
 
@@ -138,7 +141,9 @@ class Rotary(nn.Module):
         self.cos_cached = None
         self.sin_cached = None
 
-    def forward(self, x: torch.Tensor, seq_dim: int = 1) -> Tuple[torch.Tensor, torch.Tensor]:
+    def forward(
+        self, x: torch.Tensor, seq_dim: int = 1
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Compute or retrieve cached cos/sin embeddings for sequence length.
 
@@ -194,6 +199,7 @@ def _apply_rotary_pos_emb(
         cos_ = cos[0, :, 0, 0, : cos.size(-1) // 2]
         sin_ = sin[0, :, 0, 0, : sin.size(-1) // 2]
         import flash_attn.layers.rotary as fa_rot  # noqa: F811
+
         return fa_rot.apply_rotary_emb_qkv_(qkv, cos_, sin_)
     d_rot = qkv.size(-1) // 2
     qkv_rot, qkv_pass = qkv[..., :d_rot], qkv[..., d_rot:]
@@ -251,9 +257,7 @@ def residual_linear(
         Tensor [..., Dout]
     """
     dout, din = W.size(0), W.size(1)
-    out = torch.addmm(
-        x_skip.view(-1, dout), x.view(-1, din), W.T, alpha=residual_scale
-    )
+    out = torch.addmm(x_skip.view(-1, dout), x.view(-1, din), W.T, alpha=residual_scale)
     return out.view(*x.shape[:-1], dout)
 
 
@@ -278,7 +282,9 @@ class TimestepEmbedder(nn.Module):
         )
 
     @staticmethod
-    def timestep_embedding(t: torch.Tensor, dim: int, max_period: float = 10000.0) -> torch.Tensor:
+    def timestep_embedding(
+        t: torch.Tensor, dim: int, max_period: float = 10000.0
+    ) -> torch.Tensor:
         """
         Compute sinusoidal timestep embeddings.
 
@@ -292,7 +298,9 @@ class TimestepEmbedder(nn.Module):
         """
         half = dim // 2
         freqs = torch.exp(
-            -math.log(max_period) * torch.arange(half, dtype=torch.float32, device=t.device) / half
+            -math.log(max_period)
+            * torch.arange(half, dtype=torch.float32, device=t.device)
+            / half
         )
         args = t[:, None].float() * freqs[None]
         emb = torch.cat([torch.cos(args), torch.sin(args)], dim=-1)
@@ -377,7 +385,11 @@ class DDiTBlock(nn.Module):
         nn.init.zeros_(self.adaLN.bias)
 
     def _get_bias_dropout_scale(self):
-        return bias_dropout_add_scale_fused_train if self.training else bias_dropout_add_scale_fused_inference
+        return (
+            bias_dropout_add_scale_fused_train
+            if self.training
+            else bias_dropout_add_scale_fused_inference
+        )
 
     def forward(
         self,
@@ -402,18 +414,28 @@ class DDiTBlock(nn.Module):
         shifts_scales = self.adaLN(cond)[:, None].chunk(6, dim=2)
         x_skip = x
         x = _modulate_fused(self.norm1(x), shifts_scales[0], shifts_scales[1])
-        qkv = rearrange(self.attn_qkv(x), "b s (three h d) -> b s three h d", three=3, h=self.n_heads)
+        qkv = rearrange(
+            self.attn_qkv(x),
+            "b s (three h d) -> b s three h d",
+            three=3,
+            h=self.n_heads,
+        )
         cos, sin = rotary_cos_sin
         qkv = _apply_rotary_pos_emb(qkv, cos.to(qkv.dtype), sin.to(qkv.dtype))
         b, s, three, h, d = qkv.shape
         qkv = rearrange(qkv, "b s three h d -> (b s) three h d")
         if seqlens is None:
-            cu_seqlens = torch.arange(0, (b + 1) * s, step=s, device=qkv.device, dtype=torch.int32)
+            cu_seqlens = torch.arange(
+                0, (b + 1) * s, step=s, device=qkv.device, dtype=torch.int32
+            )
         else:
             cu_seqlens = seqlens.cumsum(-1)
         if USE_FLASH_ATTN:
             import flash_attn.flash_attn_interface as fa_int  # noqa: F811
-            attn_out = fa_int.flash_attn_varlen_qkvpacked_func(qkv, cu_seqlens, s, 0.0, causal=False)
+
+            attn_out = fa_int.flash_attn_varlen_qkvpacked_func(
+                qkv, cu_seqlens, s, 0.0, causal=False
+            )
             x = rearrange(attn_out, "(b s) h d -> b s (h d)", b=b)
         else:
             q, k, v = rearrange(qkv, "(b s) three h d -> three b s h d", b=b)
@@ -424,7 +446,9 @@ class DDiTBlock(nn.Module):
             x = rearrange(attn, "(b h) s d -> b s (h d)", b=b)
         x = bias_dropout(self.attn_out(x), None, shifts_scales[2], x_skip, self.dropout)
         x = bias_dropout(
-            self.mlp(_modulate_fused(self.norm2(x), shifts_scales[3], shifts_scales[4])),
+            self.mlp(
+                _modulate_fused(self.norm2(x), shifts_scales[3], shifts_scales[4])
+            ),
             None,
             shifts_scales[5],
             x,
@@ -514,7 +538,9 @@ class DIT(nn.Module, huggingface_hub.PyTorchModelHubMixin):
         self.time_embed = TimestepEmbedder(config.model.cond_dim)
         self.rotary = Rotary(config.model.hidden_size // config.model.n_heads)
 
-        if (config.conditioning.embeddings or config.conditioning.cfg) and config.conditioning.properties:
+        if (
+            config.conditioning.embeddings or config.conditioning.cfg
+        ) and config.conditioning.properties:
             self.prop_embed = ContinuousPropertyEmbedder(
                 len(config.conditioning.properties), config.model.cond_dim
             )
@@ -561,13 +587,19 @@ class DIT(nn.Module, huggingface_hub.PyTorchModelHubMixin):
             if self.training:
                 mask = None
                 if self.config.conditioning.cfg:
-                    mask = torch.rand(indices.size(0), device=indices.device) > self.config.conditioning.cfg_prob
+                    mask = (
+                        torch.rand(indices.size(0), device=indices.device)
+                        > self.config.conditioning.cfg_prob
+                    )
                 cond = cond + self.prop_embed(
                     property_conditioning_vector.to(x.device, dtype=x.dtype)
-                    if mask is None else property_conditioning_vector.masked_fill(~mask[:, None], 0)
+                    if mask is None
+                    else property_conditioning_vector.masked_fill(~mask[:, None], 0)
                 )
             elif not force_unconditional_pass:
-                cond = cond + self.prop_embed(property_conditioning_vector.to(x.device, dtype=x.dtype))
+                cond = cond + self.prop_embed(
+                    property_conditioning_vector.to(x.device, dtype=x.dtype)
+                )
 
         rotary_cos_sin = self.rotary(x)
         for block in self.blocks:

@@ -1,18 +1,18 @@
 import logging
-import os
 
 import hydra
 import lightning as L
 import pandas as pd
-import torch
 from lightning.pytorch.loggers import WandbLogger
 from omegaconf import DictConfig, OmegaConf
 
-from .gcnn import MolPropModule
-from .graph_utils import prepare_graph_dataset, split_and_load
 from src.common.utils.cuda_settings import setup_cuda
 
+from .gcnn import MolPropModule
+from .graph_utils import prepare_graph_dataset, split_and_load
+
 logger = logging.getLogger(__name__)
+
 
 def _setup_training_logging(config) -> tuple:
     """Sets up wandb logging for training. Also checks for any checkpoints to resume from and implements callbacks"""

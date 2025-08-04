@@ -1,4 +1,3 @@
-
 """This code was mostly written by Sahoo et. al, adjustments have been made
 to implement conditioning strategies (2024): https://github.com/kuleshov-group/mdlm"""
 
@@ -17,16 +16,22 @@ import transformers
 from torch import Tensor
 from tqdm import tqdm
 
-from .modeling import (ExponentialMovingAverage,
-                       FaultTolerantDistributedSampler,
-                       RandomFaultTolerantSampler, get_noise)
+from .modeling import (
+    ExponentialMovingAverage,
+    FaultTolerantDistributedSampler,
+    RandomFaultTolerantSampler,
+    get_noise,
+)
 from .models import DIT
-from .preprocessing import (map_target_properties_to_bins,
-                            normalize_scalar_target_properties)
+from .preprocessing import (
+    map_target_properties_to_bins,
+    normalize_scalar_target_properties,
+)
 from .utils.length_sampler import LengthSampler
 
 logger = logging.getLogger(__name__)
 LOG2 = math.log(2)
+
 
 def _sample_categorical(categorical_probs):
     gumbel_norm = 1e-10 - (torch.rand_like(categorical_probs) + 1e-10).log()

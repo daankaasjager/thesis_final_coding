@@ -9,8 +9,8 @@ This module provides:
 
 import json
 import logging
-import os
-from collections import defaultdict, OrderedDict
+import re
+from collections import defaultdict
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
