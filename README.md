@@ -1,40 +1,48 @@
 # MDLM Experiments
 
-This README documents the setup and execution of prepend conditioning experiments for the Msc thesis of Daan Kaasjager, using various conditioning strategies for a Masked Diffusion Language Model (MDLM) to generate novel, valid, and unique molecules.
+This README documents the setup and execution of prepend conditioning experiments for the AI Msc final research project of Daan Kaasjager, using various conditioning strategies for a Masked Diffusion Language Model (MDLM) (link to paper, blog, and Github https://s-sahoo.com/mdlm/) to generate novel, valid, unique, and representative molecules.
+
+LLMs were used to generate docstring. 
 
 ## 📚 Overview
 
 These experiments aim to answer:
 
-1. **RQ1.** Can an unconditioned MDLM trained on SELFIES generate valid, novel, and high-quality molecules?
-2. **RQ2.** How effective is prepend conditioning at improving validity, novelty, and quality of generated molecules?
+1. **RQ1.** Can a Masked Diffusion Language Model trained on SELFIES generate valid, novel, unique, and representative molecules? 
+2. **RQ2.** How effective are prepend conditioning, embedding conditioning, and classifier-free guidance at targeting molecular properties during generation?
 
-This repository focuses on **RQ2 prepend conditioning**. The core idea is to prepend scalar molecular property tokens to the input sequence as conditioning, allowing the model to learn correlations between properties and molecular structure.
+This repository focuses on answers both research questions by comparing conditioned and unconditioned models.
 
 ---
 
-
-## Training
+## Setup 
+The run.sh scripts can be run in the terminal by running the scripts directly or can be submitted as a SLURM job using the 'sbatch' command. This might require running 'chmod +x ./sripts/name_of_script.sh' beforehand. 
 
 ```bash
-pip install -r requirements.txt
+scripts/setup.sh
 ```
+
+## Training
+To continue from a checkpoint, set 
+```bash
+checkpointing.resume_from_ckpt=True
+```
+alongside the normal command
+
 
 ### Preliminary experiments
 tiny (28 M) – baseline training from scratch
 ```bash
 scripts/run.sh model=tiny \
 tokenizer.tokenizer_type=wordlevel \
-experiment.name="model_size_tiny" \
-checkpointing.resume_from_ckpt=False \
+experiment.name="model_size_tiny"
 ```
 
 small (96 M) – baseline training from scratch
 ```bash
 scripts/run.sh model=small \
 tokenizer.tokenizer_type=wordlevel \
-experiment.name="model_size_small" \
-checkpointing.resume_from_ckpt=False
+experiment.name="model_size_small"
 ```
 
 APE-70 (~30 % vocab increase)
@@ -44,8 +52,8 @@ tokenizer.tokenizer_type=ape \
 tokenizer.max_vocab_size=70 \
 checkpointing.retrain_tokenizer=True \
 checkpointing.retrain_ape_vocab=True \
-experiment.name="ape_70" \
-checkpointing.resume_from_ckpt=False \
+experiment.name="ape_70"
+
 ```
 
 
@@ -56,8 +64,8 @@ tokenizer.tokenizer_type=ape \
 tokenizer.max_vocab_size=80 \
 checkpointing.retrain_tokenizer=True \
 checkpointing.retrain_ape_vocab=True \
-experiment.name="ape_80" \
-checkpointing.resume_from_ckpt=False \
+experiment.name="ape_80"
+\
 ```
 
 APE-110 (~100 % vocab increase)
@@ -67,8 +75,8 @@ tokenizer.tokenizer_type=ape \
 tokenizer.max_vocab_size=110 \
 checkpointing.retrain_tokenizer=True \
 checkpointing.retrain_ape_vocab=True \
-experiment.name="ape_110" \
-checkpointing.resume_from_ckpt=False \
+experiment.name="ape_110"
+
 ```
 
 ### RQ2: Prepend conditioning
@@ -78,8 +86,8 @@ scripts/run.sh model=small \
 tokenizer.tokenizer_type=wordlevel \
 experiment.name="prepend_1" \
 conditioning="prepend" \
-conditioning.properties="['sa_score']" \
-checkpointing.resume_from_ckpt=False \
+conditioning.properties="['sa_score']"
+
 ```
 
 3 tokens prepended
@@ -88,8 +96,7 @@ scripts/run.sh model=small \
 tokenizer.tokenizer_type=wordlevel \
 experiment.name="prepend_3" \
 conditioning="prepend" \
-conditioning.properties="['sa_score','mol_wt','volume']" \
-checkpointing.resume_from_ckpt=False 
+conditioning.properties="['sa_score','mol_wt','volume']"
 ```
 
 8 tokens prepended
@@ -98,8 +105,7 @@ scripts/run.sh model=small \
 tokenizer.tokenizer_type=wordlevel \
 experiment.name="prepend_8" \
 conditioning="prepend" \
-conditioning.properties="['sa_score', 'mol_wt', 'volume', 'vbur_vbur', 'vmin_r', 'sterimol_L', 'sterimol_B1', 'dipolemoment']" \
-checkpointing.resume_from_ckpt=False 
+conditioning.properties="['sa_score', 'mol_wt', 'volume', 'vbur_vbur', 'vmin_r', 'sterimol_L', 'sterimol_B1', 'dipolemoment']"
 ```
 
 all properties prepended. This requires MORE MEMORY
@@ -108,8 +114,7 @@ scripts/run.sh model=small \
 tokenizer.tokenizer_type=wordlevel \
 experiment.name="prepend_all" \
 conditioning="prepend" \
-conditioning.properties="['nbo_P', 'nmr_P', 'pyr_P', 'fmo_mu', 'vmin_r', 'volume', 'fmo_eta',  'fukui_m', 'fukui_p', 'nuesp_P', 'somo_rc', 'nbo_P_rc', 'pyr_alpha', 'qpole_amp', 'vbur_vbur', 'Pint_P_min', 'sterimol_L', 'sterimol_B1', 'sterimol_B5', 'dipolemoment', 'efgtens_xx_P',  'efgtens_yy_P', 'nbo_bd_e_max', 'nbo_lp_P_occ', 'qpoletens_yy', 'E_solv_elstat', 'nbo_bds_e_avg', 'sterimol_burL', 'nbo_bd_occ_avg', 'sterimol_burB5', 'vbur_ovbur_min', 'vbur_qvbur_min', 'nbo_bds_occ_max', 'vbur_ratio_vbur_vtot', 'mol_wt', 'sa_score']" \
-checkpointing.resume_from_ckpt=False
+conditioning.properties="['nbo_P', 'nmr_P', 'pyr_P', 'fmo_mu', 'vmin_r', 'volume', 'fmo_eta',  'fukui_m', 'fukui_p', 'nuesp_P', 'somo_rc', 'nbo_P_rc', 'pyr_alpha', 'qpole_amp', 'vbur_vbur', 'Pint_P_min', 'sterimol_L', 'sterimol_B1', 'sterimol_B5', 'dipolemoment', 'efgtens_xx_P',  'efgtens_yy_P', 'nbo_bd_e_max', 'nbo_lp_P_occ', 'qpoletens_yy', 'E_solv_elstat', 'nbo_bds_e_avg', 'sterimol_burL', 'nbo_bd_occ_avg', 'sterimol_burB5', 'vbur_ovbur_min', 'vbur_qvbur_min', 'nbo_bds_occ_max', 'vbur_ratio_vbur_vtot', 'mol_wt', 'sa_score']" 
 ```
 
 ### RQ2: Embedding conditioning
@@ -120,8 +125,7 @@ tokenizer.tokenizer_type=wordlevel \
 experiment.name="embedding_1" \
 conditioning="embed" \
 conditioning.properties="['sa_score']" \
-checkpointing.resume_from_ckpt=False \
-checkpointing.retrain_tokenizer=False \
+checkpointing.retrain_tokenizer=False 
 ```
 
 3 token embedding
@@ -131,8 +135,7 @@ tokenizer.tokenizer_type=wordlevel \
 experiment.name="embedding_3" \
 conditioning="embed" \
 conditioning.properties="['sa_score','mol_wt','volume']" \
-checkpointing.resume_from_ckpt=False \
-checkpointing.retrain_tokenizer=False \
+checkpointing.retrain_tokenizer=False 
 ```
 
 8 token embedding
@@ -142,8 +145,7 @@ tokenizer.tokenizer_type=wordlevel \
 experiment.name="embedding_8" \
 conditioning="embed" \
 conditioning.properties="['sa_score', 'mol_wt', 'volume', 'vbur_vbur', 'vmin_r', 'sterimol_L', 'sterimol_B1', 'dipolemoment']" \
-checkpointing.resume_from_ckpt=False \
-checkpointing.retrain_tokenizer=False \
+checkpointing.retrain_tokenizer=False 
 ```
 
 all token embedding This requires MORE MEMORY
@@ -153,8 +155,7 @@ tokenizer.tokenizer_type=wordlevel \
 experiment.name="embedding_all" \
 conditioning="embed" \
 conditioning.properties="['nbo_P', 'nmr_P', 'pyr_P', 'fmo_mu', 'vmin_r', 'volume', 'fmo_eta',  'fukui_m', 'fukui_p', 'nuesp_P', 'somo_rc', 'nbo_P_rc', 'pyr_alpha', 'qpole_amp', 'vbur_vbur', 'Pint_P_min', 'sterimol_L', 'sterimol_B1', 'sterimol_B5', 'dipolemoment', 'efgtens_xx_P',  'efgtens_yy_P', 'nbo_bd_e_max', 'nbo_lp_P_occ', 'qpoletens_yy', 'E_solv_elstat', 'nbo_bds_e_avg', 'sterimol_burL', 'nbo_bd_occ_avg', 'sterimol_burB5', 'vbur_ovbur_min', 'vbur_qvbur_min', 'nbo_bds_occ_max', 'vbur_ratio_vbur_vtot', 'mol_wt', 'sa_score']" \
-checkpointing.resume_from_ckpt=False \
-checkpointing.retrain_tokenizer=False \
+checkpointing.retrain_tokenizer=False 
 ```
 
 ### RQ2: CFG conditioning
@@ -166,8 +167,7 @@ experiment.name="cfg_01" \
 conditioning="cfg" \
 conditioning.properties="['sa_score','mol_wt','volume']" \
 conditioning.cfg_prob=0.1 \
-checkpointing.resume_from_ckpt=False \
-checkpointing.retrain_tokenizer=False \
+checkpointing.retrain_tokenizer=False 
 ```
 
 0.2 masking probability of embedding vector
@@ -177,8 +177,7 @@ tokenizer.tokenizer_type=wordlevel \
 experiment.name="cfg_02" \
 conditioning="cfg" \
 conditioning.properties="['sa_score','mol_wt','volume']" \
-conditioning.cfg_prob=0.2 \
-checkpointing.resume_from_ckpt=False \
+conditioning.cfg_prob=0.2
 checkpointing.retrain_tokenizer=False \
 ```
 
@@ -190,15 +189,12 @@ experiment.name="cfg_03" \
 conditioning="cfg" \
 conditioning.properties="['sa_score','mol_wt','volume']" \
 conditioning.cfg_prob=0.3 \
-checkpointing.resume_from_ckpt=False \
-checkpointing.retrain_tokenizer=False \
+checkpointing.retrain_tokenizer=False 
 ```
 
 
 ## Sampling
-You might notice that during sampling the script has changed. This is script is nearly identical except that it
-specifies different SLURM configurations, therefore it is completely optional, the program works fine with 
-the run.sh script
+You might notice that during sampling the script has changed. This is script is nearly identical except that it specifies different SLURM configurations (allocates less compute), therefore it is completely optional, the program works fine with the run.sh script
 
 ### Unconditioned sampling
 tiny model

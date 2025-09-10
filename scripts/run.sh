@@ -11,6 +11,7 @@
 module purge
 module load Python/3.11.5-GCCcore-13.2.0
 module load CUDA/12.1.1
+module load poetry/1.6.1-GCCcore-13.2.0 
 source /scratch/s3905845/venvs/thesis/bin/activate
 cd /scratch/s3905845/thesis_final_coding
 

@@ -19,6 +19,8 @@ checkpoints/
 
 slurm-*
 
+lightning_logs/
+
 
 # Python cache files
 **/__pycache__/  # Matches ALL __pycache__ folders (any depth)
@@ -27,3 +29,7 @@ slurm-*
 .vscode/
 
 lightning_logs/
+
+.ruff_cache/
+
+thesis_final_coding.code-workspace

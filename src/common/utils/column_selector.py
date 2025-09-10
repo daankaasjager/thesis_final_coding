@@ -1,8 +1,10 @@
-import pandas as pd
 import logging
 from typing import List
 
+import pandas as pd
+
 logger = logging.getLogger(__name__)
+
 
 def select_numeric_columns(df: pd.DataFrame, exclude: set) -> List[str]:
     """

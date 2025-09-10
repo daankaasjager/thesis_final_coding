@@ -1,10 +1,11 @@
 import logging
-from omegaconf import DictConfig
+
 import datasets
 import torch
 from transformers import DataCollatorWithPadding
 
 logger = logging.getLogger(__name__)
+
 
 def _check_gpu_compatibility(config) -> None:
     """
@@ -12,48 +13,43 @@ def _check_gpu_compatibility(config) -> None:
     Do NOT use all visible GPUs, only what Lightning is instructed to use.
     """
     logger.info("Checking GPU compatibility")
-
-    # Use what you passed in config (devices=1) instead of all visible GPUs
     requested_gpus = config.trainer.devices
     accumulate = config.trainer.accumulate_grad_batches
     nodes = config.trainer.num_nodes
     batch_size = config.loader.batch_size
-
     expected_global = requested_gpus * nodes * accumulate * batch_size
-    logger.info(f"Configured GPUs: {requested_gpus} | Accumulate: {accumulate} | Nodes: {nodes} | Batch size: {batch_size}")
-    logger.info(f"Expected global batch size: {expected_global} | Actual: {config.loader.global_batch_size}")
-    
+    logger.info(
+        f"Configured GPUs: {requested_gpus} | Accumulate: {accumulate} | Nodes: {nodes} | Batch size: {batch_size}"
+    )
+    logger.info(
+        f"Expected global batch size: {expected_global} | Actual: {config.loader.global_batch_size}"
+    )
     assert (
         config.loader.global_batch_size == expected_global
     ), f"Mismatch: expected global_batch_size={expected_global}, got {config.loader.global_batch_size}"
-
     if config.loader.global_batch_size % (requested_gpus * accumulate) != 0:
         raise ValueError(
-            f"Train Batch Size {config.loader.global_batch_size} is not divisible "
-            f"by GPUs * accumulation ({requested_gpus} * {accumulate})."
+            f"Train Batch Size {config.loader.global_batch_size} is not divisible by GPUs * accumulation ({requested_gpus} * {accumulate})."
         )
-
     if config.loader.eval_global_batch_size % requested_gpus != 0:
         raise ValueError(
-            f"Eval Batch Size {config.loader.eval_global_batch_size} not divisible "
-            f"by number of GPUs ({requested_gpus})."
+            f"Eval Batch Size {config.loader.eval_global_batch_size} not divisible by number of GPUs ({requested_gpus})."
         )
+
 
 class CondPropertyCollator(DataCollatorWithPadding):
     """
     Pads the usual sequence fields and stacks the conditional properties
     into a float tensor of shape (Batch_size, Properties).
     """
-    def __call__(self, features):
-        # let HF collator pad input_ids, attention_mask, …
-        padded = super().__call__(features)
 
+    def __call__(self, features):
+        padded = super().__call__(features)
         if "cond_props" in features[0]:
-            # list[dict] -> list[list[float]] -> tensor
             props = [f["cond_props"] for f in features]
             padded["cond_props"] = torch.tensor(props, dtype=torch.float32)
-
         return padded
+
 
 def _create_train_val_dataloaders(config, tokenized_selfies_data, tokenizer) -> tuple:
     """
@@ -67,24 +63,20 @@ def _create_train_val_dataloaders(config, tokenized_selfies_data, tokenizer) -> 
         data = tokenized_selfies_data
         logger.info("Using provided datasets.Dataset")
     else:
-        raise TypeError(f"Expected dict or datasets.Dataset, got {type(tokenized_selfies_data)}")
-
+        raise TypeError(
+            f"Expected dict or datasets.Dataset, got {type(tokenized_selfies_data)}"
+        )
     if config.train_test_split.train < 1.0:
         split_dataset = data.train_test_split(
-            test_size=1 - config.train_test_split.train,
-            seed=config.seed,
-            shuffle=True,
+            test_size=1 - config.train_test_split.train, seed=config.seed, shuffle=True
         )
         train_dataset = split_dataset["train"]
         val_dataset = split_dataset["test"]
     else:
         logger.warning("train_test_split.train=1.0, no separate validation dataset.")
         train_dataset = data
-
         val_dataset = None
-
     data_collator = CondPropertyCollator(tokenizer=tokenizer, padding="longest")
-
     train_loader = torch.utils.data.DataLoader(
         train_dataset,
         batch_size=config.loader.batch_size,
@@ -94,7 +86,6 @@ def _create_train_val_dataloaders(config, tokenized_selfies_data, tokenizer) -> 
         collate_fn=data_collator,
         persistent_workers=True,
     )
-
     if val_dataset is not None and len(val_dataset) > 0:
         val_loader = torch.utils.data.DataLoader(
             val_dataset,
@@ -106,12 +97,8 @@ def _create_train_val_dataloaders(config, tokenized_selfies_data, tokenizer) -> 
         )
     else:
         val_loader = None
-
-    # The torch generator controls the randomness of the DataLoader. If a specific seed is passed,
-    # it guarantees that the order is reproducible across runs. For validation data, shuffling isn't
-    # strictly necessary, but if we do shuffle, we might want to use a seed.
     logger.info("Train and validation DataLoaders created succesfully.")
-    return train_loader, val_loader
+    return (train_loader, val_loader)
 
 
 def get_dataloaders(config, tokenized_selfies_data, tokenizer):
@@ -124,4 +111,4 @@ def get_dataloaders(config, tokenized_selfies_data, tokenizer):
     train_set, valid_set = _create_train_val_dataloaders(
         config, tokenized_selfies_data, tokenizer
     )
-    return train_set, valid_set
+    return (train_set, valid_set)

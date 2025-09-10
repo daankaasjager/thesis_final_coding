@@ -15,23 +15,15 @@ def resolve_paths(config: DictConfig) -> DictConfig:
     """
 
     def _resolve(obj, key=None):
-        # Skip resolving 'monitor' or other non-path fields
         if key in ["monitor", "id", "tags"]:
-            return obj  # Do not modify metric names
-
-        # If it's a string and looks like a path, resolve it
+            return obj
         if isinstance(obj, str) and ("/" in obj or "\\" in obj):
             return str(Path(obj).resolve())
-
-        # Recursively process dictionaries
         if isinstance(obj, DictConfig) or isinstance(obj, dict):
             return {k: _resolve(v, k) for k, v in obj.items()}
-
-        # Process lists of paths
         if isinstance(obj, list):
             return [_resolve(v) for v in obj]
-
-        return obj  # Leave everything else unchanged
+        return obj
 
     return DictConfig(_resolve(config))
 
@@ -41,11 +33,9 @@ def setup_training_logging(config) -> tuple:
     wandb_logger = None
     if config.get("wandb", None) is not None:
         wandb_logger = WandbLogger(config=OmegaConf.to_object(config), **config.wandb)
-
-    """ Defines Lighntning callbacks in YAML config file. 
-    Can be stuff like early_stopping, lr_monitor, model saving"""
+    " Defines Lighntning callbacks in YAML config file. \n    Can be stuff like early_stopping, lr_monitor, model saving"
     callbacks = []
     if "callbacks" in config:
         for _, callback in config.callbacks.items():
             callbacks.append(hydra.utils.instantiate(callback))
-    return wandb_logger, callbacks
+    return (wandb_logger, callbacks)
